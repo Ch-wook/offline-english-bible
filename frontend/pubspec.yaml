@@ -63,6 +63,7 @@ flutter:
 
   assets:
     - assets/databases/        # Pre-packaged bible.db, dictionary.db, strong.db
+    - assets/data/             # Bible JSON (KJV + 개역한글) for first-launch import
     - assets/images/
     - assets/icons/
 
