@@ -1,0 +1,51 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    missing_required_param: error
+    missing_return: error
+    dead_code: warning
+    unused_import: warning
+    unused_local_variable: warning
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "build/**"
+
+linter:
+  rules:
+    # Style
+    - always_declare_return_types
+    - always_put_required_named_parameters_first
+    - avoid_print
+    - avoid_redundant_argument_values
+    - avoid_unnecessary_containers
+    - directives_ordering
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_fields
+    - prefer_final_locals
+    - prefer_single_quotes
+    - require_trailing_commas
+    - sort_child_properties_last
+    - unnecessary_const
+    - unnecessary_new
+    - use_super_parameters
+
+    # Error prevention
+    - avoid_catching_errors
+    - cancel_subscriptions
+    - close_sinks
+    - no_duplicate_case_values
+    - throw_in_finally
+    - unawaited_futures
+    - use_rethrow_when_possible
+
+    # Flutter specific
+    - use_build_context_synchronously
+    - sized_box_for_whitespace
+    - use_colored_box

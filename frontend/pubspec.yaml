@@ -1,10 +1,88 @@
 name: offline_english_bible
+description: Offline English Bible learning platform - read, study, and grow in English through the Bible.
+publish_to: 'none'
+version: 1.0.0+1
+
 environment:
   sdk: ">=3.7.0 <4.0.0"
+
 dependencies:
   flutter:
     sdk: flutter
-  flutter_riverpod:
-  go_router:
-  drift:
-  sqlite3_flutter_libs:
+
+  # ── State Management ──────────────────────────────────────────
+  flutter_riverpod: ^2.6.1
+
+  # ── Navigation ────────────────────────────────────────────────
+  go_router: ^14.6.2
+
+  # ── Database ──────────────────────────────────────────────────
+  drift: ^2.22.0
+  sqlite3_flutter_libs: ^0.5.26   # Android + iOS native SQLite
+  path_provider: ^2.1.4
+  path: ^1.9.1
+
+  # ── Settings Storage ──────────────────────────────────────────
+  hive_flutter: ^1.1.0
+
+  # ── Audio ─────────────────────────────────────────────────────
+  just_audio: ^0.9.40
+  just_audio_background: ^0.0.1-beta.13
+
+  # ── Network (backend sync) ────────────────────────────────────
+  dio: ^5.7.0
+  dio_smart_retry: ^6.0.0
+  connectivity_plus: ^6.1.1
+
+  # ── Code Generation Annotations ───────────────────────────────
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # ── UI ────────────────────────────────────────────────────────
+  google_fonts: ^6.2.1
+
+  # ── Utils ─────────────────────────────────────────────────────
+  intl: ^0.19.0
+  collection: ^1.18.0
+  equatable: ^2.0.7
+  diacritic: ^0.1.5            # For word normalization (IPA accent folding)
+  rxdart: ^0.28.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.13
+  drift_dev: ^2.22.0
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/databases/        # Pre-packaged bible.db, dictionary.db, strong.db
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    - family: NotoSerif
+      fonts:
+        - asset: assets/fonts/NotoSerif/NotoSerif-Regular.ttf
+        - asset: assets/fonts/NotoSerif/NotoSerif-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/NotoSerif/NotoSerif-Italic.ttf
+          style: italic
+        - asset: assets/fonts/NotoSerif/NotoSerif-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter/Inter-Regular.ttf
+        - asset: assets/fonts/Inter/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter/Inter-Bold.ttf
+          weight: 700

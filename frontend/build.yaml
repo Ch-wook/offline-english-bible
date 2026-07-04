@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          sql:
+            dialect: sqlite
+          data_class_to_companions: true
+          named_parameters: true
+          generate_connect_constructor: false
+          # Enable for better performance analysis
+          scoped_dart_components: true

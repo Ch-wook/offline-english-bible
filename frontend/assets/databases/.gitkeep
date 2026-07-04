@@ -1,0 +1,7 @@
+# assets/databases/.gitkeep
+# 앱 빌드 시 pre-packaged SQLite 파일이 이 디렉터리에 위치함.
+# - bible.db       : KJV + 개역한글 성경 원문 (공개 도메인)
+# - dictionary.db  : Wiktionary + WordNet 사전 데이터 (별도 임포트 스크립트)
+# - strong.db      : Strong's Concordance H/G 번호 (공개 도메인)
+#
+# TASK 2 에서 임포트 스크립트로 자동 생성됨.
