@@ -1,0 +1,279 @@
+[
+  {
+    "word": "grace",
+    "ipa_us": "/ɡreɪs/",
+    "ipa_uk": "/ɡreɪs/",
+    "frequency_rank": 520,
+    "bible_frequency": 170,
+    "etymology": "Middle English, from Old French grace, from Latin gratia 'pleasing quality, favor, gratitude'",
+    "senses": [
+      {
+        "pos": "noun",
+        "order": 1,
+        "definition": "Simple elegance or refinement of movement.",
+        "bible_definition": "The free and unmerited favor of God, as manifested in the salvation of sinners and the bestowal of blessings.",
+        "is_archaic": false,
+        "examples": [
+          { "text": "She moved with effortless grace.", "type": "general" },
+          { "text": "For by grace are ye saved through faith.", "type": "bible", "ref": "Ephesians 2:8" }
+        ]
+      },
+      {
+        "pos": "noun",
+        "order": 2,
+        "definition": "Courteous goodwill; a disposition to be generous or helpful.",
+        "bible_definition": "",
+        "is_archaic": false,
+        "examples": []
+      }
+    ],
+    "synonyms": ["mercy", "favor", "clemency", "blessing"],
+    "antonyms": ["disgrace", "condemnation", "wrath"],
+    "related": ["gracious", "graceful", "gratitude"],
+    "inflections": []
+  },
+  {
+    "word": "create",
+    "ipa_us": "/kriˈeɪt/",
+    "ipa_uk": "/kriˈeɪt/",
+    "frequency_rank": 680,
+    "bible_frequency": 55,
+    "etymology": "Late Middle English, from Latin creat- 'produced', from the verb creare",
+    "senses": [
+      {
+        "pos": "verb",
+        "order": 1,
+        "definition": "Bring (something) into existence from nothing.",
+        "bible_definition": "Used of God's act of bringing the universe and all living things into being (ex nihilo).",
+        "is_archaic": false,
+        "examples": [
+          { "text": "In the beginning God created the heaven and the earth.", "type": "bible", "ref": "Genesis 1:1" }
+        ]
+      }
+    ],
+    "synonyms": ["make", "form", "fashion", "produce"],
+    "antonyms": ["destroy", "demolish"],
+    "related": ["creation", "creator", "creature"],
+    "inflections": [
+      { "type": "past_tense", "form": "created" },
+      { "type": "past_participle", "form": "created" },
+      { "type": "present_participle", "form": "creating" },
+      { "type": "third_person_singular", "form": "creates" }
+    ]
+  },
+  {
+    "word": "lord",
+    "ipa_us": "/lɔːrd/",
+    "ipa_uk": "/lɔːd/",
+    "frequency_rank": 310,
+    "bible_frequency": 7970,
+    "etymology": "Old English hlāford 'master of a household', from hlāf 'loaf' + weard 'keeper'",
+    "senses": [
+      {
+        "pos": "noun",
+        "order": 1,
+        "definition": "Someone or something having power, authority, or influence; a master or ruler.",
+        "bible_definition": "In the KJV, LORD (small capitals) represents the divine name Yahweh; Lord refers to Adonai or the New Testament Kyrios.",
+        "is_archaic": false,
+        "examples": [
+          { "text": "The LORD is my shepherd; I shall not want.", "type": "bible", "ref": "Psalm 23:1" }
+        ]
+      },
+      {
+        "pos": "noun",
+        "order": 2,
+        "definition": "A title given to a peer (a man of high rank in the British aristocracy).",
+        "bible_definition": "",
+        "is_archaic": false,
+        "examples": []
+      }
+    ],
+    "synonyms": ["master", "sovereign", "ruler", "king"],
+    "antonyms": ["servant", "subject"],
+    "related": ["lordship", "overlord"],
+    "inflections": []
+  },
+  {
+    "word": "covenant",
+    "ipa_us": "/ˈkʌvənənt/",
+    "ipa_uk": "/ˈkʌvənənt/",
+    "frequency_rank": 8200,
+    "bible_frequency": 287,
+    "etymology": "Middle English, from Old French, present participle of covenir 'agree', from Latin convenire",
+    "senses": [
+      {
+        "pos": "noun",
+        "order": 1,
+        "definition": "An agreement, usually formal and solemn.",
+        "bible_definition": "A solemn, binding agreement between God and his people, often sealed by a visible sign (rainbow, circumcision, etc.).",
+        "is_archaic": false,
+        "examples": [
+          { "text": "And I will establish my covenant between me and thee.", "type": "bible", "ref": "Genesis 17:7" }
+        ]
+      }
+    ],
+    "synonyms": ["agreement", "contract", "pact", "treaty"],
+    "antonyms": [],
+    "related": ["promise", "oath", "testament"],
+    "inflections": [
+      { "type": "plural", "form": "covenants" }
+    ]
+  },
+  {
+    "word": "righteousness",
+    "ipa_us": "/ˈraɪtʃəsnəs/",
+    "ipa_uk": "/ˈraɪtʃəsnəs/",
+    "frequency_rank": 6700,
+    "bible_frequency": 302,
+    "etymology": "Old English rihtwīsnes, from rihtwīs 'righteous' + -ness",
+    "senses": [
+      {
+        "pos": "noun",
+        "order": 1,
+        "definition": "The quality of being morally right or justifiable.",
+        "bible_definition": "Right standing before God; the moral quality of conforming to God's law; also the imputed righteousness received through faith in Christ.",
+        "is_archaic": false,
+        "examples": [
+          { "text": "But seek ye first the kingdom of God, and his righteousness.", "type": "bible", "ref": "Matthew 6:33" }
+        ]
+      }
+    ],
+    "synonyms": ["justice", "virtue", "uprightness", "holiness"],
+    "antonyms": ["wickedness", "sin", "iniquity"],
+    "related": ["righteous", "justification", "sanctification"],
+    "inflections": []
+  },
+  {
+    "word": "faith",
+    "ipa_us": "/feɪθ/",
+    "ipa_uk": "/feɪθ/",
+    "frequency_rank": 420,
+    "bible_frequency": 247,
+    "etymology": "Middle English feith, from Old French feid, from Latin fides 'trust, faith'",
+    "senses": [
+      {
+        "pos": "noun",
+        "order": 1,
+        "definition": "Complete trust or confidence in someone or something.",
+        "bible_definition": "The assurance of things hoped for and the conviction of things not seen; trust and belief in God and his promises.",
+        "is_archaic": false,
+        "examples": [
+          { "text": "Now faith is the substance of things hoped for, the evidence of things not seen.", "type": "bible", "ref": "Hebrews 11:1" },
+          { "text": "For we walk by faith, not by sight.", "type": "bible", "ref": "2 Corinthians 5:7" }
+        ]
+      }
+    ],
+    "synonyms": ["trust", "belief", "confidence", "reliance"],
+    "antonyms": ["doubt", "disbelief", "unbelief"],
+    "related": ["faithful", "faithfulness", "believe"],
+    "inflections": []
+  },
+  {
+    "word": "behold",
+    "ipa_us": "/bɪˈhoʊld/",
+    "ipa_uk": "/bɪˈhəʊld/",
+    "frequency_rank": 5400,
+    "bible_frequency": 1298,
+    "etymology": "Old English behealdan 'to hold, observe', from be- + healdan 'hold'",
+    "senses": [
+      {
+        "pos": "verb",
+        "order": 1,
+        "definition": "See or observe (someone or something, especially of a remarkable or impressive nature).",
+        "bible_definition": "Used as an exclamation to draw attention to something important or surprising (KJV equivalent of 'look!' or 'see!').",
+        "is_archaic": true,
+        "examples": [
+          { "text": "Behold, I stand at the door, and knock.", "type": "bible", "ref": "Revelation 3:20" }
+        ]
+      }
+    ],
+    "synonyms": ["see", "observe", "look at", "regard"],
+    "antonyms": [],
+    "related": ["beholder", "beheld"],
+    "inflections": [
+      { "type": "past_tense", "form": "beheld" },
+      { "type": "past_participle", "form": "beheld" },
+      { "type": "present_participle", "form": "beholding" }
+    ]
+  },
+  {
+    "word": "salvation",
+    "ipa_us": "/sælˈveɪʃən/",
+    "ipa_uk": "/sælˈveɪʃən/",
+    "frequency_rank": 4200,
+    "bible_frequency": 164,
+    "etymology": "Middle English, from Old French salvacion, from Latin salvatio(n-), from salvare 'to save'",
+    "senses": [
+      {
+        "pos": "noun",
+        "order": 1,
+        "definition": "Preservation or deliverance from harm, ruin, or loss.",
+        "bible_definition": "Deliverance from sin and its consequences; eternal life granted through faith in Jesus Christ.",
+        "is_archaic": false,
+        "examples": [
+          { "text": "For God so loved the world, that he gave his only begotten Son.", "type": "bible", "ref": "John 3:16" }
+        ]
+      }
+    ],
+    "synonyms": ["redemption", "deliverance", "rescue", "liberation"],
+    "antonyms": ["damnation", "condemnation"],
+    "related": ["save", "savior", "saved"],
+    "inflections": []
+  },
+  {
+    "word": "sanctify",
+    "ipa_us": "/ˈsæŋktɪfaɪ/",
+    "ipa_uk": "/ˈsæŋktɪfaɪ/",
+    "frequency_rank": 12000,
+    "bible_frequency": 98,
+    "etymology": "Late Middle English, from Old French sanctifier, from Latin sanctificare, from sanctus 'holy'",
+    "senses": [
+      {
+        "pos": "verb",
+        "order": 1,
+        "definition": "Set apart as or declare holy; consecrate.",
+        "bible_definition": "To make holy or set apart for God's purposes; the progressive work of the Holy Spirit in conforming a believer to the image of Christ.",
+        "is_archaic": false,
+        "examples": [
+          { "text": "And God blessed the seventh day, and sanctified it.", "type": "bible", "ref": "Genesis 2:3" }
+        ]
+      }
+    ],
+    "synonyms": ["consecrate", "hallow", "dedicate", "bless"],
+    "antonyms": ["profane", "desecrate"],
+    "related": ["holy", "sanctification", "saint"],
+    "inflections": [
+      { "type": "past_tense", "form": "sanctified" },
+      { "type": "past_participle", "form": "sanctified" },
+      { "type": "present_participle", "form": "sanctifying" }
+    ]
+  },
+  {
+    "word": "redeem",
+    "ipa_us": "/rɪˈdiːm/",
+    "ipa_uk": "/rɪˈdiːm/",
+    "frequency_rank": 5800,
+    "bible_frequency": 72,
+    "etymology": "Late Middle English, from Old French redimer or Latin redimere 'buy back'",
+    "senses": [
+      {
+        "pos": "verb",
+        "order": 1,
+        "definition": "Compensate for the faults or bad aspects of (something); buy the freedom of.",
+        "bible_definition": "To buy back or ransom; Christ's act of paying the penalty for sin to free humanity from its bondage.",
+        "is_archaic": false,
+        "examples": [
+          { "text": "Christ hath redeemed us from the curse of the law.", "type": "bible", "ref": "Galatians 3:13" }
+        ]
+      }
+    ],
+    "synonyms": ["ransom", "rescue", "save", "recover"],
+    "antonyms": ["condemn", "forfeit"],
+    "related": ["redeemer", "redemption", "ransom"],
+    "inflections": [
+      { "type": "past_tense", "form": "redeemed" },
+      { "type": "past_participle", "form": "redeemed" },
+      { "type": "present_participle", "form": "redeeming" }
+    ]
+  }
+]
