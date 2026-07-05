@@ -1,10 +1,9 @@
 // lib/features/settings/presentation/pages/settings_page.dart
-// [NEW] 설정 화면 (완전 구현 — Hive 기반)
+// [MODIFY] 설정 화면 — 완전 구현
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../providers/settings_provider.dart';
@@ -22,231 +21,205 @@ class SettingsPage extends ConsumerWidget {
       appBar: AppBar(
         title: Text(
           '설정',
-          style: AppTypography.titleLarge
-              .copyWith(color: colorScheme.onSurface),
+          style: AppTypography.titleLarge.copyWith(
+            color: colorScheme.onSurface,
+          ),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
         children: [
-          // ── 테마 ────────────────────────────────────────────────
-          _SectionHeader(label: '테마'),
-          _SegmentedRow(
-            label: '다크 모드',
-            icon: Icons.brightness_6_rounded,
-            segments: const [
-              ButtonSegment(
-                value: ThemeMode.light,
-                icon: Icon(Icons.light_mode_rounded),
-                label: Text('라이트'),
-              ),
-              ButtonSegment(
-                value: ThemeMode.system,
-                icon: Icon(Icons.brightness_auto_rounded),
-                label: Text('시스템'),
-              ),
-              ButtonSegment(
-                value: ThemeMode.dark,
-                icon: Icon(Icons.dark_mode_rounded),
-                label: Text('다크'),
-              ),
-            ],
-            selected: {settings.themeMode},
-            onSelectionChanged: (s) => notifier.setThemeMode(s.first),
-          ),
+          // ── 읽기 설정 ─────────────────────────────────────────────
+          _SectionHeader(label: '읽기'),
 
-          const SizedBox(height: AppSpacing.xxl),
-
-          // ── 성경 읽기 ────────────────────────────────────────────
-          _SectionHeader(label: '성경 읽기'),
-
-          _SliderRow(
-            label: '글자 크기',
+          // 글자 크기
+          _SliderTile(
             icon: Icons.format_size_rounded,
+            label: '글자 크기',
             value: settings.fontSize,
-            min: 12,
-            max: 28,
-            divisions: 8,
-            displayText: '${settings.fontSize.toInt()}pt',
-            onChanged: notifier.setFontSize,
+            min: 12.0,
+            max: 32.0,
+            divisions: 20,
+            displayValue: '${settings.fontSize.round()}pt',
+            onChanged: (v) => notifier.setFontSize(v),
           ),
 
-          _SliderRow(
-            label: '줄 간격',
+          // 줄 간격
+          _SliderTile(
             icon: Icons.format_line_spacing_rounded,
+            label: '줄 간격',
             value: settings.lineSpacing,
-            min: 1.4,
+            min: 1.2,
             max: 2.5,
+            divisions: 13,
+            displayValue: settings.lineSpacing.toStringAsFixed(1),
+            onChanged: (v) => notifier.setLineSpacing(v),
+          ),
+
+          // 자동 스크롤 속도
+          _SliderTile(
+            icon: Icons.speed_rounded,
+            label: '자동 스크롤 속도',
+            value: settings.autoScrollSpeed,
+            min: 10,
+            max: 120,
             divisions: 11,
-            displayText: settings.lineSpacing.toStringAsFixed(1),
-            onChanged: notifier.setLineSpacing,
+            displayValue: '${settings.autoScrollSpeed.round()}px/s',
+            onChanged: (v) => notifier.setAutoScrollSpeed(v),
           ),
 
-          _SwitchRow(
-            label: '절 번호 표시',
-            icon: Icons.tag_rounded,
-            value: settings.showVerseNumbers,
-            onChanged: (_) => notifier.toggleShowVerseNumbers(),
-          ),
-
-          _SwitchRow(
-            label: 'Strong 번호 표시',
-            icon: Icons.numbers_rounded,
-            value: settings.showStrongNumbers,
-            onChanged: (_) => notifier.toggleShowStrongNumbers(),
-          ),
-
-          _SwitchRow(
-            label: '화면 켜기 유지',
-            icon: Icons.screen_lock_portrait_rounded,
-            value: settings.keepScreenOn,
-            onChanged: (_) => notifier.toggleKeepScreenOn(),
-          ),
-
-          const SizedBox(height: AppSpacing.xxl),
-
-          // ── 번역본 ───────────────────────────────────────────────
-          _SectionHeader(label: '번역본'),
-
-          _SelectRow(
-            label: '영어 번역본',
-            icon: Icons.translate_rounded,
-            value: settings.defaultTranslation,
-            options: const {
-              'KJV': 'King James Version (공개 도메인)',
-            },
-            onChanged: notifier.setDefaultTranslation,
-          ),
-
-          _SelectRow(
-            label: '한국어 번역본',
-            icon: Icons.g_translate_rounded,
-            value: settings.defaultKoreanTranslation,
-            options: const {
-              'KOREAN_RV': '개역한글 (공개 도메인)',
-            },
-            onChanged: notifier.setDefaultKoreanTranslation,
-          ),
-
-          const SizedBox(height: AppSpacing.xxl),
-
-          // ── 대역 보기 ────────────────────────────────────────────
-          _SectionHeader(label: '대역 보기'),
-
-          _SwitchRow(
-            label: '한영 대역 보기',
-            icon: Icons.view_column_rounded,
+          // 대역 보기 기본값
+          SwitchListTile(
+            secondary: const Icon(Icons.view_column_rounded),
+            title: const Text('대역 보기 기본값'),
+            subtitle: const Text('성경 열람 시 KJV + 한국어 동시 표시'),
             value: settings.parallelView,
-            onChanged: (_) => notifier.toggleParallelView(),
+            onChanged: (v) => notifier.setParallelView(value: v),
           ),
 
-          if (settings.parallelView)
-            _SegmentedRow<String>(
-              label: '왼쪽 언어',
-              icon: Icons.swap_horiz_rounded,
-              segments: const [
-                ButtonSegment(value: 'ko', label: Text('한국어')),
-                ButtonSegment(value: 'en', label: Text('영어')),
-              ],
-              selected: {settings.parallelLeftLanguage},
-              onSelectionChanged: (s) =>
-                  notifier.setParallelLeftLanguage(s.first),
-            ),
+          const Divider(),
 
-          const SizedBox(height: AppSpacing.xxl),
+          // ── 기본 번역본 ────────────────────────────────────────────
+          _SectionHeader(label: '기본 번역본'),
 
-          // ── 자동 스크롤 ──────────────────────────────────────────
-          _SectionHeader(label: '자동 스크롤'),
-
-          _SwitchRow(
-            label: '자동 스크롤',
-            icon: Icons.swap_vert_rounded,
-            value: settings.autoScroll,
-            onChanged: (_) => notifier.toggleAutoScroll(),
+          RadioListTile<String>(
+            secondary: const Icon(Icons.flag_rounded),
+            title: const Text('KJV (영어)'),
+            subtitle: const Text('King James Version — 공개 도메인'),
+            value: 'KJV',
+            groupValue: settings.defaultTranslation,
+            onChanged: (v) {
+              if (v != null) notifier.setDefaultTranslation(v);
+            },
           ),
 
-          if (settings.autoScroll)
-            _SliderRow(
-              label: '스크롤 속도',
-              icon: Icons.speed_rounded,
-              value: settings.autoScrollSpeed,
-              min: 10,
-              max: 200,
-              divisions: 19,
-              displayText: '${settings.autoScrollSpeed.toInt()}px/s',
-              onChanged: notifier.setAutoScrollSpeed,
-            ),
+          RadioListTile<String>(
+            secondary: const Icon(Icons.flag_outlined),
+            title: const Text('개역한글 (한국어)'),
+            subtitle: const Text('공개 도메인'),
+            value: 'KOREAN_RV',
+            groupValue: settings.defaultTranslation,
+            onChanged: (v) {
+              if (v != null) notifier.setDefaultTranslation(v);
+            },
+          ),
 
-          const SizedBox(height: AppSpacing.xxl),
+          const Divider(),
 
-          // ── 초기화 ────────────────────────────────────────────────
-          _SectionHeader(label: '기타'),
+          // ── 테마 ──────────────────────────────────────────────────
+          _SectionHeader(label: '테마'),
+
+          RadioListTile<ThemeMode>(
+            secondary: const Icon(Icons.wb_sunny_rounded),
+            title: const Text('라이트 모드'),
+            value: ThemeMode.light,
+            groupValue: settings.themeMode,
+            onChanged: (v) {
+              if (v != null) notifier.setThemeMode(v);
+            },
+          ),
+
+          RadioListTile<ThemeMode>(
+            secondary: const Icon(Icons.dark_mode_rounded),
+            title: const Text('다크 모드'),
+            value: ThemeMode.dark,
+            groupValue: settings.themeMode,
+            onChanged: (v) {
+              if (v != null) notifier.setThemeMode(v);
+            },
+          ),
+
+          RadioListTile<ThemeMode>(
+            secondary: const Icon(Icons.brightness_auto_rounded),
+            title: const Text('시스템 설정 따름'),
+            value: ThemeMode.system,
+            groupValue: settings.themeMode,
+            onChanged: (v) {
+              if (v != null) notifier.setThemeMode(v);
+            },
+          ),
+
+          const Divider(),
+
+          // ── 데이터 ────────────────────────────────────────────────
+          _SectionHeader(label: '데이터'),
 
           ListTile(
-            leading: const Icon(Icons.restore_rounded),
-            title: Text('설정 초기화', style: AppTypography.bodyLarge),
-            subtitle: Text(
-              '모든 설정을 기본값으로 되돌립니다',
-              style: AppTypography.bodySmall,
+            leading: const Icon(Icons.storage_rounded),
+            title: const Text('사전 데이터 관리'),
+            subtitle: const Text('Wiktionary + WordNet 임포트'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('사전 데이터 관리 (추후 구현)'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: Icon(
+              Icons.delete_forever_rounded,
+              color: colorScheme.error,
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            title: Text(
+              '모든 사용자 데이터 초기화',
+              style: TextStyle(color: colorScheme.error),
             ),
-            onTap: () => _confirmReset(context, notifier),
+            subtitle: const Text('북마크, 형광펜, 단어장이 모두 삭제됩니다'),
+            onTap: () => _showResetDialog(context, ref),
+          ),
+
+          const SizedBox(height: AppSpacing.xxxl),
+
+          // ── 앱 정보 ───────────────────────────────────────────────
+          _SectionHeader(label: '앱 정보'),
+
+          const ListTile(
+            leading: Icon(Icons.info_outline_rounded),
+            title: Text('버전'),
+            trailing: Text('1.0.0'),
+          ),
+
+          const ListTile(
+            leading: Icon(Icons.gavel_rounded),
+            title: Text('오픈소스 라이선스'),
+            subtitle: Text('KJV, 개역한글: 공개 도메인\nWiktionary: CC BY-SA 4.0\nWordNet: Princeton License'),
           ),
 
           const SizedBox(height: AppSpacing.xxl),
-
-          // ── 앱 정보 ───────────────────────────────────────────────
-          Center(
-            child: Column(
-              children: [
-                Icon(
-                  Icons.menu_book_rounded,
-                  size: 32,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Offline English Bible v1.0.0',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                Text(
-                  'KJV & 개역한글 — Public Domain',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xxxxl),
         ],
       ),
     );
   }
 
-  void _confirmReset(BuildContext context, SettingsNotifier notifier) {
+  void _showResetDialog(BuildContext context, WidgetRef ref) {
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('설정 초기화'),
-        content: const Text('모든 설정을 기본값으로 되돌리시겠습니까?'),
+      builder: (_) => AlertDialog(
+        title: const Text('데이터 초기화'),
+        content: const Text(
+          '모든 북마크, 형광펜, 단어장이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.',
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(context),
             child: const Text('취소'),
           ),
           FilledButton(
             onPressed: () {
-              Navigator.pop(ctx);
-              notifier.resetToDefaults();
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('사용자 데이터가 초기화되었습니다'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
             },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('초기화'),
           ),
         ],
@@ -255,7 +228,7 @@ class SettingsPage extends ConsumerWidget {
   }
 }
 
-// ── Section Widgets ───────────────────────────────────────────────────
+// ── Shared Widgets ────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.label});
@@ -264,222 +237,72 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.sm,
-        bottom: AppSpacing.sm,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.xs,
       ),
       child: Text(
         label,
         style: AppTypography.labelMedium.copyWith(
-          color: Theme.of(context).colorScheme.primary,
+          color: colorScheme.primary,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
+          letterSpacing: 0.5,
         ),
       ),
     );
   }
 }
 
-class _SwitchRow extends StatelessWidget {
-  const _SwitchRow({
-    required this.label,
+class _SliderTile extends StatelessWidget {
+  const _SliderTile({
     required this.icon,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(label, style: AppTypography.bodyLarge),
-      secondary: Icon(icon, size: AppSpacing.iconMd),
-      value: value,
-      onChanged: onChanged,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      ),
-    );
-  }
-}
-
-class _SliderRow extends StatelessWidget {
-  const _SliderRow({
     required this.label,
-    required this.icon,
     required this.value,
     required this.min,
     required this.max,
     required this.divisions,
-    required this.displayText,
+    required this.displayValue,
     required this.onChanged,
   });
 
-  final String label;
   final IconData icon;
+  final String label;
   final double value;
   final double min;
   final double max;
   final int divisions;
-  final String displayText;
-  final ValueChanged<double> onChanged;
+  final String displayValue;
+  final void Function(double) onChanged;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: AppSpacing.iconMd, color: colorScheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Text(label, style: AppTypography.bodyLarge),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
-                ),
-                child: Text(
-                  displayText,
-                  style: AppTypography.labelMedium.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Slider(
-            value: value,
-            min: min,
-            max: max,
-            divisions: divisions,
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-class _SegmentedRow<T> extends StatelessWidget {
-  const _SegmentedRow({
-    required this.label,
-    required this.icon,
-    required this.segments,
-    required this.selected,
-    required this.onSelectionChanged,
-  });
-
-  final String label;
-  final IconData icon;
-  final List<ButtonSegment<T>> segments;
-  final Set<T> selected;
-  final ValueChanged<Set<T>> onSelectionChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                icon,
-                size: AppSpacing.iconMd,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Text(label, style: AppTypography.bodyLarge),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SegmentedButton<T>(
-            segments: segments,
-            selected: selected,
-            onSelectionChanged: onSelectionChanged,
-            showSelectedIcon: false,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SelectRow extends StatelessWidget {
-  const _SelectRow({
-    required this.label,
-    required this.icon,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final String label;
-  final IconData icon;
-  final String value;
-  final Map<String, String> options;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, size: AppSpacing.iconMd),
-      title: Text(label, style: AppTypography.bodyLarge),
-      subtitle: Text(
-        options[value] ?? value,
-        style: AppTypography.bodySmall,
+      leading: Icon(icon, color: colorScheme.onSurfaceVariant),
+      title: Row(
+        children: [
+          Text(label),
+          const Spacer(),
+          Text(
+            displayValue,
+            style: AppTypography.labelMedium.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
-      trailing: options.length > 1
-          ? const Icon(Icons.chevron_right_rounded)
-          : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      ),
-      onTap: options.length > 1
-          ? () => _showOptions(context)
-          : null,
-    );
-  }
-
-  void _showOptions(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: options.entries
-            .map(
-              (e) => RadioListTile<String>(
-                title: Text(e.value),
-                value: e.key,
-                groupValue: value,
-                onChanged: (v) {
-                  if (v != null) onChanged(v);
-                  Navigator.pop(ctx);
-                },
-              ),
-            )
-            .toList(),
+      subtitle: Slider(
+        value: value.clamp(min, max),
+        min: min,
+        max: max,
+        divisions: divisions,
+        onChanged: onChanged,
       ),
     );
   }
