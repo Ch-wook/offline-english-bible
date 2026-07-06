@@ -1,7 +1,7 @@
 // lib/features/search/domain/entities/search_result.dart
 // [NEW] 전문 검색 결과 엔티티
 
-import '../../bible/domain/entities/verse.dart';
+import '../../../bible/domain/entities/verse.dart';
 
 /// 성경 전문 검색(FTS5) 결과.
 final class SearchResult {

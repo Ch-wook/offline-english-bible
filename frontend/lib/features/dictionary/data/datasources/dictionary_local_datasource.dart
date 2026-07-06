@@ -27,19 +27,16 @@ abstract interface class DictionaryLocalDataSource {
     void Function(double)? onProgress,
   });
 
-  Future<void> insertSenses(List<SensesCompanion> senses);
-
-  Future<void> insertExamples(List<ExamplesCompanion> examples);
-
-  Future<void> insertRelations(List<WordNetRelationsCompanion> relations);
-
-  Future<void> insertInflections(List<InflectionsCompanion> inflections);
+  Future<void> insertSenses(List<WordSensesCompanion> senses);
+  Future<void> insertExamples(List<WordExamplesCompanion> examples);
+  Future<void> insertRelations(List<WordnetRelationsCompanion> relations);
+  Future<void> insertInflections(List<WordFormsCompanion> inflections);
 }
 
 // ── Row type aliases (Drift generated) ───────────────────────────────
 
-typedef DictionaryEntryRow = DictionaryEntries$Row;
-typedef SenseRow = Senses$Row;
-typedef ExampleRow = Examples$Row;
-typedef WordNetRelationRow = WordNetRelations$Row;
-typedef InflectionRow = Inflections$Row;
+typedef DictionaryEntryRow = DictionaryEntryData;
+typedef SenseRow = WordSenseData;
+typedef ExampleRow = WordExampleData;
+typedef WordNetRelationRow = WordnetRelationData;
+typedef InflectionRow = WordFormData;

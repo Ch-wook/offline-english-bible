@@ -2,6 +2,7 @@
 // [NEW] 앱 루트 위젯 — 테마 + 라우터 연결
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/settings/presentation/providers/settings_provider.dart';
@@ -29,6 +30,11 @@ class App extends ConsumerWidget {
       routerConfig: router,
 
       // ── 로케일 ───────────────────────────────────────────────
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       locale: const Locale('ko', 'KR'),
       supportedLocales: const [
         Locale('ko', 'KR'),

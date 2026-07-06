@@ -15,13 +15,21 @@ import '../providers/bible_reader_provider.dart';
 class BookSelectorSheet extends ConsumerStatefulWidget {
   const BookSelectorSheet({super.key});
 
-  static Future<void> show(BuildContext context) {
-    return showModalBottomSheet<void>(
+  static Future<void> show(BuildContext context) async {
+    final selectedBook = await showModalBottomSheet<Book?>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => const BookSelectorSheet(),
     );
+
+    if (selectedBook != null && context.mounted) {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (context.mounted) {
+          ChapterSelectorSheet.show(context, book: selectedBook);
+        }
+      });
+    }
   }
 
   @override
@@ -179,13 +187,7 @@ class _BookSelectorSheetState extends ConsumerState<BookSelectorSheet>
   }
 
   void _onBookSelect(Book book) {
-    Navigator.pop(context);
-    // 장 선택 시트를 이어서 표시
-    Future.delayed(const Duration(milliseconds: 250), () {
-      if (context.mounted) {
-        ChapterSelectorSheet.show(context, book: book);
-      }
-    });
+    Navigator.pop(context, book);
   }
 }
 
@@ -216,7 +218,7 @@ class _BookGrid extends ConsumerWidget {
         crossAxisCount: 3,
         mainAxisSpacing: AppSpacing.sm,
         crossAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 2.4,
+        childAspectRatio: 2.0,
       ),
       itemCount: books.length,
       itemBuilder: (_, i) {

@@ -8,6 +8,7 @@ import 'package:drift/drift.dart';
 
 /// 영어 단어 기본 항목 (Wiktionary 기반).
 /// word_normalized = 소문자 + 원형 (검색 최적화)
+@DataClassName('DictionaryEntryData')
 class DictionaryEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get word => text().withLength(min: 1, max: 100)();
@@ -35,6 +36,7 @@ class DictionaryEntries extends Table {
 
 /// 품사별 뜻 항목 (한 단어에 여러 품사/뜻 가능).
 /// pos: 'noun' | 'verb' | 'adjective' | 'adverb' | 'preposition' | 'conjunction' | 'pronoun' | 'interjection'
+@DataClassName('WordSenseData')
 class WordSenses extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get entryId => integer().references(DictionaryEntries, #id)();
@@ -51,12 +53,13 @@ class WordSenses extends Table {
 
 /// 예문 (일반 + 성경).
 /// exampleType: 'general' | 'bible'
+@DataClassName('WordExampleData')
 class WordExamples extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get senseId => integer().references(WordSenses, #id)();
   TextColumn get exampleType =>
       text().withLength(min: 1, max: 10)(); // 'general' | 'bible'
-  TextColumn get text => text()(); // 예문
+  TextColumn get textContent => text().named('text')(); // 예문
   TextColumn get sourceReference =>
       text().withDefault(const Constant(''))(); // e.g., 'John 3:16'
   IntColumn get bookId => integer().nullable()();
@@ -66,6 +69,7 @@ class WordExamples extends Table {
 
 /// 단어 활용형 (Wiktionary 기반).
 /// formType: 'plural' | 'past_tense' | 'past_participle' | 'present_participle' | 'third_person_singular' | 'comparative' | 'superlative'
+@DataClassName('WordFormData')
 class WordForms extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get entryId => integer().references(DictionaryEntries, #id)();
@@ -77,6 +81,7 @@ class WordForms extends Table {
 
 /// WordNet Synset (동의어 집합).
 /// posCode: 'n' (명사) | 'v' (동사) | 'a' (형용사) | 'r' (부사)
+@DataClassName('WordnetSynsetData')
 class WordnetSynsets extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get synsetId =>
@@ -93,6 +98,7 @@ class WordnetSynsets extends Table {
 }
 
 /// 단어 ↔ Synset 매핑 (다대다).
+@DataClassName('WordnetLemmaData')
 class WordnetLemmas extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get entryId => integer().references(DictionaryEntries, #id)();
@@ -102,6 +108,7 @@ class WordnetLemmas extends Table {
 
 /// Synset 간 의미 관계.
 /// relationType: 'hypernym' | 'hyponym' | 'antonym' | 'similar' | 'also' | 'attribute' | 'holonym' | 'meronym'
+@DataClassName('WordnetRelationData')
 class WordnetRelations extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get fromSynsetId =>

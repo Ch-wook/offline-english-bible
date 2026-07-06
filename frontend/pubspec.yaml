@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # ── State Management ──────────────────────────────────────────
   flutter_riverpod: ^2.6.1
@@ -42,7 +44,7 @@ dependencies:
   google_fonts: ^6.2.1
 
   # ── Utils ─────────────────────────────────────────────────────
-  intl: ^0.19.0
+  intl: 0.20.2
   collection: ^1.18.0
   equatable: ^2.0.7
   diacritic: ^0.1.5            # For word normalization (IPA accent folding)
@@ -62,28 +64,28 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/databases/        # Pre-packaged bible.db, dictionary.db, strong.db
-    - assets/data/             # Bible JSON (KJV + 개역한글) for first-launch import
-    - assets/images/
-    - assets/icons/
+    - assets/databases/
+    - assets/data/
+#    - assets/images/
+#    - assets/icons/
 
-  fonts:
-    - family: NotoSerif
-      fonts:
-        - asset: assets/fonts/NotoSerif/NotoSerif-Regular.ttf
-        - asset: assets/fonts/NotoSerif/NotoSerif-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/NotoSerif/NotoSerif-Italic.ttf
-          style: italic
-        - asset: assets/fonts/NotoSerif/NotoSerif-BoldItalic.ttf
-          weight: 700
-          style: italic
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter/Inter-Regular.ttf
-        - asset: assets/fonts/Inter/Inter-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Inter/Inter-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Inter/Inter-Bold.ttf
-          weight: 700
+#   fonts:
+#     - family: NotoSerif
+#       fonts:
+#         - asset: assets/fonts/NotoSerif/NotoSerif-Regular.ttf
+#         - asset: assets/fonts/NotoSerif/NotoSerif-Bold.ttf
+#           weight: 700
+#         - asset: assets/fonts/NotoSerif/NotoSerif-Italic.ttf
+#           style: italic
+#         - asset: assets/fonts/NotoSerif/NotoSerif-BoldItalic.ttf
+#           weight: 700
+#           style: italic
+#     - family: Inter
+#       fonts:
+#         - asset: assets/fonts/Inter/Inter-Regular.ttf
+#         - asset: assets/fonts/Inter/Inter-Medium.ttf
+#           weight: 500
+#         - asset: assets/fonts/Inter/Inter-SemiBold.ttf
+#           weight: 600
+#         - asset: assets/fonts/Inter/Inter-Bold.ttf
+#           weight: 700

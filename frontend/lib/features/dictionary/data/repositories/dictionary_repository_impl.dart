@@ -1,6 +1,7 @@
 // lib/features/dictionary/data/repositories/dictionary_repository_impl.dart
 // [NEW] DictionaryRepository 구현체
 
+import '../../../../core/database/app_database.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/result.dart';
@@ -44,21 +45,21 @@ final class DictionaryRepositoryImpl implements DictionaryRepository {
         _dataSource.getInflections(row.id),
       ]);
 
-      final senses = results[0] as List;
-      final relations = results[1] as List;
-      final inflections = results[2] as List;
+      final senses = results[0] as List<WordSenseData>;
+      final relations = results[1] as List<WordnetRelationData>;
+      final inflections = results[2] as List<WordFormData>;
 
       // 각 sense 의 examples 로드
       final exampleFutures = senses
-          .map((s) => _dataSource.getExamples((s as dynamic).id as int));
+          .map((s) => _dataSource.getExamples(s.id));
       final exampleResults = await Future.wait(exampleFutures);
 
       final entry = DictionaryEntryMapper.toDomain(
         row: row,
-        senses: List.from(senses),
-        examples: exampleResults.map((e) => List.from(e)).toList(),
-        relations: List.from(relations),
-        inflections: List.from(inflections),
+        senses: senses,
+        examples: exampleResults,
+        relations: relations,
+        inflections: inflections,
       );
 
       return Success(entry);

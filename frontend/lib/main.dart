@@ -243,7 +243,7 @@ class _ErrorContent extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          state.importProgress?.message ?? '알 수 없는 오류',
+          state.importProgress?.message ?? '알 수 없는 오류:\n${state.error}',
           style: AppTypography.bodySmall.copyWith(
             color: AppColors.darkOnSurfaceVariant,
           ),

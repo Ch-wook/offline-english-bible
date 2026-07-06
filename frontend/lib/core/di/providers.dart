@@ -17,7 +17,7 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 
 /// 데이터베이스 dispose 처리.
 /// main() 에서 ProviderScope.overrides 로 사용.
-ProviderOverride appDatabaseOverride(AppDatabase db) =>
+Override appDatabaseOverride(AppDatabase db) =>
     appDatabaseProvider.overrideWith((ref) {
       ref.onDispose(db.close);
       return db;

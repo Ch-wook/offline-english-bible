@@ -65,20 +65,28 @@ class VocabularyItems extends Table {
   TextColumn get bibleDefinition => text().withDefault(const Constant(''))();
   TextColumn get ipa => text().withDefault(const Constant(''))();
   // 단어를 발견한 절 정보
-  IntColumn get sourceBookId => integer().nullable()();
-  IntColumn get sourceChapter => integer().nullable()();
-  IntColumn get sourceVerse => integer().nullable()();
-  TextColumn get sourceTranslation =>
-      text().withLength(min: 1, max: 20).nullable()();
-  // 학습 상태
+  IntColumn get bookId => integer().withDefault(const Constant(0))();
+  IntColumn get chapter => integer().withDefault(const Constant(0))();
+  IntColumn get verse => integer().withDefault(const Constant(0))();
+  TextColumn get translationCode =>
+      text().withLength(min: 1, max: 20).withDefault(const Constant(''))();
+  TextColumn get note => text().withDefault(const Constant(''))();
+
+  // 학습 상태 (SuperMemo-2 기반)
   IntColumn get masteryLevel =>
       integer().withDefault(const Constant(0))(); // 0~5
   IntColumn get reviewCount =>
       integer().withDefault(const Constant(0))();
   IntColumn get correctCount =>
       integer().withDefault(const Constant(0))();
+  IntColumn get repetitions => integer().withDefault(const Constant(0))();
+  RealColumn get easeFactor => real().withDefault(const Constant(2.5))();
+  IntColumn get intervalDays => integer().withDefault(const Constant(1))();
+  
   DateTimeColumn get addedAt => dateTime()();
-  DateTimeColumn get nextReviewAt => dateTime()();
+  DateTimeColumn get nextReviewAt => dateTime().nullable()();
+  DateTimeColumn get lastReviewedAt => dateTime().nullable()();
+  BoolColumn get isLearned => boolean().withDefault(const Constant(false))();
   BoolColumn get isFavorite =>
       boolean().withDefault(const Constant(false))();
 

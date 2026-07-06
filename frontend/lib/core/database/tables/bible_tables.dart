@@ -44,12 +44,9 @@ class VerseTranslations extends Table {
   IntColumn get bookId => integer()();
   IntColumn get chapter => integer()();
   IntColumn get verse => integer()();
-  TextColumn get text => text()();
+  TextColumn get textContent => text().named('text')();
   // 원어 Strong 번호 참조 (JSON 배열 형태: "[H430,H3068]")
   TextColumn get strongRefs => text().nullable()();
-
-  @override
-  Set<Column>? get primaryKey => null; // autoIncrement handles PK
 
   @override
   List<Set<Column>> get uniqueKeys => [

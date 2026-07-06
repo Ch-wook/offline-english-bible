@@ -109,7 +109,7 @@ final class BibleLocalDataSourceImpl implements BibleLocalDataSource {
             bookId: r.read<int>('book_id'),
             chapter: r.read<int>('chapter'),
             verse: r.read<int>('verse'),
-            text: r.read<String>('text'),
+            textContent: r.read<String>('text'),
             strongRefs: r.readNullable<String>('strong_refs'),
           ),
         )

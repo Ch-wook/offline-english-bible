@@ -73,7 +73,7 @@ class SettingsPage extends ConsumerWidget {
             title: const Text('대역 보기 기본값'),
             subtitle: const Text('성경 열람 시 KJV + 한국어 동시 표시'),
             value: settings.parallelView,
-            onChanged: (v) => notifier.setParallelView(value: v),
+            onChanged: (v) => notifier.toggleParallelView(),
           ),
 
           const Divider(),

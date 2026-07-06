@@ -25,7 +25,7 @@ extension VerseTranslationMapper on VerseTranslation {
         bookId: bookId,
         chapter: chapter,
         verseNumber: verse,
-        text: text,
+        text: textContent,
         translationCode: translationCode,
         strongRefs: Verse.parseStrongRefs(strongRefs),
       );

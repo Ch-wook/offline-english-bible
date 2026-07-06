@@ -10,6 +10,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../../domain/entities/vocab_item.dart';
+import '../../domain/repositories/vocabulary_repository.dart';
 import '../providers/vocabulary_providers.dart';
 
 class VocabularyPage extends ConsumerWidget {
@@ -453,7 +454,7 @@ class _ReviewCard extends StatelessWidget {
         children: [
           Text(
             item.word,
-            style: AppTypography.displaySmall.copyWith(
+            style: AppTypography.headlineSmall.copyWith(
               fontFamily: 'NotoSerif',
               color: colorScheme.onSurface,
             ),

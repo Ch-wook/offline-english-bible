@@ -40,14 +40,12 @@ final class DictionaryImportService {
     var entryId = 1;
     var senseId = 1;
     var exampleId = 1;
-    var relationId = 1;
-    var inflectionId = 1;
+    var formId = 1;
 
     final entries = <DictionaryEntriesCompanion>[];
-    final senses = <SensesCompanion>[];
-    final examples = <ExamplesCompanion>[];
-    final relations = <WordNetRelationsCompanion>[];
-    final inflections = <InflectionsCompanion>[];
+    final senses = <WordSensesCompanion>[];
+    final examples = <WordExamplesCompanion>[];
+    final forms = <WordFormsCompanion>[];
 
     for (final item in raw) {
       final map = item as Map<String, dynamic>;
@@ -59,11 +57,11 @@ final class DictionaryImportService {
           id: Value(currentEntryId),
           word: Value(word),
           wordNormalized: Value(word.toLowerCase()),
-          ipaUs: Value(map['ipa_us'] as String?),
-          ipaUk: Value(map['ipa_uk'] as String?),
-          frequencyRank: Value(map['frequency_rank'] as int?),
-          bibleFrequency: Value(map['bible_frequency'] as int?),
-          etymology: Value(map['etymology'] as String?),
+          ipaUs: Value(map['ipa_us'] as String? ?? ''),
+          ipaUk: Value(map['ipa_uk'] as String? ?? ''),
+          frequencyRank: Value(map['frequency_rank'] as int? ?? 999999),
+          bibleFrequency: Value(map['bible_frequency'] as int? ?? 0),
+          etymology: Value(map['etymology'] as String? ?? ''),
         ),
       );
 
@@ -74,15 +72,15 @@ final class DictionaryImportService {
         final currentSenseId = senseId++;
 
         senses.add(
-          SensesCompanion(
+          WordSensesCompanion(
             id: Value(currentSenseId),
             entryId: Value(currentEntryId),
             partOfSpeech: Value(sm['pos'] as String),
-            senseOrder: Value(sm['order'] as int),
+            senseOrder: Value(sm['order'] as int? ?? 1),
             definition: Value(sm['definition'] as String),
-            bibleDefinition: Value(sm['bible_definition'] as String?),
+            bibleDefinition: Value(sm['bible_definition'] as String? ?? ''),
             isArchaic: Value(sm['is_archaic'] as bool? ?? false),
-            register: const Value(null),
+            register: Value(sm['register'] as String? ?? ''),
           ),
         );
 
@@ -91,62 +89,24 @@ final class DictionaryImportService {
         for (final ex in exList) {
           final em = ex as Map<String, dynamic>;
           examples.add(
-            ExamplesCompanion(
+            WordExamplesCompanion(
               id: Value(exampleId++),
               senseId: Value(currentSenseId),
-              text: Value(em['text'] as String),
-              type: Value(em['type'] as String),
-              sourceReference: Value(em['ref'] as String?),
+              textContent: Value(em['text'] as String),
+              exampleType: Value(em['type'] as String? ?? 'general'),
+              sourceReference: Value(em['ref'] as String? ?? ''),
             ),
           );
         }
       }
 
-      // WordNet Relations
-      final syns = (map['synonyms'] as List<dynamic>? ?? [])
-          .cast<String>();
-      for (final w in syns) {
-        relations.add(
-          WordNetRelationsCompanion(
-            id: Value(relationId++),
-            entryId: Value(currentEntryId),
-            relationType: const Value('synonym'),
-            relatedWord: Value(w),
-          ),
-        );
-      }
-      final ants = (map['antonyms'] as List<dynamic>? ?? [])
-          .cast<String>();
-      for (final w in ants) {
-        relations.add(
-          WordNetRelationsCompanion(
-            id: Value(relationId++),
-            entryId: Value(currentEntryId),
-            relationType: const Value('antonym'),
-            relatedWord: Value(w),
-          ),
-        );
-      }
-      final related = (map['related'] as List<dynamic>? ?? [])
-          .cast<String>();
-      for (final w in related) {
-        relations.add(
-          WordNetRelationsCompanion(
-            id: Value(relationId++),
-            entryId: Value(currentEntryId),
-            relationType: const Value('related'),
-            relatedWord: Value(w),
-          ),
-        );
-      }
-
-      // Inflections
+      // Inflections -> WordForms
       final inflList = map['inflections'] as List<dynamic>? ?? [];
       for (final inf in inflList) {
         final im = inf as Map<String, dynamic>;
-        inflections.add(
-          InflectionsCompanion(
-            id: Value(inflectionId++),
+        forms.add(
+          WordFormsCompanion(
+            id: Value(formId++),
             entryId: Value(currentEntryId),
             formType: Value(im['type'] as String),
             form: Value(im['form'] as String),
@@ -157,23 +117,20 @@ final class DictionaryImportService {
 
     // 배치 삽입
     await _db.batch(
-      (b) => b.insertAllOnConflictUpdate(_db.dictionaryEntries, entries),
+      (b) => b.insertAll(_db.dictionaryEntries, entries, mode: InsertMode.insertOrReplace),
     );
     yield (0.5, '단어 항목 삽입 완료 (${entries.length}개)');
 
     await _db.batch(
-      (b) => b.insertAllOnConflictUpdate(_db.senses, senses),
+      (b) => b.insertAll(_db.wordSenses, senses, mode: InsertMode.insertOrReplace),
     );
     yield (0.65, '의미 삽입 완료 (${senses.length}개)');
 
     await _db.batch(
-      (b) => b.insertAllOnConflictUpdate(_db.examples, examples),
+      (b) => b.insertAll(_db.wordExamples, examples, mode: InsertMode.insertOrReplace),
     );
     await _db.batch(
-      (b) => b.insertAllOnConflictUpdate(_db.wordNetRelations, relations),
-    );
-    await _db.batch(
-      (b) => b.insertAllOnConflictUpdate(_db.inflections, inflections),
+      (b) => b.insertAll(_db.wordForms, forms, mode: InsertMode.insertOrReplace),
     );
 
     yield (1.0, '사전 임포트 완료');

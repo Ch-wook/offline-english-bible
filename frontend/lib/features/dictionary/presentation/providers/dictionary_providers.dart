@@ -4,6 +4,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart';
+import '../../../../core/data/bible_word_korean_dict.dart';
 import '../../data/datasources/dictionary_local_datasource_impl.dart';
 import '../../data/repositories/dictionary_repository_impl.dart';
 import '../../domain/entities/dictionary_entry.dart';
@@ -41,7 +42,31 @@ final wordLookupProvider =
   if (word.isEmpty) return null;
   final useCase = ref.watch(lookupWordUseCaseProvider);
   final result = await useCase(word);
-  return result.valueOrNull; // 찾지 못해도 null (not error)
+  final entry = result.valueOrNull; // 찾지 못해도 null (not error)
+  if (entry != null) return entry;
+
+  // Fallback to internal dictionary
+  final normalized = word.toLowerCase().replaceAll(RegExp(r"[^a-z]"), "");
+  final koreanMeaning = bibleWordKoreanDict[normalized];
+  if (koreanMeaning != null && koreanMeaning.isNotEmpty) {
+    return DictionaryEntry(
+      id: -1,
+      word: word,
+      wordNormalized: normalized,
+      koreanMeaning: koreanMeaning,
+      senses: [
+        WordSense(
+          id: -1,
+          partOfSpeech: 'unknown',
+          senseOrder: 1,
+          definition: '기본 단어',
+          definitionKo: koreanMeaning,
+        ),
+      ],
+    );
+  }
+
+  return null;
 });
 
 /// 자동완성 제안.

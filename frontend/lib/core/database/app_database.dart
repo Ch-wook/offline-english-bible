@@ -8,6 +8,7 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'seed_data/bible_books_seed.dart';
 import 'tables/bible_tables.dart';
 import 'tables/dictionary_tables.dart';
 import 'tables/user_tables.dart';
@@ -182,6 +183,7 @@ class AppDatabase extends _$AppDatabase {
           copyright: Value('Public Domain'),
         ),
       ]);
+      b.insertAll(bibleBooks, bibleBooksSeed());
     });
   }
 
@@ -189,7 +191,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// 단어 정규화 후 사전 항목 조회.
   /// [word]: 원형 또는 활용형 모두 허용.
-  Future<DictionaryEntry?> lookupWord(String word) async {
+  Future<DictionaryEntryData?> lookupWord(String word) async {
     final normalized = word.toLowerCase().trim();
 
     // 1차: 정확 일치
@@ -210,14 +212,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 단어의 모든 뜻 조회 (품사별).
-  Future<List<WordSense>> getWordSenses(int entryId) =>
+  Future<List<WordSenseData>> getWordSenses(int entryId) =>
       (select(wordSenses)
             ..where((s) => s.entryId.equals(entryId))
             ..orderBy([(s) => OrderingTerm.asc(s.senseOrder)]))
           .get();
 
   /// 단어 동의어/반의어 조회 (WordNet).
-  Future<List<DictionaryEntry>> getSynonyms(int entryId) async {
+  Future<List<DictionaryEntryData>> getSynonyms(int entryId) async {
     final lemmas = await (select(wordnetLemmas)
           ..where((l) => l.entryId.equals(entryId)))
         .get();

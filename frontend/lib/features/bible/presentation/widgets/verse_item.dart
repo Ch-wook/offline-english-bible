@@ -10,6 +10,7 @@ import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../../domain/entities/verse.dart';
 import '../providers/bible_reader_provider.dart';
+import '../../../settings/presentation/providers/settings_provider.dart';
 import '../providers/bible_providers.dart';
 
 /// 단일 절 위젯.
@@ -32,7 +33,11 @@ class VerseItem extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fontSize = ref.watch(bibleFontSizeProvider);
     final lineSpacing = ref.watch(bibleLineSpacingProvider);
+    final readerState = ref.watch(bibleReaderProvider);
     final readerNotifier = ref.read(bibleReaderProvider.notifier);
+
+    final isPrimaryEnglish = readerState.translationCode != 'KOREAN_RV';
+    final isParallelEnglish = readerState.parallelTranslationCode != 'KOREAN_RV';
 
     final selectedColor = isDark
         ? AppColors.darkPrimaryContainer.withAlpha(180)
@@ -70,34 +75,51 @@ class VerseItem extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // 본문 (단어별 탭 가능)
+                // 본문
                 Expanded(
-                  child: _TappableVerseText(
-                    text: verse.text,
-                    fontSize: fontSize,
-                    lineSpacing: lineSpacing,
-                    color: colorScheme.onSurface,
-                    onWordTap: readerNotifier.onWordTap,
-                  ),
+                  child: isPrimaryEnglish
+                      ? _TappableVerseText(
+                          text: verse.text,
+                          fontSize: fontSize,
+                          lineSpacing: lineSpacing,
+                          color: colorScheme.onSurface,
+                          onWordTap: readerNotifier.onWordTap,
+                        )
+                      : Text(
+                          verse.text,
+                          style: AppTypography.bibleBody.copyWith(
+                            fontSize: fontSize,
+                            height: lineSpacing,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
                 ),
               ],
             ),
 
-            // ── 대역 번역본 (한국어) ────────────────────────────────
+            // ── 대역 번역본 ────────────────────────────────
             if (parallelVerse != null) ...[
               const SizedBox(height: AppSpacing.xs),
               Padding(
                 padding: const EdgeInsets.only(
                   left: AppSpacing.verseNumberWidth,
                 ),
-                child: Text(
-                  parallelVerse!.text,
-                  style: AppTypography.bibleBodySmall.copyWith(
-                    fontSize: fontSize * 0.85,
-                    height: lineSpacing * 0.9,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
+                child: isParallelEnglish
+                    ? _TappableVerseText(
+                        text: parallelVerse!.text,
+                        fontSize: fontSize * 0.85,
+                        lineSpacing: lineSpacing * 0.9,
+                        color: colorScheme.onSurfaceVariant,
+                        onWordTap: readerNotifier.onWordTap,
+                      )
+                    : Text(
+                        parallelVerse!.text,
+                        style: AppTypography.bibleBodySmall.copyWith(
+                          fontSize: fontSize * 0.85,
+                          height: lineSpacing * 0.9,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
               ),
             ],
           ],

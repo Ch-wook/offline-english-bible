@@ -98,10 +98,13 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
     final settings = _ref.read(settingsProvider);
     state = BibleReaderState(
       translationCode: settings.defaultTranslation,
-      parallelTranslationCode: settings.defaultKoreanTranslation,
+      parallelTranslationCode: settings.defaultTranslation == 'KJV'
+          ? settings.defaultKoreanTranslation
+          : 'KJV',
       isParallelView: settings.parallelView,
     );
-    _syncToChapterParams();
+    // 생성자 완료 후 다른 provider에 sync (즉시 호출 시 assertion 에러)
+    Future.microtask(_syncToChapterParams);
   }
 
   final Ref _ref;
@@ -143,7 +146,18 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
   // ── Translation ───────────────────────────────────────────────────
 
   void setTranslation(String code) {
-    state = state.copyWith(translationCode: code);
+    String newParallel = state.parallelTranslationCode;
+    
+    if (code == 'KOREAN_RV') {
+      newParallel = 'KJV';
+    } else if (code == 'KJV') {
+      newParallel = 'KOREAN_RV';
+    }
+
+    state = state.copyWith(
+      translationCode: code,
+      parallelTranslationCode: newParallel,
+    );
     _syncToChapterParams();
   }
 

@@ -19,6 +19,7 @@ final class DictionaryEntry {
     this.antonyms = const [],
     this.relatedWords = const [],
     this.inflectedForms = const [],
+    this.koreanMeaning = '',
   });
 
   final int id;
@@ -59,6 +60,9 @@ final class DictionaryEntry {
   /// 활용형 (plural, past_tense, past_participle 등).
   final List<InflectedForm> inflectedForms;
 
+  /// 내장 사전 한국어 뜻 (있을 경우)
+  final String koreanMeaning;
+
   bool get hasIpa => ipaUs.isNotEmpty || ipaUk.isNotEmpty;
   String get displayIpa => ipaUs.isNotEmpty ? ipaUs : ipaUk;
 
@@ -92,6 +96,7 @@ final class WordSense {
     required this.partOfSpeech,
     required this.senseOrder,
     required this.definition,
+    this.definitionKo = '',
     this.bibleDefinition = '',
     this.register = '',
     this.isArchaic = false,
@@ -108,6 +113,9 @@ final class WordSense {
 
   /// 현대 영어 정의.
   final String definition;
+
+  /// 한국어 뜻 (내장 사전 기반)
+  final String definitionKo;
 
   /// 성경적 맥락 정의 (KJV 특화).
   final String bibleDefinition;

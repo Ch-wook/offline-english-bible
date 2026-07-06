@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../database/app_database.dart';
 import 'bible_import_service.dart';
+import 'dictionary_import_service.dart';
 
 // ── Hive Keys ─────────────────────────────────────────────────────────
 
@@ -15,6 +16,7 @@ const _boxName = 'init_flags';
 const _kjvImportedKey = 'kjv_imported';
 const _koreanImportedKey = 'korean_rv_imported';
 const _booksSeededKey = 'books_seeded';
+const _dictionaryImportedKey = 'dictionary_imported';
 
 // ── Init State ────────────────────────────────────────────────────────
 
@@ -61,7 +63,7 @@ final class AppInitState {
 /// 앱 시작 시 1회 실행되는 초기화 조율자.
 ///
 /// 1. Hive 플래그 확인 → 이미 임포트된 경우 즉시 ready
-/// 2. 미임포트 → BibleImportService 실행
+/// 2. 미임포트 → BibleImportService 및 DictionaryImportService 실행
 /// 3. 완료 → Hive 플래그 저장 → ready
 final class AppInitializationService {
   AppInitializationService({
@@ -69,11 +71,13 @@ final class AppInitializationService {
     required Box<dynamic> flagBox,
   })  : _db = db,
         _flagBox = flagBox,
-        _importService = BibleImportService(db);
+        _importService = BibleImportService(db),
+        _dictImportService = DictionaryImportService(db);
 
   final AppDatabase _db;
   final Box<dynamic> _flagBox;
   final BibleImportService _importService;
+  final DictionaryImportService _dictImportService;
 
   final StreamController<AppInitState> _stateController =
       StreamController<AppInitState>.broadcast();
@@ -95,31 +99,57 @@ final class AppInitializationService {
         const AppInitState(status: AppInitStatus.importRequired),
       );
 
-      await for (final progress in _importService.runFullImport()) {
-        if (progress.hasError) {
+      // 1. 성경 임포트
+      bool bibleImported = _flagBox.get(_kjvImportedKey) as bool? ?? false;
+      if (!bibleImported) {
+        await for (final progress in _importService.runFullImport()) {
+          if (progress.hasError) {
+            _emit(
+              AppInitState(
+                status: AppInitStatus.error,
+                importProgress: progress,
+                error: progress.error,
+              ),
+            );
+            return;
+          }
+
           _emit(
             AppInitState(
-              status: AppInitStatus.error,
+              status: AppInitStatus.importing,
               importProgress: progress,
-              error: progress.error,
             ),
           );
-          return;
-        }
 
-        _emit(
-          AppInitState(
-            status: progress.isComplete
-                ? AppInitStatus.ready
-                : AppInitStatus.importing,
-            importProgress: progress,
-          ),
-        );
-
-        if (progress.isComplete) {
-          await _markImported();
+          if (progress.isComplete) {
+            await Future.wait([
+              _flagBox.put(_kjvImportedKey, true),
+              _flagBox.put(_koreanImportedKey, true),
+              _flagBox.put(_booksSeededKey, true),
+            ]);
+          }
         }
       }
+
+      // 2. 사전 임포트
+      bool dictImported = _flagBox.get(_dictionaryImportedKey) as bool? ?? false;
+      if (!dictImported) {
+        await for (final (progress, message) in _dictImportService.importSampleDictionary()) {
+          _emit(
+            AppInitState(
+              status: AppInitStatus.importing,
+              importProgress: ImportProgress(
+                status: ImportStatus.inserting,
+                progress: progress,
+                message: message,
+              ),
+            ),
+          );
+        }
+        await _flagBox.put(_dictionaryImportedKey, true);
+      }
+
+      _emit(const AppInitState.ready());
     } catch (e) {
       _emit(
         AppInitState(
@@ -132,7 +162,8 @@ final class AppInitializationService {
 
   bool _isAlreadyImported() {
     return (_flagBox.get(_kjvImportedKey) as bool? ?? false) &&
-        (_flagBox.get(_booksSeededKey) as bool? ?? false);
+        (_flagBox.get(_booksSeededKey) as bool? ?? false) &&
+        (_flagBox.get(_dictionaryImportedKey) as bool? ?? false);
   }
 
   Future<void> _markImported() async {

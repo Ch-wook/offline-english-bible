@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../theme/app_spacing.dart';
+import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/chapter_content.dart';
 import '../providers/bible_reader_provider.dart';
 import '../providers/bible_providers.dart';
@@ -101,7 +102,8 @@ class _VerseListViewState extends ConsumerState<VerseListView> {
     });
 
     final content = widget.content;
-    final parallelView = readerState.isParallelView;
+    final parallelView = readerState.isParallelView &&
+        readerState.translationCode != readerState.parallelTranslationCode;
 
     return NotificationListener<ScrollNotification>(
       // 사용자가 스크롤하면 자동 스크롤 중지

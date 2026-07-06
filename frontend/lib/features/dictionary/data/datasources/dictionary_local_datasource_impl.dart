@@ -15,49 +15,43 @@ final class DictionaryLocalDataSourceImpl
   // ── Lookup ────────────────────────────────────────────────────────
 
   @override
-  Future<DictionaryEntries$Row?> lookupWord(String wordNormalized) =>
+  Future<DictionaryEntryData?> lookupWord(String wordNormalized) =>
       (_db.select(_db.dictionaryEntries)
-            ..where((e) => e.wordNormalized.equals(wordNormalized)))
+            ..where((t) => t.wordNormalized.equals(wordNormalized)))
           .getSingleOrNull();
 
   @override
-  Future<List<DictionaryEntries$Row>> lookupInflection(String form) async {
-    final rows = await (_db.select(_db.inflections)
-          ..where((i) => i.form.equals(form)))
-        .get();
-    if (rows.isEmpty) return [];
-    final entryIds = rows.map((r) => r.entryId).toSet().toList();
-    return (_db.select(_db.dictionaryEntries)
-          ..where((e) => e.id.isIn(entryIds)))
-        .get();
+  Future<List<DictionaryEntryData>> lookupInflection(String form) async {
+    final query = _db.select(_db.wordForms).join([
+      innerJoin(
+          _db.dictionaryEntries,
+          _db.dictionaryEntries.id
+              .equalsExp(_db.wordForms.entryId)),
+    ])
+      ..where(_db.wordForms.form.equals(form));
+
+    final results = await query.get();
+    return results.map((row) => row.readTable(_db.dictionaryEntries)).toList();
   }
 
   @override
-  Future<List<Senses$Row>> getSenses(int entryId) =>
-      (_db.select(_db.senses)
-            ..where((s) => s.entryId.equals(entryId))
-            ..orderBy([
-              (s) => OrderingTerm.asc(s.partOfSpeech),
-              (s) => OrderingTerm.asc(s.senseOrder),
-            ]))
+  Future<List<WordSenseData>> getSenses(int entryId) =>
+      (_db.select(_db.wordSenses)..where((t) => t.entryId.equals(entryId)))
           .get();
 
   @override
-  Future<List<Examples$Row>> getExamples(int senseId) =>
-      (_db.select(_db.examples)
-            ..where((e) => e.senseId.equals(senseId)))
+  Future<List<WordExampleData>> getExamples(int senseId) =>
+      (_db.select(_db.wordExamples)..where((t) => t.senseId.equals(senseId)))
           .get();
 
   @override
-  Future<List<WordNetRelations$Row>> getRelations(int entryId) =>
-      (_db.select(_db.wordNetRelations)
-            ..where((r) => r.entryId.equals(entryId)))
+  Future<List<WordnetRelationData>> getRelations(int entryId) =>
+      (_db.select(_db.wordnetRelations)..where((t) => t.fromSynsetId.equals(entryId)))
           .get();
 
   @override
-  Future<List<Inflections$Row>> getInflections(int entryId) =>
-      (_db.select(_db.inflections)
-            ..where((i) => i.entryId.equals(entryId)))
+  Future<List<WordFormData>> getInflections(int entryId) =>
+      (_db.select(_db.wordForms)..where((t) => t.entryId.equals(entryId)))
           .get();
 
   // ── Suggestions (FTS prefix) ──────────────────────────────────────
@@ -135,30 +129,30 @@ final class DictionaryLocalDataSourceImpl
   }
 
   @override
-  Future<void> insertSenses(List<SensesCompanion> senses) =>
+  Future<void> insertSenses(List<WordSensesCompanion> senses) =>
       _db.batch(
-        (b) => b.insertAllOnConflictUpdate(_db.senses, senses),
+        (b) => b.insertAllOnConflictUpdate(_db.wordSenses, senses),
       );
 
   @override
-  Future<void> insertExamples(List<ExamplesCompanion> examples) =>
+  Future<void> insertExamples(List<WordExamplesCompanion> examples) =>
       _db.batch(
-        (b) => b.insertAllOnConflictUpdate(_db.examples, examples),
+        (b) => b.insertAllOnConflictUpdate(_db.wordExamples, examples),
       );
 
   @override
   Future<void> insertRelations(
-    List<WordNetRelationsCompanion> relations,
+    List<WordnetRelationsCompanion> relations,
   ) =>
       _db.batch(
-        (b) => b.insertAllOnConflictUpdate(_db.wordNetRelations, relations),
+        (b) => b.insertAllOnConflictUpdate(_db.wordnetRelations, relations),
       );
 
   @override
   Future<void> insertInflections(
-    List<InflectionsCompanion> inflections,
+    List<WordFormsCompanion> inflections,
   ) =>
       _db.batch(
-        (b) => b.insertAllOnConflictUpdate(_db.inflections, inflections),
+        (b) => b.insertAllOnConflictUpdate(_db.wordForms, inflections),
       );
 }

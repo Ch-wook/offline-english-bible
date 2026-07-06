@@ -2,6 +2,7 @@
 // [NEW] 공통 로딩 인디케이터 위젯
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';

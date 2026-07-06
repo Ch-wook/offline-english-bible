@@ -4,10 +4,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/seed_data/bible_books_seed.dart';
-import '../../bible/domain/repositories/bible_repository.dart';
-import '../../bible/presentation/providers/bible_providers.dart';
-import '../../bible/presentation/providers/bible_reader_provider.dart';
-import '../domain/entities/search_result.dart';
+import '../../../bible/domain/repositories/bible_repository.dart';
+import '../../../bible/presentation/providers/bible_providers.dart';
+import '../../../bible/presentation/providers/bible_reader_provider.dart';
+import '../../domain/entities/search_result.dart';
 
 // ── Search State ──────────────────────────────────────────────────────
 

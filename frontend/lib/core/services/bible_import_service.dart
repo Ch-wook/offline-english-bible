@@ -173,7 +173,11 @@ final class BibleImportService {
       final chunk = companions.sublist(i, end);
 
       await _db.batch(
-        (b) => b.insertAllOnConflictUpdate(_db.verseTranslations, chunk),
+        (b) => b.insertAll(
+          _db.verseTranslations,
+          chunk,
+          mode: InsertMode.insertOrReplace,
+        ),
       );
 
       final ratio = end / total;
@@ -221,7 +225,7 @@ final class BibleImportService {
       bookId: Value(bookId),
       chapter: Value(chapter),
       verse: Value(verse),
-      text: Value(text),
+      textContent: Value(text),
     );
   }
 }

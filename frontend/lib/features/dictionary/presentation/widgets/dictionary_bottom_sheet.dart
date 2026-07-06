@@ -281,6 +281,27 @@ class _SensesSection extends StatelessWidget {
                               ),
                             ),
 
+                            // 한국어 정의
+                            if (sense.definitionKo.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('🇰🇷 '),
+                                  Expanded(
+                                    child: Text(
+                                      sense.definitionKo,
+                                      style: AppTypography.bodyMedium.copyWith(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
                             // 성경적 정의 (있을 때만)
                             if (sense.bibleDefinition.isNotEmpty) ...[
                               const SizedBox(height: 4),

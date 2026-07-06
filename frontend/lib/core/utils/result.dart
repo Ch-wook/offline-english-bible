@@ -20,12 +20,12 @@ sealed class Result<S, F extends Failure> {
   bool get isSuccess => this is Success<S, F>;
 
   /// Returns true if this is a [Failure].
-  bool get isFailure => this is Failure<S, F>;
+  bool get isFailure => this is FailureResult<S, F>;
 
   /// Returns the success value or null.
   S? get valueOrNull => switch (this) {
         Success(value: final v) => v,
-        Failure() => null,
+        FailureResult() => null,
       };
 
   /// Returns the failure or null.
