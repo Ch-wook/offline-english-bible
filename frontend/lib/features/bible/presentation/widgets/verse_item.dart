@@ -8,10 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
+import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/verse.dart';
 import '../providers/bible_reader_provider.dart';
-import '../../../settings/presentation/providers/settings_provider.dart';
-import '../providers/bible_providers.dart';
 
 /// 단일 절 위젯.
 /// 영어 각 단어는 TapGestureRecognizer 로 탭 가능하다.

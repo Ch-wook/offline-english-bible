@@ -4,9 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../routes/route_names.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_typography.dart';
 
 /// 앱 전체 쉘 위젯.
 /// GoRouter [StatefulShellRoute.indexedStack] 의 builder 로 사용된다.

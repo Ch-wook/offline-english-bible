@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../../domain/entities/grammar_analysis.dart';

@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/seed_data/bible_books_seed.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
-import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../../domain/entities/vocab_item.dart';

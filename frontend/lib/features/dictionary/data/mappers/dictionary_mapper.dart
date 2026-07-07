@@ -1,8 +1,8 @@
 // lib/features/dictionary/data/mappers/dictionary_mapper.dart
 // [NEW] Drift 데이터클래스 → 도메인 엔티티 변환 매퍼
 
-import '../../../../core/database/app_database.dart';
 import '../../../../core/data/bible_word_korean_dict.dart';
+import '../../../../core/database/app_database.dart';
 import '../../domain/entities/dictionary_entry.dart';
 
 abstract final class DictionaryEntryMapper {

@@ -19,21 +19,21 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
 
   VocabItem _rowToEntity(VocabularyItem row) {
     return VocabItem(
-      id: row.id as int,
-      word: row.word as String,
-      bookId: row.bookId as int,
-      chapter: row.chapter as int,
-      verse: row.verse as int,
-      translationCode: row.translationCode as String,
-      addedAt: row.addedAt as DateTime,
+      id: row.id,
+      word: row.word,
+      bookId: row.bookId,
+      chapter: row.chapter,
+      verse: row.verse,
+      translationCode: row.translationCode,
+      addedAt: row.addedAt,
       definition: (row.definition as String?) ?? '',
       note: (row.note as String?) ?? '',
-      repetitions: row.repetitions as int,
-      easeFactor: row.easeFactor as double,
-      intervalDays: row.intervalDays as int,
-      nextReviewAt: row.nextReviewAt as DateTime?,
-      lastReviewedAt: row.lastReviewedAt as DateTime?,
-      isLearned: row.isLearned as bool,
+      repetitions: row.repetitions,
+      easeFactor: row.easeFactor,
+      intervalDays: row.intervalDays,
+      nextReviewAt: row.nextReviewAt,
+      lastReviewedAt: row.lastReviewedAt,
+      isLearned: row.isLearned,
     );
   }
 

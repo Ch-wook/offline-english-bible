@@ -11,23 +11,23 @@ void main() {
 
     group('Success', () {
       test('isSuccess returns true', () {
-        final result = Success<String, Failure>('hello');
+        const result = Success<String, Failure>('hello');
         expect(result.isSuccess, isTrue);
         expect(result.isFailure, isFalse);
       });
 
       test('valueOrNull returns value', () {
-        final result = Success<int, Failure>(42);
+        const result = Success<int, Failure>(42);
         expect(result.valueOrNull, 42);
       });
 
       test('failureOrNull returns null', () {
-        final result = Success<int, Failure>(42);
+        const result = Success<int, Failure>(42);
         expect(result.failureOrNull, isNull);
       });
 
       test('when calls success branch', () {
-        final result = Success<String, Failure>('hello');
+        const result = Success<String, Failure>('hello');
         final output = result.when(
           success: (v) => 'got: $v',
           failure: (_) => 'failed',
@@ -36,31 +36,31 @@ void main() {
       });
 
       test('map transforms value', () {
-        final result = Success<int, Failure>(5);
+        const result = Success<int, Failure>(5);
         final mapped = result.map((v) => v * 2);
         expect(mapped.valueOrNull, 10);
       });
 
       test('flatMap chains results', () {
-        final result = Success<int, Failure>(5);
+        const result = Success<int, Failure>(5);
         final chained = result.flatMap(
           (v) => v > 0
               ? Success(v.toString())
-              : FailureResult(const ValidationFailure('negative')),
+              : const FailureResult<String, Failure>(ValidationFailure('negative')),
         );
         expect(chained.valueOrNull, '5');
       });
 
       test('equality works', () {
-        final a = Success<int, Failure>(1);
-        final b = Success<int, Failure>(1);
-        final c = Success<int, Failure>(2);
+        const a = Success<int, Failure>(1);
+        const b = Success<int, Failure>(1);
+        const c = Success<int, Failure>(2);
         expect(a, equals(b));
         expect(a, isNot(equals(c)));
       });
 
       test('toString is descriptive', () {
-        final result = Success<String, Failure>('test');
+        const result = Success<String, Failure>('test');
         expect(result.toString(), contains('success'));
         expect(result.toString(), contains('test'));
       });
@@ -72,23 +72,23 @@ void main() {
       const failure = DatabaseFailure('DB error');
 
       test('isFailure returns true', () {
-        final result = FailureResult<String, Failure>(failure);
+        const result = FailureResult<String, Failure>(failure);
         expect(result.isFailure, isTrue);
         expect(result.isSuccess, isFalse);
       });
 
       test('valueOrNull returns null', () {
-        final result = FailureResult<String, Failure>(failure);
+        const result = FailureResult<String, Failure>(failure);
         expect(result.valueOrNull, isNull);
       });
 
       test('failureOrNull returns failure', () {
-        final result = FailureResult<String, Failure>(failure);
+        const result = FailureResult<String, Failure>(failure);
         expect(result.failureOrNull, failure);
       });
 
       test('when calls failure branch', () {
-        final result = FailureResult<String, Failure>(failure);
+        const result = FailureResult<String, Failure>(failure);
         final output = result.when(
           success: (_) => 'ok',
           failure: (f) => f.message,
@@ -97,14 +97,14 @@ void main() {
       });
 
       test('map passes failure through', () {
-        final result = FailureResult<int, Failure>(failure);
+        const result = FailureResult<int, Failure>(failure);
         final mapped = result.map((v) => v * 2);
         expect(mapped.isFailure, isTrue);
         expect(mapped.failureOrNull, failure);
       });
 
       test('flatMap passes failure through', () {
-        final result = FailureResult<int, Failure>(failure);
+        const result = FailureResult<int, Failure>(failure);
         final chained = result.flatMap(
           (v) => Success(v + 1),
         );
@@ -112,10 +112,10 @@ void main() {
       });
 
       test('equality works', () {
-        final a = FailureResult<int, Failure>(failure);
-        final b = FailureResult<int, Failure>(failure);
-        final c = FailureResult<int, Failure>(
-          const NetworkFailure('net'),
+        const a = FailureResult<int, Failure>(failure);
+        const b = FailureResult<int, Failure>(failure);
+        const c = FailureResult<int, Failure>(
+          NetworkFailure('net'),
         );
         expect(a, equals(b));
         expect(a, isNot(equals(c)));
@@ -151,26 +151,26 @@ void main() {
 
     group('whenSuccess / whenFailure', () {
       test('whenSuccess returns value on success', () {
-        final result = Success<int, Failure>(10);
+        const result = Success<int, Failure>(10);
         expect(result.whenSuccess((v) => v * 2), 20);
       });
 
       test('whenSuccess returns null on failure', () {
-        final result = FailureResult<int, Failure>(
-          const DatabaseFailure('err'),
+        const result = FailureResult<int, Failure>(
+          DatabaseFailure('err'),
         );
         expect(result.whenSuccess((v) => v * 2), isNull);
       });
 
       test('whenFailure returns value on failure', () {
-        final result = FailureResult<int, Failure>(
-          const NetworkFailure('timeout'),
+        const result = FailureResult<int, Failure>(
+          NetworkFailure('timeout'),
         );
         expect(result.whenFailure((f) => f.message), 'timeout');
       });
 
       test('whenFailure returns null on success', () {
-        final result = Success<int, Failure>(5);
+        const result = Success<int, Failure>(5);
         expect(result.whenFailure((f) => f.message), isNull);
       });
     });

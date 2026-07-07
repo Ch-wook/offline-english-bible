@@ -29,7 +29,7 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         children: [
           // ── 읽기 설정 ─────────────────────────────────────────────
-          _SectionHeader(label: '읽기'),
+          const _SectionHeader(label: '읽기'),
 
           // 글자 크기
           _SliderTile(
@@ -79,7 +79,7 @@ class SettingsPage extends ConsumerWidget {
           const Divider(),
 
           // ── 기본 번역본 ────────────────────────────────────────────
-          _SectionHeader(label: '기본 번역본'),
+          const _SectionHeader(label: '기본 번역본'),
 
           RadioListTile<String>(
             secondary: const Icon(Icons.flag_rounded),
@@ -106,7 +106,7 @@ class SettingsPage extends ConsumerWidget {
           const Divider(),
 
           // ── 테마 ──────────────────────────────────────────────────
-          _SectionHeader(label: '테마'),
+          const _SectionHeader(label: '테마'),
 
           RadioListTile<ThemeMode>(
             secondary: const Icon(Icons.wb_sunny_rounded),
@@ -141,7 +141,7 @@ class SettingsPage extends ConsumerWidget {
           const Divider(),
 
           // ── 데이터 ────────────────────────────────────────────────
-          _SectionHeader(label: '데이터'),
+          const _SectionHeader(label: '데이터'),
 
           ListTile(
             leading: const Icon(Icons.storage_rounded),
@@ -174,7 +174,7 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xxxl),
 
           // ── 앱 정보 ───────────────────────────────────────────────
-          _SectionHeader(label: '앱 정보'),
+          const _SectionHeader(label: '앱 정보'),
 
           const ListTile(
             leading: Icon(Icons.info_outline_rounded),

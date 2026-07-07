@@ -4,7 +4,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart';
-import '../../bible/data/datasources/user_local_datasource_impl.dart';
+import '../../../bible/data/datasources/user_local_datasource_impl.dart';
 
 // ── Data Source ───────────────────────────────────────────────────────
 

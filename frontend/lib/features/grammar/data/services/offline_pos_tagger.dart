@@ -131,14 +131,18 @@ final class OfflinePosTagger {
     if (word.endsWith('ness') || word.endsWith('ment') ||
         word.endsWith('tion') || word.endsWith('sion') ||
         word.endsWith('ance') || word.endsWith('ence') ||
-        word.endsWith('ity')) return 'NN';
+        word.endsWith('ity')) {
+      return 'NN';
+    }
     if (word.endsWith('ed') && !_articles.contains(prev)) return 'VBD';
     if (word.endsWith('ing')) return 'VBG';
     if (word.endsWith('er') && prev.isNotEmpty) return 'JJR'; // comparative
     if (word.endsWith('est')) return 'JJS'; // superlative
     if (word.endsWith('ful') || word.endsWith('less') ||
         word.endsWith('ous') || word.endsWith('al') ||
-        word.endsWith('ive')) return 'JJ';
+        word.endsWith('ive')) {
+      return 'JJ';
+    }
 
     // KJV 고어 접미사
     if (word.endsWith('eth') || word.endsWith('est')) return 'VBZ'; // cometh

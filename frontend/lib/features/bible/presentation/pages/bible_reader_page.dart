@@ -4,9 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/widgets/bible_error_widget.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
-import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';

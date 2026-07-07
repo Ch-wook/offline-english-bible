@@ -12,6 +12,7 @@ void main() {
     double easeFactor = 2.5,
     int intervalDays = 1,
     DateTime? nextReviewAt,
+    bool isLearned = false,
   }) =>
       VocabItem(
         id: 1,
@@ -25,11 +26,12 @@ void main() {
         easeFactor: easeFactor,
         intervalDays: intervalDays,
         nextReviewAt: nextReviewAt,
+        isLearned: isLearned,
       );
 
   group('VocabItem.updateWithQuality - SM-2 Algorithm', () {
     test('quality < 3: resets repetitions to 0', () {
-      final item = makeItem(repetitions: 5, easeFactor: 2.5);
+      final item = makeItem(repetitions: 5);
       final updated = item.updateWithQuality(0);
       expect(updated.repetitions, 0);
       expect(updated.intervalDays, 1);
@@ -43,14 +45,14 @@ void main() {
     });
 
     test('quality == 3: first repetition gives 1 day interval', () {
-      final item = makeItem(repetitions: 0);
+      final item = makeItem();
       final updated = item.updateWithQuality(3);
       expect(updated.repetitions, 1);
       expect(updated.intervalDays, 1);
     });
 
     test('quality == 4: second repetition gives 6 day interval', () {
-      final item = makeItem(repetitions: 1, intervalDays: 1);
+      final item = makeItem(repetitions: 1);
       final updated = item.updateWithQuality(4);
       expect(updated.repetitions, 2);
       expect(updated.intervalDays, 6);
@@ -59,7 +61,6 @@ void main() {
     test('quality == 5: third repetition uses ease factor', () {
       final item = makeItem(
         repetitions: 2,
-        easeFactor: 2.5,
         intervalDays: 6,
       );
       final updated = item.updateWithQuality(5);
@@ -74,7 +75,7 @@ void main() {
     });
 
     test('ease factor decreases with harder quality', () {
-      final item = makeItem(easeFactor: 2.5);
+      final item = makeItem();
       final updated = item.updateWithQuality(3);
       expect(updated.easeFactor, lessThan(2.5));
     });
@@ -88,7 +89,7 @@ void main() {
     });
 
     test('ease factor never exceeds 2.5', () {
-      var item = makeItem(easeFactor: 2.5);
+      var item = makeItem();
       for (var i = 0; i < 10; i++) {
         item = item.updateWithQuality(5);
       }
@@ -108,7 +109,7 @@ void main() {
     });
 
     test('isLearned false after quality < 3 reset', () {
-      var item = makeItem(repetitions: 5, intervalDays: 25, isLearned: true);
+      final item = makeItem(repetitions: 5, intervalDays: 25, isLearned: true);
       final updated = item.updateWithQuality(0);
       expect(updated.isLearned, isFalse);
     });
@@ -116,7 +117,7 @@ void main() {
 
   group('VocabItem.isDueForReview', () {
     test('returns true when nextReviewAt is null', () {
-      final item = makeItem(nextReviewAt: null);
+      final item = makeItem();
       expect(item.isDueForReview, isTrue);
     });
 

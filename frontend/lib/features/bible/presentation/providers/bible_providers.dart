@@ -3,7 +3,6 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/database/app_database.dart';
 import '../../../../core/di/providers.dart';
 import '../../data/datasources/bible_local_datasource_impl.dart';
 import '../../data/repositories/bible_repository_impl.dart';

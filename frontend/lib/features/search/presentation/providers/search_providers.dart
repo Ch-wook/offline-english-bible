@@ -77,7 +77,6 @@ class SearchNotifier extends StateNotifier<SearchState> {
       query: query.trim(),
       translationCode: translationCode ?? state.translationCode,
       bookId: state.bookId,
-      limit: 50,
     );
 
     result.when(
@@ -117,7 +116,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
   }
 
   void clearFilters() {
-    state = state.copyWith(bookId: null, testament: null);
+    state = state.copyWith();
     if (state.query.isNotEmpty) search(state.query);
   }
 

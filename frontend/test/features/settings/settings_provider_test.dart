@@ -37,7 +37,6 @@ void main() {
         fontSize: 19.0,
         lineSpacing: 2.0,
         parallelView: true,
-        defaultTranslation: 'KJV',
       );
       final map = original.toMap();
       final restored = AppSettings.fromMap(map);

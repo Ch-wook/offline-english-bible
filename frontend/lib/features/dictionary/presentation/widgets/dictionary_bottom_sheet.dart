@@ -452,7 +452,7 @@ class _EtymologySection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionTitle(label: '어원', icon: Icons.history_edu_rounded),
+          const _SectionTitle(label: '어원', icon: Icons.history_edu_rounded),
           const SizedBox(height: AppSpacing.sm),
           Text(
             text,
@@ -482,7 +482,7 @@ class _InflectionsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionTitle(label: '활용형', icon: Icons.transform_rounded),
+          const _SectionTitle(label: '활용형', icon: Icons.transform_rounded),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.sm,

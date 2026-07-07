@@ -3,8 +3,8 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/di/providers.dart';
 import '../../../../core/data/bible_word_korean_dict.dart';
+import '../../../../core/di/providers.dart';
 import '../../data/datasources/dictionary_local_datasource_impl.dart';
 import '../../data/repositories/dictionary_repository_impl.dart';
 import '../../domain/entities/dictionary_entry.dart';
@@ -46,7 +46,7 @@ final wordLookupProvider =
   if (entry != null) return entry;
 
   // Fallback to internal dictionary
-  final normalized = word.toLowerCase().replaceAll(RegExp(r"[^a-z]"), "");
+  final normalized = word.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
   final koreanMeaning = bibleWordKoreanDict[normalized];
   if (koreanMeaning != null && koreanMeaning.isNotEmpty) {
     return DictionaryEntry(

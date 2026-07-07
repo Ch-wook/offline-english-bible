@@ -2,7 +2,6 @@
 // [NEW] 사용자 데이터 로컬 데이터소스 인터페이스
 // (북마크, 형광펜, 읽기 기록, 메모)
 
-import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
 

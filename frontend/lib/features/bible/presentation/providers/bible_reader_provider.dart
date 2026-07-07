@@ -115,8 +115,6 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
     state = state.copyWith(
       bookId: bookId,
       chapter: chapter,
-      selectedVerseNumber: null,
-      tappedWord: null,
     );
     _syncToChapterParams();
   }
@@ -125,8 +123,6 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
     if (state.chapter < maxChapter) {
       state = state.copyWith(
         chapter: state.chapter + 1,
-        selectedVerseNumber: null,
-        tappedWord: null,
       );
       _syncToChapterParams();
     }
@@ -136,8 +132,6 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
     if (state.chapter > 1) {
       state = state.copyWith(
         chapter: state.chapter - 1,
-        selectedVerseNumber: null,
-        tappedWord: null,
       );
       _syncToChapterParams();
     }
@@ -184,7 +178,7 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
   }
 
   void clearWordTap() {
-    state = state.copyWith(tappedWord: null);
+    state = state.copyWith();
   }
 
   void selectVerse(int verseNumber) {
@@ -192,7 +186,7 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
   }
 
   void clearVerseSelection() {
-    state = state.copyWith(selectedVerseNumber: null);
+    state = state.copyWith();
   }
 
   // ── Auto Scroll ───────────────────────────────────────────────────

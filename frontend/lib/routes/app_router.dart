@@ -31,7 +31,6 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: RoutePaths.bible,
-    debugLogDiagnostics: false,
     routes: [
       // ── Shell Route (bottom nav) ──────────────────────────────────
       StatefulShellRoute.indexedStack(

@@ -86,7 +86,7 @@ void main() {
 
   group('GetSuggestionsUseCase', () {
     test('returns suggestions for valid prefix', () async {
-      when(() => mockRepo.getSuggestions('gr', limit: 10)).thenAnswer(
+      when(() => mockRepo.getSuggestions('gr')).thenAnswer(
         (_) async => const Success(['grace', 'great', 'grieve']),
       );
 

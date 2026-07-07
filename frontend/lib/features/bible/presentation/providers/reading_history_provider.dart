@@ -43,5 +43,5 @@ final lastReadChapterProvider = FutureProvider((ref) async {
 
 final recentReadingHistoryProvider = FutureProvider((ref) async {
   final ds = ref.watch(userDataSourceProvider);
-  return ds.getRecentReadingHistory(limit: 20);
+  return ds.getRecentReadingHistory();
 });

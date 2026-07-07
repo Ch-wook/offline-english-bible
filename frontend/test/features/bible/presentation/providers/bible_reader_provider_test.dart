@@ -1,11 +1,10 @@
 // test/features/bible/presentation/providers/bible_reader_provider_test.dart
 // [NEW] BibleReaderProvider 유닛 테스트
 
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:offline_english_bible/features/bible/presentation/providers/bible_reader_provider.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:offline_english_bible/features/bible/presentation/providers/bible_providers.dart';
-import 'package:offline_english_bible/features/bible/domain/usecases/get_chapter_usecase.dart';
+import 'package:offline_english_bible/features/bible/presentation/providers/bible_reader_provider.dart';
 
 import '../../../../helpers/provider_container_helper.dart';
 
@@ -29,7 +28,6 @@ void main() {
       const state = BibleReaderState(
         bookId: 43,
         chapter: 3,
-        translationCode: 'KJV',
       );
       final params = state.toChapterParams();
       expect(params.bookId, 43);
@@ -40,20 +38,16 @@ void main() {
 
     test('toChapterParams includes parallel when isParallelView', () {
       const state = BibleReaderState(
-        bookId: 1,
-        chapter: 1,
-        translationCode: 'KJV',
         isParallelView: true,
-        parallelTranslationCode: 'KOREAN_RV',
       );
       final params = state.toChapterParams();
       expect(params.parallelTranslationCode, 'KOREAN_RV');
     });
 
     test('equality', () {
-      const a = BibleReaderState(bookId: 1, chapter: 1);
-      const b = BibleReaderState(bookId: 1, chapter: 1);
-      const c = BibleReaderState(bookId: 1, chapter: 2);
+      const a = BibleReaderState();
+      const b = BibleReaderState();
+      const c = BibleReaderState(chapter: 2);
       expect(a, equals(b));
       expect(a, isNot(equals(c)));
     });

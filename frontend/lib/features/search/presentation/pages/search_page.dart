@@ -8,10 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
-import '../../../bible/presentation/widgets/book_selector_sheet.dart';
-import '../providers/search_providers.dart';
-import '../../../bible/domain/entities/verse.dart';
 import '../../domain/entities/search_result.dart';
+import '../providers/search_providers.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});

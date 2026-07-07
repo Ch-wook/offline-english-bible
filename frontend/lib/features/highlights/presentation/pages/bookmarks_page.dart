@@ -33,7 +33,7 @@ class BookmarksPage extends ConsumerWidget {
         loading: () => const Center(child: InlineLoader()),
         error: (e, _) => Center(child: Text('오류: $e')),
         data: (bookmarks) {
-          if (bookmarks.isEmpty) {
+          if (bookmarks?.isEmpty ?? true) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -64,10 +64,10 @@ class BookmarksPage extends ConsumerWidget {
           }
 
           return ListView.separated(
-            itemCount: bookmarks.length,
+            itemCount: bookmarks?.length ?? 0,
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (_, i) {
-              final bm = bookmarks[i];
+              final bm = bookmarks![i];
               final bookInfo = bookNameMap[bm.bookId];
               final bookName = bookInfo?.ko ?? '알 수 없음';
               final ref_ = '$bookName ${bm.chapter}:${bm.verse}';

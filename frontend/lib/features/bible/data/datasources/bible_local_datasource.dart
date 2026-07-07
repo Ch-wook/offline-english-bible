@@ -1,7 +1,6 @@
 // lib/features/bible/data/datasources/bible_local_datasource.dart
 // [NEW] 성경 로컬 데이터소스 추상 인터페이스
 
-import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
 

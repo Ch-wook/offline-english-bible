@@ -1,6 +1,7 @@
 // test/core/database/app_database_test.dart
 // [NEW] AppDatabase 통합 테스트 (인메모리 SQLite)
 
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:offline_english_bible/core/database/app_database.dart';
 
@@ -97,13 +98,13 @@ void main() {
     });
 
     test('insert and query chapter verses', () async {
-      await db.into(db.verseTranslations).insertAll([
+      await db.batch((b) => b.insertAll(db.verseTranslations, [
         const VerseTranslationsCompanion(
           translationCode: Value('KJV'),
           bookId: Value(1),
           chapter: Value(1),
           verse: Value(1),
-          text: Value(
+          textContent: Value(
             'In the beginning God created the heaven and the earth.',
           ),
         ),
@@ -112,11 +113,11 @@ void main() {
           bookId: Value(1),
           chapter: Value(1),
           verse: Value(2),
-          text: Value(
+          textContent: Value(
             'And the earth was without form, and void;',
           ),
         ),
-      ]);
+      ]));
 
       final verses = await db.getChapterVerses(
         translationCode: 'KJV',
@@ -281,7 +282,7 @@ void main() {
       final old = DateTime.now().subtract(const Duration(days: 2));
       final recent = DateTime.now().subtract(const Duration(hours: 1));
 
-      await db.into(db.readingHistory).insertAll([
+      await db.batch((b) => b.insertAll(db.readingHistory, [
         ReadingHistoryCompanion(
           bookId: const Value(1),
           chapter: const Value(1),
@@ -294,7 +295,7 @@ void main() {
           translationCode: const Value('KJV'),
           accessedAt: Value(recent),
         ),
-      ]);
+      ]));
 
       final last = await db.getLastReadChapter();
       expect(last, isNotNull);

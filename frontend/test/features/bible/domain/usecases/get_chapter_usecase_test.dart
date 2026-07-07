@@ -35,7 +35,6 @@ void main() {
       chapter: 1,
       verseNumber: i + 1,
       text: 'Verse ${i + 1} text',
-      translationCode: 'KJV',
     ),
   );
 
@@ -66,7 +65,6 @@ void main() {
           bookId: 1,
           chapter: 1,
           translationCode: 'KJV',
-          parallelTranslationCode: null,
         ),
       ).thenAnswer((_) async => Success(genesis1Content));
 
@@ -85,7 +83,6 @@ void main() {
           bookId: 1,
           chapter: 999,
           translationCode: 'KJV',
-          parallelTranslationCode: null,
         ),
       ).thenAnswer(
         (_) async =>

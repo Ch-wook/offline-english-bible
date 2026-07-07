@@ -329,7 +329,7 @@ abstract final class AppTheme {
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withAlpha(30),
         trackHeight: 4,
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+        thumbShape: const RoundSliderThumbShape(),
       ),
 
       // ── Switch ────────────────────────────────────────────────────

@@ -325,7 +325,6 @@ QueryExecutor createDatabaseConnection(String dbName) {
     final file = File(p.join(dir.path, dbName));
     return NativeDatabase.createInBackground(
       file,
-      logStatements: false, // Production: false
     );
   });
 }

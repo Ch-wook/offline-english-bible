@@ -100,7 +100,7 @@ final class AppInitializationService {
       );
 
       // 1. 성경 임포트
-      bool bibleImported = _flagBox.get(_kjvImportedKey) as bool? ?? false;
+      final bool bibleImported = _flagBox.get(_kjvImportedKey) as bool? ?? false;
       if (!bibleImported) {
         await for (final progress in _importService.runFullImport()) {
           if (progress.hasError) {
@@ -132,7 +132,7 @@ final class AppInitializationService {
       }
 
       // 2. 사전 임포트
-      bool dictImported = _flagBox.get(_dictionaryImportedKey) as bool? ?? false;
+      final bool dictImported = _flagBox.get(_dictionaryImportedKey) as bool? ?? false;
       if (!dictImported) {
         await for (final (progress, message) in _dictImportService.importSampleDictionary()) {
           _emit(

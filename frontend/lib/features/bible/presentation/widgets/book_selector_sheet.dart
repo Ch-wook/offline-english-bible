@@ -359,7 +359,6 @@ class ChapterSelectorSheet extends ConsumerWidget {
                 crossAxisCount: 6,
                 mainAxisSpacing: AppSpacing.xs,
                 crossAxisSpacing: AppSpacing.xs,
-                childAspectRatio: 1.0,
               ),
               itemCount: book.chapterCount,
               itemBuilder: (_, i) {

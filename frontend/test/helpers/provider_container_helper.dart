@@ -55,7 +55,11 @@ class _InMemoryBox extends Box<dynamic> {
   Future<void> close() async {}
 
   @override
-  Future<void> clear() async => _store.clear();
+  Future<int> clear() async {
+    final count = _store.length;
+    _store.clear();
+    return count;
+  }
 
   @override
   int get length => _store.length;
@@ -68,6 +72,9 @@ class _InMemoryBox extends Box<dynamic> {
 
   @override
   Iterable<dynamic> get keys => _store.keys;
+
+  @override
+  dynamic keyAt(int index) => _store.keys.elementAt(index);
 
   @override
   Iterable<dynamic> get values => _store.values;
@@ -98,7 +105,6 @@ class _InMemoryBox extends Box<dynamic> {
   @override
   void operator []=(dynamic key, dynamic value) => _store[key] = value;
 
-  @override
   bool get lazy => false;
 
   @override
@@ -144,11 +150,9 @@ class _InMemoryBox extends Box<dynamic> {
   @override
   Stream<BoxEvent> watch({dynamic key}) => const Stream.empty();
 
-  @override
   Iterable<dynamic> valuesBetween({dynamic startKey, dynamic endKey}) =>
       _store.values;
 
-  @override
   Iterable<dynamic> keysBetween({dynamic startKey, dynamic endKey}) =>
       _store.keys;
 }

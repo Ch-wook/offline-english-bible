@@ -10,7 +10,6 @@ import '../../../../theme/app_spacing.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/chapter_content.dart';
 import '../providers/bible_reader_provider.dart';
-import '../providers/bible_providers.dart';
 import 'verse_item.dart';
 
 /// 장 전체를 스크롤 가능한 리스트 뷰로 표시.
