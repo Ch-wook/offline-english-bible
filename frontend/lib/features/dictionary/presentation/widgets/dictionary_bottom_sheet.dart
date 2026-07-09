@@ -1,464 +1,227 @@
 // lib/features/dictionary/presentation/widgets/dictionary_bottom_sheet.dart
-// [NEW] 사전 바텀시트 완전 구현 (Wiktionary + WordNet UI)
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/widgets/loading_indicator.dart';
-import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../../domain/entities/dictionary_entry.dart';
 import '../providers/dictionary_providers.dart';
 
-/// 단어 사전 바텀시트 — 완전 구현.
-/// TASK 3 의 placeholder를 대체한다.
 class DictionaryBottomSheet extends ConsumerWidget {
   const DictionaryBottomSheet({required this.word, super.key});
 
   final String word;
 
   static Future<void> show(BuildContext context, String word) {
+    final query = word.trim();
+    if (query.isEmpty) return Future.value();
+
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => DictionaryBottomSheet(word: word),
+      showDragHandle: false,
+      builder: (_) => DictionaryBottomSheet(word: query),
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entryAsync = ref.watch(wordLookupProvider(word));
+    final lookup = ref.watch(wordLookupProvider(word));
 
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.65,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      builder: (_, scrollController) => entryAsync.when(
-        loading: () => const Center(child: InlineLoader()),
-        error: (e, _) => _NotFoundBody(word: word),
-        data: (entry) => entry != null
-            ? _EntryBody(
-                entry: entry,
-                scrollController: scrollController,
-              )
-            : _NotFoundBody(word: word),
-      ),
+      initialChildSize: 0.72,
+      minChildSize: 0.42,
+      maxChildSize: 0.96,
+      builder: (context, scrollController) {
+        return lookup.when(
+          loading: () => const _LoadingContent(),
+          error: (_, __) => _NotFoundContent(word: word),
+          data:
+              (entry) =>
+                  entry == null
+                      ? _NotFoundContent(word: word)
+                      : _EntryContent(
+                        entry: entry,
+                        scrollController: scrollController,
+                      ),
+        );
+      },
     );
   }
 }
 
-// ── Entry Body ────────────────────────────────────────────────────────
-
-class _EntryBody extends ConsumerWidget {
-  const _EntryBody({
-    required this.entry,
-    required this.scrollController,
-  });
+class _EntryContent extends StatelessWidget {
+  const _EntryContent({required this.entry, required this.scrollController});
 
   final DictionaryEntry entry;
   final ScrollController scrollController;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       controller: scrollController,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.sm,
+        AppSpacing.xl,
+        AppSpacing.xxxl,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── 핸들 ────────────────────────────────────────────────────
-          const SizedBox(height: AppSpacing.sm),
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+          const _SheetHandle(),
+          _Header(entry: entry),
+          if (_koreanMeaning(entry).isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            _KoreanMeaningPanel(text: _koreanMeaning(entry)),
+          ],
+          if (entry.senses.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xl),
+            const _SectionTitle(icon: Icons.menu_book_outlined, label: '뜻'),
+            const SizedBox(height: AppSpacing.sm),
+            ...entry.senses.map(
+              (sense) => _SenseBlock(
+                sense: sense,
+                suppressEnglishDefinition: entry.id == -1,
               ),
             ),
-          ),
-
-          // ── 단어 헤더 ────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.xl,
-              AppSpacing.lg,
-              0,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 단어
-                      Text(
-                        entry.word,
-                        style: AppTypography.headlineMedium.copyWith(
-                          fontFamily: 'NotoSerif',
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      // IPA
-                      if (entry.hasIpa) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          entry.displayIpa,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                      // KJV 빈도
-                      if (entry.isKjvWord) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.menu_book_rounded,
-                              size: 12,
-                              color: colorScheme.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'KJV에서 ${entry.bibleFrequency}회 사용',
-                              style: AppTypography.labelSmall.copyWith(
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                // 단어장 추가
-                _VocabAddButton(word: entry.word),
-              ],
-            ),
-          ),
-
-          // ── 품사 + 정의 ──────────────────────────────────────────────
-          const SizedBox(height: AppSpacing.lg),
-          _SensesSection(entry: entry, isDark: isDark),
-
-          // ── 어원 ─────────────────────────────────────────────────────
-          if (entry.etymology.isNotEmpty) ...[
-            const _SectionDivider(),
-            _EtymologySection(text: entry.etymology),
           ],
-
-          // ── 활용형 ───────────────────────────────────────────────────
+          if (entry.etymology.trim().isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xl),
+            const _SectionTitle(icon: Icons.history_edu_rounded, label: '어원'),
+            const SizedBox(height: AppSpacing.sm),
+            _BodyText(entry.etymology),
+          ],
           if (entry.inflectedForms.isNotEmpty) ...[
-            const _SectionDivider(),
-            _InflectionsSection(forms: entry.inflectedForms),
+            const SizedBox(height: AppSpacing.xl),
+            const _SectionTitle(icon: Icons.transform_rounded, label: '활용형'),
+            const SizedBox(height: AppSpacing.sm),
+            _InflectionWrap(forms: entry.inflectedForms),
           ],
-
-          // ── 동의어 ───────────────────────────────────────────────────
-          if (entry.hasSynonyms) ...[
-            const _SectionDivider(),
-            _WordChipsSection(
-              title: '동의어',
+          if (entry.synonyms.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xl),
+            _WordChipSection(
               icon: Icons.swap_horiz_rounded,
+              label: '비슷한 말',
               words: entry.synonyms,
-              color: Colors.green,
             ),
           ],
-
-          // ── 반의어 ───────────────────────────────────────────────────
-          if (entry.hasAntonyms) ...[
-            const _SectionDivider(),
-            _WordChipsSection(
-              title: '반의어',
+          if (entry.antonyms.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xl),
+            _WordChipSection(
               icon: Icons.compare_arrows_rounded,
+              label: '반대말',
               words: entry.antonyms,
-              color: Colors.red,
             ),
           ],
-
-          // ── 관련 단어 ────────────────────────────────────────────────
           if (entry.relatedWords.isNotEmpty) ...[
-            const _SectionDivider(),
-            _WordChipsSection(
-              title: '관련 단어',
+            const SizedBox(height: AppSpacing.xl),
+            _WordChipSection(
               icon: Icons.link_rounded,
-              words: entry.relatedWords.take(8).toList(),
-              color: Colors.blue,
+              label: '관련 단어',
+              words: entry.relatedWords.take(12).toList(),
             ),
           ],
-
-          const SizedBox(height: AppSpacing.xxxl),
         ],
       ),
     );
   }
 }
 
-// ── Senses Section ────────────────────────────────────────────────────
-
-class _SensesSection extends StatelessWidget {
-  const _SensesSection({required this.entry, required this.isDark});
+class _Header extends StatelessWidget {
+  const _Header({required this.entry});
 
   final DictionaryEntry entry;
-  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // 품사별로 그룹핑
-    final grouped = <String, List<WordSense>>{};
-    for (final s in entry.senses) {
-      grouped.putIfAbsent(s.partOfSpeech, () => []).add(s);
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: grouped.entries.map((pos) {
-          return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 품사 레이블
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.secondaryContainer,
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusXs),
-                ),
-                child: Text(
-                  pos.value.first.posLabel,
-                  style: AppTypography.labelSmall.copyWith(
-                    color: colorScheme.onSecondaryContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
+              Text(
+                entry.word,
+                style: AppTypography.headlineMedium.copyWith(
+                  color: colorScheme.onSurface,
+                  fontFamily: 'NotoSerif',
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
-
-              // 의미 목록
-              ...pos.value.asMap().entries.map((e) {
-                final sense = e.value;
-                return Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: AppSpacing.md,
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
+                children: [
+                  if (entry.hasIpa)
+                    _MetaChip(
+                      icon: Icons.record_voice_over_rounded,
+                      label: entry.displayIpa,
+                    ),
+                  if (entry.bibleFrequency > 0)
+                    _MetaChip(
+                      icon: Icons.auto_stories_rounded,
+                      label: 'KJV ${entry.bibleFrequency}회',
+                    ),
+                  _MetaChip(
+                    icon: Icons.offline_pin_rounded,
+                    label: entry.id == -1 ? '내장 사전' : '오프라인 사전',
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${e.key + 1}.',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 정의
-                            Text(
-                              sense.definition,
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: colorScheme.onSurface,
-                                height: 1.5,
-                              ),
-                            ),
-
-                            // 한국어 정의
-                            if (sense.definitionKo.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('🇰🇷 '),
-                                  Expanded(
-                                    child: Text(
-                                      sense.definitionKo,
-                                      style: AppTypography.bodyMedium.copyWith(
-                                        color: colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-
-                            // 성경적 정의 (있을 때만)
-                            if (sense.bibleDefinition.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.menu_book_outlined,
-                                    size: 12,
-                                    color: colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      sense.bibleDefinition,
-                                      style: AppTypography.bodySmall
-                                          .copyWith(
-                                        color:
-                                            colorScheme.onSurfaceVariant,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-
-                            // 고어 뱃지
-                            if (sense.isArchaic) ...[
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.tertiaryContainer,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'archaic · 고어',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    fontSize: 9,
-                                    color:
-                                        colorScheme.onTertiaryContainer,
-                                  ),
-                                ),
-                              ),
-                            ],
-
-                            // 예문
-                            if (sense.examples.isNotEmpty) ...[
-                              const SizedBox(height: AppSpacing.sm),
-                              ...sense.examples
-                                  .take(2)
-                                  .map(
-                                    (ex) => _ExampleItem(
-                                      example: ex,
-                                      isDark: isDark,
-                                    ),
-                                  ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-
-              const SizedBox(height: AppSpacing.md),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// ── Example Item ──────────────────────────────────────────────────────
-
-class _ExampleItem extends StatelessWidget {
-  const _ExampleItem({required this.example, required this.isDark});
-
-  final WordExample example;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isBible = example.isBibleExample;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: isBible
-            ? colorScheme.primaryContainer.withAlpha(60)
-            : (isDark ? AppColors.surface1Dark : AppColors.surface1Light),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
-        border: isBible
-            ? Border(
-                left: BorderSide(
-                  color: colorScheme.primary,
-                  width: 2.5,
-                ),
-              )
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '"${example.text}"',
-            style: AppTypography.bodySmall.copyWith(
-              color: colorScheme.onSurface,
-              fontStyle: FontStyle.italic,
-              fontFamily: isBible ? 'NotoSerif' : null,
-            ),
-          ),
-          if (isBible && example.sourceReference.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              '— ${example.sourceReference}',
-              style: AppTypography.labelSmall.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w600,
+                ],
               ),
-            ),
-          ],
-        ],
-      ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: '닫기',
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 }
 
-// ── Etymology Section ─────────────────────────────────────────────────
-
-class _EtymologySection extends StatelessWidget {
-  const _EtymologySection({required this.text});
+class _KoreanMeaningPanel extends StatelessWidget {
+  const _KoreanMeaningPanel({required this.text});
 
   final String text;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withAlpha(110),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        border: Border.all(color: colorScheme.primary.withAlpha(40)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(label: '어원', icon: Icons.history_edu_rounded),
-          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '한국어 뜻',
+            style: AppTypography.labelMedium.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             text,
-            style: AppTypography.bodySmall.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.6,
+            style: AppTypography.titleMedium.copyWith(
+              color: colorScheme.onSurface,
+              height: 1.5,
             ),
           ),
         ],
@@ -467,249 +230,455 @@ class _EtymologySection extends StatelessWidget {
   }
 }
 
-// ── Inflections Section ───────────────────────────────────────────────
+class _SenseBlock extends StatelessWidget {
+  const _SenseBlock({
+    required this.sense,
+    required this.suppressEnglishDefinition,
+  });
 
-class _InflectionsSection extends StatelessWidget {
-  const _InflectionsSection({required this.forms});
+  final WordSense sense;
+  final bool suppressEnglishDefinition;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final showEnglish =
+        !suppressEnglishDefinition && sense.definition.trim().isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _PartOfSpeechChip(label: _posLabel(sense)),
+          if (sense.definitionKo.trim().isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _BodyText(
+              sense.definitionKo,
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ],
+          if (showEnglish) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _BodyText(sense.definition),
+          ],
+          if (sense.bibleDefinition.trim().isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _BibleMeaning(text: sense.bibleDefinition),
+          ],
+          if (sense.isArchaic) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const _MetaChip(icon: Icons.history_rounded, label: '고어'),
+          ],
+          if (sense.examples.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            ...sense.examples.take(3).map(_ExampleLine.new),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BibleMeaning extends StatelessWidget {
+  const _BibleMeaning({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer.withAlpha(100),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.auto_stories_outlined,
+            size: AppSpacing.iconSm,
+            color: colorScheme.secondary,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.bodyMedium.copyWith(
+                color: colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExampleLine extends StatelessWidget {
+  const _ExampleLine(this.example);
+
+  final WordExample example;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            example.isBibleExample
+                ? Icons.menu_book_rounded
+                : Icons.format_quote_rounded,
+            size: AppSpacing.iconXs,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  example.text,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                if (example.sourceReference.isNotEmpty)
+                  Text(
+                    example.sourceReference,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InflectionWrap extends StatelessWidget {
+  const _InflectionWrap({required this.forms});
 
   final List<InflectedForm> forms;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionTitle(label: '활용형', icon: Icons.transform_rounded),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.xs,
-            children: forms.map((f) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: 4,
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children:
+          forms
+              .map(
+                (form) => _LabelValueChip(
+                  label: form.formTypeLabel,
+                  value: form.form,
                 ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusXs),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      f.formTypeLabel,
-                      style: AppTypography.labelSmall.copyWith(
-                        fontSize: 9,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    Text(
-                      f.form,
-                      style: AppTypography.labelMedium.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
+              )
+              .toList(),
     );
   }
 }
 
-// ── Word Chips Section ────────────────────────────────────────────────
-
-class _WordChipsSection extends ConsumerWidget {
-  const _WordChipsSection({
-    required this.title,
+class _WordChipSection extends StatelessWidget {
+  const _WordChipSection({
     required this.icon,
+    required this.label,
     required this.words,
-    required this.color,
   });
 
-  final String title;
   final IconData icon;
+  final String label;
   final List<String> words;
-  final Color color;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionTitle(label: title, icon: icon, color: color),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.xs,
-            children: words
-                .map(
-                  (w) => ActionChip(
-                    label: Text(
-                      w,
-                      style: AppTypography.labelMedium.copyWith(
-                        fontFamily: 'NotoSerif',
-                      ),
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionTitle(icon: icon, label: label),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children:
+              words
+                  .where((word) => word.trim().isNotEmpty)
+                  .map(
+                    (word) => ActionChip(
+                      label: Text(word),
+                      visualDensity: VisualDensity.compact,
+                      onPressed:
+                          () => DictionaryBottomSheet.show(context, word),
                     ),
-                    onPressed: () {
-                      // 탭하면 해당 단어를 조회
-                      DictionaryBottomSheet.show(context, w);
-                    },
-                    visualDensity: VisualDensity.compact,
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Vocab Add Button ──────────────────────────────────────────────────
-
-class _VocabAddButton extends ConsumerWidget {
-  const _VocabAddButton({required this.word});
-
-  final String word;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return FilledButton.tonal(
-      onPressed: () {
-        // TASK 5 에서 완전 구현
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('"$word" 를 단어장에 추가했습니다'),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        Navigator.pop(context);
-      },
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
+                  )
+                  .toList(),
         ),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.add_rounded, size: 16),
-          SizedBox(width: 4),
-          Text('단어장'),
-        ],
-      ),
+      ],
     );
   }
 }
 
-// ── Not Found Body ────────────────────────────────────────────────────
-
-class _NotFoundBody extends StatelessWidget {
-  const _NotFoundBody({required this.word});
+class _NotFoundContent extends StatelessWidget {
+  const _NotFoundContent({required this.word});
 
   final String word;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 48,
+
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _SheetHandle(),
+          const Spacer(),
+          Icon(
+            Icons.search_off_rounded,
+            size: 52,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            word,
+            style: AppTypography.headlineSmall.copyWith(
+              color: colorScheme.onSurface,
+              fontFamily: 'NotoSerif',
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '아직 오프라인 사전에 없는 단어입니다.',
+            style: AppTypography.bodyMedium.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              '"$word"',
-              style: AppTypography.titleMedium.copyWith(
-                fontFamily: 'NotoSerif',
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              '사전에서 찾을 수 없습니다.\n사전 데이터를 임포트해야 합니다.',
-              style: AppTypography.bodySmall.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+          const Spacer(),
+        ],
       ),
     );
   }
 }
 
-// ── Shared Widgets ────────────────────────────────────────────────────
-
-class _SectionDivider extends StatelessWidget {
-  const _SectionDivider();
+class _LoadingContent extends StatelessWidget {
+  const _LoadingContent();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.md,
+    return const Padding(
+      padding: EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        children: [_SheetHandle(), Spacer(), InlineLoader(), Spacer()],
       ),
-      child: Divider(
-        color:
-            Theme.of(context).colorScheme.outlineVariant.withAlpha(60),
+    );
+  }
+}
+
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Center(
+      child: Container(
+        width: AppSpacing.bottomSheetHandleWidth,
+        height: AppSpacing.bottomSheetHandleHeight,
+        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: colorScheme.outlineVariant,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        ),
       ),
     );
   }
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.label,
-    required this.icon,
-    this.color,
-  });
+  const _SectionTitle({required this.icon, required this.label});
 
-  final String label;
   final IconData icon;
-  final Color? color;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final effectiveColor = color ?? colorScheme.primary;
 
     return Row(
       children: [
-        Icon(icon, size: 16, color: effectiveColor),
+        Icon(icon, size: AppSpacing.iconSm, color: colorScheme.primary),
         const SizedBox(width: AppSpacing.xs),
         Text(
           label,
-          style: AppTypography.labelMedium.copyWith(
-            color: effectiveColor,
-            fontWeight: FontWeight.w700,
+          style: AppTypography.titleSmall.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ],
     );
   }
+}
+
+class _BodyText extends StatelessWidget {
+  const _BodyText(this.text, {this.color, this.fontWeight});
+
+  final String text;
+  final Color? color;
+  final FontWeight? fontWeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: AppTypography.bodyMedium.copyWith(
+        color: color ?? Theme.of(context).colorScheme.onSurface,
+        fontWeight: fontWeight,
+        height: 1.55,
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: AppSpacing.iconXs, color: colorScheme.primary),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PartOfSpeechChip extends StatelessWidget {
+  const _PartOfSpeechChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.labelSmall.copyWith(
+          color: colorScheme.onSecondaryContainer,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _LabelValueChip extends StatelessWidget {
+  const _LabelValueChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: AppTypography.labelMedium.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _koreanMeaning(DictionaryEntry entry) {
+  if (entry.koreanMeaning.trim().isNotEmpty) return entry.koreanMeaning.trim();
+
+  for (final sense in entry.senses) {
+    if (sense.definitionKo.trim().isNotEmpty) {
+      return sense.definitionKo.trim();
+    }
+  }
+
+  return '';
+}
+
+String _posLabel(WordSense sense) {
+  if (sense.partOfSpeech == 'unknown') return '단어';
+  return sense.posLabel;
 }

@@ -7,13 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
+import '../../../dictionary/presentation/widgets/dictionary_bottom_sheet.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/chapter_content.dart';
 import '../providers/bible_providers.dart';
 import '../providers/bible_reader_provider.dart';
 import '../widgets/book_selector_sheet.dart';
 import '../widgets/verse_list_view.dart';
-import '../widgets/word_tap_bottom_sheet.dart';
 
 class BibleReaderPage extends ConsumerWidget {
   const BibleReaderPage({super.key});
@@ -27,7 +27,7 @@ class BibleReaderPage extends ConsumerWidget {
     // 단어 탭 → 바텀시트 트리거
     ref.listen<BibleReaderState>(bibleReaderProvider, (_, next) {
       if (next.tappedWord != null && context.mounted) {
-        WordTapBottomSheet.show(context, next.tappedWord!);
+        DictionaryBottomSheet.show(context, next.tappedWord!);
         ref.read(bibleReaderProvider.notifier).clearWordTap();
       }
     });

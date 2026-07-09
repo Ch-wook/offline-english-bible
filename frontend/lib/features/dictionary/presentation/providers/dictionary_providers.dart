@@ -9,6 +9,7 @@ import '../../data/datasources/dictionary_local_datasource_impl.dart';
 import '../../data/repositories/dictionary_repository_impl.dart';
 import '../../domain/entities/dictionary_entry.dart';
 import '../../domain/repositories/dictionary_repository.dart';
+import '../../domain/services/dictionary_query_normalizer.dart';
 import '../../domain/usecases/lookup_word_usecase.dart';
 
 // ── Repository ────────────────────────────────────────────────────────
@@ -39,19 +40,19 @@ final getSuggestionsUseCaseProvider =
 /// 단어 조회 FutureProvider.family.
 final wordLookupProvider =
     FutureProvider.family<DictionaryEntry?, String>((ref, word) async {
-  if (word.isEmpty) return null;
+  final normalized = const DictionaryQueryNormalizer().normalize(word);
+  if (normalized.isEmpty) return null;
   final useCase = ref.watch(lookupWordUseCaseProvider);
-  final result = await useCase(word);
+  final result = await useCase(normalized);
   final entry = result.valueOrNull; // 찾지 못해도 null (not error)
   if (entry != null) return entry;
 
   // Fallback to internal dictionary
-  final normalized = word.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
   final koreanMeaning = bibleWordKoreanDict[normalized];
   if (koreanMeaning != null && koreanMeaning.isNotEmpty) {
     return DictionaryEntry(
       id: -1,
-      word: word,
+      word: normalized,
       wordNormalized: normalized,
       koreanMeaning: koreanMeaning,
       senses: [

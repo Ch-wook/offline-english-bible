@@ -3,6 +3,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../dictionary/domain/services/dictionary_query_normalizer.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/usecases/get_chapter_usecase.dart';
 import '../providers/bible_providers.dart';
@@ -169,10 +170,7 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
 
   void onWordTap(String word) {
     // 구두점 제거 후 소문자화
-    final cleaned = word
-        .replaceAll(RegExp(r"[^\w']"), '')
-        .toLowerCase()
-        .trim();
+    final cleaned = const DictionaryQueryNormalizer().normalize(word);
     if (cleaned.isEmpty) return;
     state = state.copyWith(tappedWord: cleaned);
   }
