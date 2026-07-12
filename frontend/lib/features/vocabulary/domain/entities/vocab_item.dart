@@ -73,6 +73,7 @@ final class VocabItem {
         repetitions: 0,
         intervalDays: 1,
         nextReviewAt: DateTime.now().add(const Duration(hours: 4)),
+        isLearned: false,
       );
     }
 

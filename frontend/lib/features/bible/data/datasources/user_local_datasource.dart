@@ -2,7 +2,6 @@
 // [NEW] 사용자 데이터 로컬 데이터소스 인터페이스
 // (북마크, 형광펜, 읽기 기록, 메모)
 
-
 import '../../../../core/database/app_database.dart';
 
 abstract interface class UserLocalDataSource {
@@ -13,9 +12,9 @@ abstract interface class UserLocalDataSource {
     required String translationCode,
   });
 
-  Future<ReadingHistory?> getLastReadChapter();
+  Future<ReadingHistoryData?> getLastReadChapter();
 
-  Future<List<ReadingHistory>> getRecentReadingHistory({int limit = 20});
+  Future<List<ReadingHistoryData>> getRecentReadingHistory({int limit = 20});
 
   // ── Bookmarks ──────────────────────────────────────────────────────
   Future<List<Bookmark>> getAllBookmarks();

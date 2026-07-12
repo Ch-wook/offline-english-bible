@@ -28,10 +28,16 @@ class DictionaryEntries extends Table {
   // 어원 (Optional)
   TextColumn get etymology => text().withDefault(const Constant(''))();
 
+  // 앱에서 바로 표시할 수 있는 오프라인 번역/관계 데이터.
+  TextColumn get koreanMeaning => text().withDefault(const Constant(''))();
+  TextColumn get synonymsJson => text().withDefault(const Constant('[]'))();
+  TextColumn get antonymsJson => text().withDefault(const Constant('[]'))();
+  TextColumn get relatedWordsJson => text().withDefault(const Constant('[]'))();
+
   @override
   List<Set<Column>> get uniqueKeys => [
-        {wordNormalized},
-      ];
+    {wordNormalized},
+  ];
 }
 
 /// 품사별 뜻 항목 (한 단어에 여러 품사/뜻 가능).
@@ -43,6 +49,8 @@ class WordSenses extends Table {
   TextColumn get partOfSpeech => text().withLength(min: 1, max: 30)();
   IntColumn get senseOrder => integer()(); // 같은 품사 내 순서
   TextColumn get definition => text()(); // 일반 뜻
+  TextColumn get definitionKo =>
+      text().withDefault(const Constant(''))(); // 한국어 뜻
   TextColumn get bibleDefinition =>
       text().withDefault(const Constant(''))(); // 성경에서의 의미
   TextColumn get register =>
@@ -93,8 +101,8 @@ class WordnetSynsets extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [
-        {synsetId},
-      ];
+    {synsetId},
+  ];
 }
 
 /// 단어 ↔ Synset 매핑 (다대다).
@@ -111,10 +119,8 @@ class WordnetLemmas extends Table {
 @DataClassName('WordnetRelationData')
 class WordnetRelations extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get fromSynsetId =>
-      integer().references(WordnetSynsets, #id)();
-  IntColumn get toSynsetId =>
-      integer().references(WordnetSynsets, #id)();
+  IntColumn get fromSynsetId => integer().references(WordnetSynsets, #id)();
+  IntColumn get toSynsetId => integer().references(WordnetSynsets, #id)();
   TextColumn get relationType => text().withLength(min: 1, max: 30)();
 }
 
@@ -129,22 +135,18 @@ class StrongEntries extends Table {
   TextColumn get testament =>
       text().withLength(min: 2, max: 2)(); // 'OT' | 'NT'
   TextColumn get originalWord => text()(); // 히브리어/헬라어 원문
-  TextColumn get transliteration =>
-      text().withDefault(const Constant(''))();
-  TextColumn get pronunciation =>
-      text().withDefault(const Constant(''))();
-  TextColumn get partOfSpeech =>
-      text().withDefault(const Constant(''))();
+  TextColumn get transliteration => text().withDefault(const Constant(''))();
+  TextColumn get pronunciation => text().withDefault(const Constant(''))();
+  TextColumn get partOfSpeech => text().withDefault(const Constant(''))();
   TextColumn get shortDefinition => text()();
   TextColumn get fullDefinition => text()();
   TextColumn get derivation => text().withDefault(const Constant(''))();
-  IntColumn get kjvFrequency =>
-      integer().withDefault(const Constant(0))();
+  IntColumn get kjvFrequency => integer().withDefault(const Constant(0))();
 
   @override
   List<Set<Column>> get uniqueKeys => [
-        {strongNumber},
-      ];
+    {strongNumber},
+  ];
 }
 
 /// KJV 단어 ↔ Strong 번호 매핑.
@@ -167,7 +169,8 @@ class GrammarRules extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get ruleType => text().withLength(min: 1, max: 30)();
   TextColumn get pattern => text()(); // 패턴 (정규식 또는 POS 시퀀스)
-  TextColumn get label => text().withLength(min: 1, max: 50)(); // 'NP', 'VP', 'S', ...
+  TextColumn get label =>
+      text().withLength(min: 1, max: 50)(); // 'NP', 'VP', 'S', ...
   TextColumn get description => text().withDefault(const Constant(''))();
   IntColumn get priority => integer().withDefault(const Constant(0))();
 }
@@ -183,6 +186,6 @@ class PosLookup extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [
-        {wordNormalized},
-      ];
+    {wordNormalized},
+  ];
 }

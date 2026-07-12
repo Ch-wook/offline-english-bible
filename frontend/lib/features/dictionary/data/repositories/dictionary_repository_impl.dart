@@ -25,40 +25,35 @@ final class DictionaryRepositoryImpl implements DictionaryRepository {
 
       // 2. 없으면 활용형으로 검색 (created → create)
       if (row == null) {
-        final inflectionMatches =
-            await _dataSource.lookupInflection(normalized);
+        final inflectionMatches = await _dataSource.lookupInflection(
+          normalized,
+        );
         if (inflectionMatches.isNotEmpty) {
           row = inflectionMatches.first;
         }
       }
 
       if (row == null) {
-        return FailureResult(
-          WordNotFoundFailure('단어를 찾을 수 없습니다: $word'),
-        );
+        return FailureResult(WordNotFoundFailure('단어를 찾을 수 없습니다: $word'));
       }
 
-      // senses + examples + relations + inflections 병렬 로드
+      // senses + inflections 병렬 로드
       final results = await Future.wait([
         _dataSource.getSenses(row.id),
-        _dataSource.getRelations(row.id),
         _dataSource.getInflections(row.id),
       ]);
 
       final senses = results[0] as List<WordSenseData>;
-      final relations = results[1] as List<WordnetRelationData>;
-      final inflections = results[2] as List<WordFormData>;
+      final inflections = results[1] as List<WordFormData>;
 
       // 각 sense 의 examples 로드
-      final exampleFutures = senses
-          .map((s) => _dataSource.getExamples(s.id));
+      final exampleFutures = senses.map((s) => _dataSource.getExamples(s.id));
       final exampleResults = await Future.wait(exampleFutures);
 
       final entry = DictionaryEntryMapper.toDomain(
         row: row,
         senses: senses,
         examples: exampleResults,
-        relations: relations,
         inflections: inflections,
       );
 
@@ -73,9 +68,7 @@ final class DictionaryRepositoryImpl implements DictionaryRepository {
   @override
   Future<Result<bool, Failure>> hasEntry(String word) async {
     try {
-      return Success(
-        await _dataSource.hasEntry(word.toLowerCase().trim()),
-      );
+      return Success(await _dataSource.hasEntry(word.toLowerCase().trim()));
     } catch (e) {
       return FailureResult(DatabaseFailure(e.toString()));
     }
@@ -87,9 +80,7 @@ final class DictionaryRepositoryImpl implements DictionaryRepository {
     int limit = 10,
   }) async {
     try {
-      return Success(
-        await _dataSource.getSuggestions(prefix, limit: limit),
-      );
+      return Success(await _dataSource.getSuggestions(prefix, limit: limit));
     } catch (e) {
       return FailureResult(DatabaseFailure(e.toString()));
     }

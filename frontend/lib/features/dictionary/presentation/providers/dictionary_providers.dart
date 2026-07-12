@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/data/bible_word_korean_dict.dart';
 import '../../../../core/di/providers.dart';
+import '../../../../core/services/pronunciation_service.dart';
 import '../../data/datasources/dictionary_local_datasource_impl.dart';
 import '../../data/repositories/dictionary_repository_impl.dart';
 import '../../domain/entities/dictionary_entry.dart';
@@ -14,8 +15,7 @@ import '../../domain/usecases/lookup_word_usecase.dart';
 
 // ── Repository ────────────────────────────────────────────────────────
 
-final dictionaryRepositoryProvider =
-    Provider<DictionaryRepository>((ref) {
+final dictionaryRepositoryProvider = Provider<DictionaryRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final ds = DictionaryLocalDataSourceImpl(db);
   return DictionaryRepositoryImpl(ds);
@@ -23,23 +23,27 @@ final dictionaryRepositoryProvider =
 
 // ── Use Cases ─────────────────────────────────────────────────────────
 
-final lookupWordUseCaseProvider =
-    Provider<LookupWordUseCase>((ref) {
+final lookupWordUseCaseProvider = Provider<LookupWordUseCase>((ref) {
   return LookupWordUseCase(ref.watch(dictionaryRepositoryProvider));
 });
 
-final getSuggestionsUseCaseProvider =
-    Provider<GetSuggestionsUseCase>((ref) {
-  return GetSuggestionsUseCase(
-    ref.watch(dictionaryRepositoryProvider),
-  );
+final getSuggestionsUseCaseProvider = Provider<GetSuggestionsUseCase>((ref) {
+  return GetSuggestionsUseCase(ref.watch(dictionaryRepositoryProvider));
+});
+
+final pronunciationServiceProvider = Provider<PronunciationService>((ref) {
+  final service = DevicePronunciationService();
+  ref.onDispose(service.stop);
+  return service;
 });
 
 // ── Data Providers ────────────────────────────────────────────────────
 
 /// 단어 조회 FutureProvider.family.
-final wordLookupProvider =
-    FutureProvider.family<DictionaryEntry?, String>((ref, word) async {
+final wordLookupProvider = FutureProvider.family<DictionaryEntry?, String>((
+  ref,
+  word,
+) async {
   final normalized = const DictionaryQueryNormalizer().normalize(word);
   if (normalized.isEmpty) return null;
   final useCase = ref.watch(lookupWordUseCaseProvider);
@@ -71,8 +75,10 @@ final wordLookupProvider =
 });
 
 /// 자동완성 제안.
-final wordSuggestionsProvider =
-    FutureProvider.family<List<String>, String>((ref, prefix) async {
+final wordSuggestionsProvider = FutureProvider.family<List<String>, String>((
+  ref,
+  prefix,
+) async {
   if (prefix.length < 2) return [];
   final useCase = ref.watch(getSuggestionsUseCaseProvider);
   final result = await useCase(prefix);

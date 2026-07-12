@@ -92,13 +92,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
           // ── 결과 ────────────────────────────────────────────────
           Expanded(
-            child: searchState.isSearching
-                ? const Center(child: InlineLoader())
-                : !searchState.hasSearched
+            child:
+                searchState.isSearching
+                    ? const Center(child: InlineLoader())
+                    : !searchState.hasSearched
                     ? const _SearchHint()
                     : searchState.isEmpty
-                        ? _NoResults(query: searchState.query)
-                        : _SearchResults(results: searchState.results),
+                    ? _NoResults(query: searchState.query)
+                    : _SearchResults(results: searchState.results),
           ),
         ],
       ),
@@ -116,8 +117,6 @@ class _FilterBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(
@@ -169,35 +168,30 @@ class _FilterBar extends ConsumerWidget {
   void _showTranslationPicker(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: AppSpacing.lg),
-          RadioListTile<String>(
-            title: const Text('KJV (영어)'),
-            value: 'KJV',
+      builder:
+          (_) => RadioGroup<String>(
             groupValue: state.translationCode,
-            onChanged: (v) {
-              if (v != null) {
-                notifier.setTranslation(v);
-                Navigator.pop(context);
-              }
+            onChanged: (value) {
+              if (value == null) return;
+              notifier.setTranslation(value);
+              Navigator.pop(context);
             },
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: AppSpacing.lg),
+                RadioListTile<String>(
+                  title: Text('KJV (영어)'),
+                  value: 'KJV',
+                ),
+                RadioListTile<String>(
+                  title: Text('개역한글 (한국어)'),
+                  value: 'KOREAN_RV',
+                ),
+                SizedBox(height: AppSpacing.xl),
+              ],
+            ),
           ),
-          RadioListTile<String>(
-            title: const Text('개역한글 (한국어)'),
-            value: 'KOREAN_RV',
-            groupValue: state.translationCode,
-            onChanged: (v) {
-              if (v != null) {
-                notifier.setTranslation(v);
-                Navigator.pop(context);
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.xl),
-        ],
-      ),
     );
   }
 }
@@ -281,8 +275,7 @@ class _SearchResults extends ConsumerWidget {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color:
-                            colorScheme.primaryContainer.withAlpha(80),
+                        color: colorScheme.primaryContainer.withAlpha(80),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -297,9 +290,7 @@ class _SearchResults extends ConsumerWidget {
                 ),
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: _HighlightedText(
-                    text: result.highlightedText,
-                  ),
+                  child: _HighlightedText(text: result.highlightedText),
                 ),
                 onTap: () {
                   navigate(result);

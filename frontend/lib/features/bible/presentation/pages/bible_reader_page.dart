@@ -51,10 +51,7 @@ class BibleReaderPage extends ConsumerWidget {
 
 class _BibleAppBar extends ConsumerStatefulWidget
     implements PreferredSizeWidget {
-  const _BibleAppBar({
-    required this.readerState,
-    required this.settings,
-  });
+  const _BibleAppBar({required this.readerState, required this.settings});
 
   final BibleReaderState readerState;
   final dynamic settings; // AppSettings
@@ -73,10 +70,8 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
     final chapterAsync = ref.watch(currentChapterProvider);
     final notifier = ref.read(bibleReaderProvider.notifier);
 
-    final bookName = chapterAsync.whenOrNull(
-          data: (c) => c.book.nameKorean,
-        ) ??
-        '';
+    final bookName =
+        chapterAsync.whenOrNull(data: (c) => c.book.nameKorean) ?? '';
     final chapter = widget.readerState.chapter;
 
     return AppBar(
@@ -140,9 +135,8 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
             widget.readerState.isParallelView
                 ? Icons.view_agenda_rounded
                 : Icons.view_column_rounded,
-            color: widget.readerState.isParallelView
-                ? colorScheme.primary
-                : null,
+            color:
+                widget.readerState.isParallelView ? colorScheme.primary : null,
           ),
           onPressed: () => notifier.toggleParallelView(),
           tooltip: '대역 보기',
@@ -152,38 +146,39 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
         PopupMenuButton<_MenuAction>(
           icon: const Icon(Icons.more_vert_rounded),
           onSelected: _onMenuAction,
-          itemBuilder: (_) => [
-            const PopupMenuItem(
-              value: _MenuAction.autoScroll,
-              child: Row(
-                children: [
-                  Icon(Icons.swap_vert_rounded, size: 20),
-                  SizedBox(width: 12),
-                  Text('자동 스크롤'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: _MenuAction.search,
-              child: Row(
-                children: [
-                  Icon(Icons.search_rounded, size: 20),
-                  SizedBox(width: 12),
-                  Text('검색'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: _MenuAction.share,
-              child: Row(
-                children: [
-                  Icon(Icons.share_rounded, size: 20),
-                  SizedBox(width: 12),
-                  Text('공유'),
-                ],
-              ),
-            ),
-          ],
+          itemBuilder:
+              (_) => [
+                const PopupMenuItem(
+                  value: _MenuAction.autoScroll,
+                  child: Row(
+                    children: [
+                      Icon(Icons.swap_vert_rounded, size: 20),
+                      SizedBox(width: 12),
+                      Text('자동 스크롤'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: _MenuAction.search,
+                  child: Row(
+                    children: [
+                      Icon(Icons.search_rounded, size: 20),
+                      SizedBox(width: 12),
+                      Text('검색'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: _MenuAction.share,
+                  child: Row(
+                    children: [
+                      Icon(Icons.share_rounded, size: 20),
+                      SizedBox(width: 12),
+                      Text('공유'),
+                    ],
+                  ),
+                ),
+              ],
         ),
       ],
     );
@@ -193,10 +188,11 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
     final notifier = ref.read(bibleReaderProvider.notifier);
     showModalBottomSheet<void>(
       context: context,
-      builder: (_) => _TranslationPicker(
-        current: widget.readerState.translationCode,
-        onSelect: notifier.setTranslation,
-      ),
+      builder:
+          (_) => _TranslationPicker(
+            current: widget.readerState.translationCode,
+            onSelect: notifier.setTranslation,
+          ),
     );
   }
 
@@ -327,15 +323,12 @@ class _VerseActionBar extends ConsumerWidget {
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.md,
-        bottom: AppSpacing.md +
-            MediaQuery.of(context).viewInsets.bottom,
+        bottom: AppSpacing.md + MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
         border: Border(
-          top: BorderSide(
-            color: colorScheme.outlineVariant.withAlpha(60),
-          ),
+          top: BorderSide(color: colorScheme.outlineVariant.withAlpha(60)),
         ),
       ),
       child: Row(
@@ -408,8 +401,8 @@ class _AutoScrollFAB extends ConsumerWidget {
     if (!autoScrollEnabled) return const SizedBox.shrink();
 
     return FloatingActionButton.small(
-      onPressed: () =>
-          ref.read(bibleReaderProvider.notifier).toggleAutoScroll(),
+      onPressed:
+          () => ref.read(bibleReaderProvider.notifier).toggleAutoScroll(),
       tooltip: '자동 스크롤 중지',
       child: const Icon(Icons.pause_rounded),
     );
@@ -419,10 +412,7 @@ class _AutoScrollFAB extends ConsumerWidget {
 // ── Translation Picker ────────────────────────────────────────────────
 
 class _TranslationPicker extends StatelessWidget {
-  const _TranslationPicker({
-    required this.current,
-    required this.onSelect,
-  });
+  const _TranslationPicker({required this.current, required this.onSelect});
 
   final String current;
   final void Function(String) onSelect;
@@ -434,36 +424,37 @@ class _TranslationPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: AppSpacing.lg),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Text(
-            '번역본 선택',
-            style: AppTypography.titleMedium.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
+    return RadioGroup<String>(
+      groupValue: current,
+      onChanged: (value) {
+        if (value == null) return;
+        onSelect(value);
+        Navigator.pop(context);
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: AppSpacing.lg),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Text(
+              '번역본 선택',
+              style: AppTypography.titleMedium.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        ..._translations.map(
-          (t) => RadioListTile<String>(
-            title: Text(t.$2),
-            subtitle: Text(t.$3),
-            value: t.$1,
-            groupValue: current,
-            onChanged: (v) {
-              if (v != null) {
-                onSelect(v);
-                Navigator.pop(context);
-              }
-            },
+          const SizedBox(height: AppSpacing.md),
+          ..._translations.map(
+            (t) => RadioListTile<String>(
+              title: Text(t.$2),
+              subtitle: Text(t.$3),
+              value: t.$1,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-      ],
+          const SizedBox(height: AppSpacing.xl),
+        ],
+      ),
     );
   }
 }

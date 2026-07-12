@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/di/providers.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../providers/settings_provider.dart';
@@ -81,26 +82,27 @@ class SettingsPage extends ConsumerWidget {
           // ── 기본 번역본 ────────────────────────────────────────────
           const _SectionHeader(label: '기본 번역본'),
 
-          RadioListTile<String>(
-            secondary: const Icon(Icons.flag_rounded),
-            title: const Text('KJV (영어)'),
-            subtitle: const Text('King James Version — 공개 도메인'),
-            value: 'KJV',
+          RadioGroup<String>(
             groupValue: settings.defaultTranslation,
-            onChanged: (v) {
-              if (v != null) notifier.setDefaultTranslation(v);
+            onChanged: (value) {
+              if (value != null) notifier.setDefaultTranslation(value);
             },
-          ),
-
-          RadioListTile<String>(
-            secondary: const Icon(Icons.flag_outlined),
-            title: const Text('개역한글 (한국어)'),
-            subtitle: const Text('공개 도메인'),
-            value: 'KOREAN_RV',
-            groupValue: settings.defaultTranslation,
-            onChanged: (v) {
-              if (v != null) notifier.setDefaultTranslation(v);
-            },
+            child: const Column(
+              children: [
+                RadioListTile<String>(
+                  secondary: Icon(Icons.flag_rounded),
+                  title: Text('KJV (영어)'),
+                  subtitle: Text('King James Version — 공개 도메인'),
+                  value: 'KJV',
+                ),
+                RadioListTile<String>(
+                  secondary: Icon(Icons.flag_outlined),
+                  title: Text('개역한글 (한국어)'),
+                  subtitle: Text('공개 도메인'),
+                  value: 'KOREAN_RV',
+                ),
+              ],
+            ),
           ),
 
           const Divider(),
@@ -108,55 +110,36 @@ class SettingsPage extends ConsumerWidget {
           // ── 테마 ──────────────────────────────────────────────────
           const _SectionHeader(label: '테마'),
 
-          RadioListTile<ThemeMode>(
-            secondary: const Icon(Icons.wb_sunny_rounded),
-            title: const Text('라이트 모드'),
-            value: ThemeMode.light,
+          RadioGroup<ThemeMode>(
             groupValue: settings.themeMode,
-            onChanged: (v) {
-              if (v != null) notifier.setThemeMode(v);
+            onChanged: (value) {
+              if (value != null) notifier.setThemeMode(value);
             },
-          ),
-
-          RadioListTile<ThemeMode>(
-            secondary: const Icon(Icons.dark_mode_rounded),
-            title: const Text('다크 모드'),
-            value: ThemeMode.dark,
-            groupValue: settings.themeMode,
-            onChanged: (v) {
-              if (v != null) notifier.setThemeMode(v);
-            },
-          ),
-
-          RadioListTile<ThemeMode>(
-            secondary: const Icon(Icons.brightness_auto_rounded),
-            title: const Text('시스템 설정 따름'),
-            value: ThemeMode.system,
-            groupValue: settings.themeMode,
-            onChanged: (v) {
-              if (v != null) notifier.setThemeMode(v);
-            },
+            child: const Column(
+              children: [
+                RadioListTile<ThemeMode>(
+                  secondary: Icon(Icons.wb_sunny_rounded),
+                  title: Text('라이트 모드'),
+                  value: ThemeMode.light,
+                ),
+                RadioListTile<ThemeMode>(
+                  secondary: Icon(Icons.dark_mode_rounded),
+                  title: Text('다크 모드'),
+                  value: ThemeMode.dark,
+                ),
+                RadioListTile<ThemeMode>(
+                  secondary: Icon(Icons.brightness_auto_rounded),
+                  title: Text('시스템 설정 따름'),
+                  value: ThemeMode.system,
+                ),
+              ],
+            ),
           ),
 
           const Divider(),
 
           // ── 데이터 ────────────────────────────────────────────────
           const _SectionHeader(label: '데이터'),
-
-          ListTile(
-            leading: const Icon(Icons.storage_rounded),
-            title: const Text('사전 데이터 관리'),
-            subtitle: const Text('Wiktionary + WordNet 임포트'),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('사전 데이터 관리 (추후 구현)'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
 
           ListTile(
             leading: Icon(
@@ -179,13 +162,15 @@ class SettingsPage extends ConsumerWidget {
           const ListTile(
             leading: Icon(Icons.info_outline_rounded),
             title: Text('버전'),
-            trailing: Text('1.0.0'),
+            trailing: Text('2.0.0'),
           ),
 
           const ListTile(
             leading: Icon(Icons.gavel_rounded),
             title: Text('오픈소스 라이선스'),
-            subtitle: Text('KJV, 개역한글: 공개 도메인\nWiktionary: CC BY-SA 4.0\nWordNet: Princeton License'),
+            subtitle: Text(
+              'KJV, 개역한글: 공개 도메인\nWiktionary: CC BY-SA 4.0\nWordNet: Princeton License\nCMUdict: BSD-style License',
+            ),
           ),
 
           const SizedBox(height: AppSpacing.xxl),
@@ -197,34 +182,49 @@ class SettingsPage extends ConsumerWidget {
   void _showResetDialog(BuildContext context, WidgetRef ref) {
     showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('데이터 초기화'),
-        content: const Text(
-          '모든 북마크, 형광펜, 단어장이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('사용자 데이터가 초기화되었습니다'),
-                  behavior: SnackBarBehavior.floating,
+      builder:
+          (_) => AlertDialog(
+            title: const Text('데이터 초기화'),
+            content: const Text('모든 북마크, 형광펜, 단어장이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('취소'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _resetUserData(ref);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('사용자 데이터가 초기화되었습니다'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
                 ),
-              );
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('초기화'),
+                child: const Text('초기화'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
+  }
+
+  Future<void> _resetUserData(WidgetRef ref) async {
+    final db = ref.read(appDatabaseProvider);
+    await db.transaction(() async {
+      await db.delete(db.reviewAnswers).go();
+      await db.delete(db.reviewSessions).go();
+      await db.delete(db.vocabularyItems).go();
+      await db.delete(db.highlights).go();
+      await db.delete(db.memos).go();
+      await db.delete(db.bookmarks).go();
+      await db.delete(db.readingHistory).go();
+      await db.delete(db.readingPlans).go();
+    });
   }
 }
 

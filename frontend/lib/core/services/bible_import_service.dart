@@ -28,18 +28,18 @@ final class ImportProgress {
   });
 
   const ImportProgress.idle()
-      : status = ImportStatus.idle,
-        progress = 0.0,
-        currentBook = '',
-        message = '',
-        error = null;
+    : status = ImportStatus.idle,
+      progress = 0.0,
+      currentBook = '',
+      message = '',
+      error = null;
 
   const ImportProgress.complete()
-      : status = ImportStatus.complete,
-        progress = 1.0,
-        currentBook = '',
-        message = '임포트 완료',
-        error = null;
+    : status = ImportStatus.complete,
+      progress = 1.0,
+      currentBook = '',
+      message = '임포트 완료',
+      error = null;
 
   final ImportStatus status;
 
@@ -66,8 +66,9 @@ final class BibleImportService {
 
   final AppDatabase _db;
 
-  static const _kjvAssetPath = 'assets/data/kjv_sample.json';
-  static const _koreanAssetPath = 'assets/data/korean_rv_sample.json';
+  static const kjvDataVersion = 2;
+  static const _kjvAssetPath = 'assets/data/kjv_full.json';
+  static const _koreanAssetPath = 'assets/data/korean_rv_full.json';
 
   /// 임포트 실행. Stream<ImportProgress> 를 반환한다.
   Stream<ImportProgress> runFullImport() async* {
@@ -84,10 +85,7 @@ final class BibleImportService {
         message: '성경 목록을 초기화합니다…',
       );
       await _db.batch(
-        (b) => b.insertAllOnConflictUpdate(
-          _db.bibleBooks,
-          bibleBooksSeed(),
-        ),
+        (b) => b.insertAllOnConflictUpdate(_db.bibleBooks, bibleBooksSeed()),
       );
 
       // ── Step 2: KJV 임포트 ────────────────────────────────────────
@@ -154,14 +152,12 @@ final class BibleImportService {
     );
 
     final List<dynamic> raw = jsonDecode(jsonStr) as List<dynamic>;
-    final companions = raw
-        .map(
-          (e) => _toCompanion(
-            e as Map<String, dynamic>,
-            translationCode,
-          ),
-        )
-        .toList();
+    final companions =
+        raw
+            .map(
+              (e) => _toCompanion(e as Map<String, dynamic>, translationCode),
+            )
+            .toList();
 
     // 배치 삽입
     final total = companions.length;
@@ -186,9 +182,7 @@ final class BibleImportService {
 
       yield ImportProgress(
         status: ImportStatus.inserting,
-        progress: progressStart +
-            0.1 +
-            progressRange * ratio,
+        progress: progressStart + 0.1 + progressRange * ratio,
         currentBook: bookName,
         message: '$label 삽입 중… ($end / $total)',
       );

@@ -77,11 +77,11 @@ void main() {
   // ── getAllBooks ──────────────────────────────────────────────────────
 
   group('getAllBooks', () {
-    test('returns list with Genesis', () async {
+    test('returns seeded list beginning with Genesis', () async {
       final result = await repository.getAllBooks();
       expect(result.isSuccess, isTrue);
       final books = result.valueOrNull!;
-      expect(books.length, 1);
+      expect(books.length, 66);
       expect(books.first.name, 'Genesis');
       expect(books.first.id, 1);
     });

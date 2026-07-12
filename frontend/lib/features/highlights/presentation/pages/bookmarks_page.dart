@@ -33,7 +33,7 @@ class BookmarksPage extends ConsumerWidget {
         loading: () => const Center(child: InlineLoader()),
         error: (e, _) => Center(child: Text('오류: $e')),
         data: (bookmarks) {
-          if (bookmarks?.isEmpty ?? true) {
+          if (bookmarks.isEmpty) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -64,10 +64,10 @@ class BookmarksPage extends ConsumerWidget {
           }
 
           return ListView.separated(
-            itemCount: bookmarks?.length ?? 0,
+            itemCount: bookmarks.length,
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (_, i) {
-              final bm = bookmarks![i];
+              final bm = bookmarks[i];
               final bookInfo = bookNameMap[bm.bookId];
               final bookName = bookInfo?.ko ?? '알 수 없음';
               final ref_ = '$bookName ${bm.chapter}:${bm.verse}';
@@ -95,8 +95,7 @@ class BookmarksPage extends ConsumerWidget {
                     height: 36,
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusSm),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     ),
                     child: Icon(
                       Icons.bookmark_rounded,
@@ -111,16 +110,17 @@ class BookmarksPage extends ConsumerWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  subtitle: bm.note != null && (bm.note?.isNotEmpty ?? false)
-                      ? Text(
-                          bm.note!,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                      : null,
+                  subtitle:
+                      bm.note.isNotEmpty
+                          ? Text(
+                            bm.note,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                          : null,
                   trailing: Text(
                     bm.translationCode,
                     style: AppTypography.labelSmall.copyWith(
@@ -131,10 +131,7 @@ class BookmarksPage extends ConsumerWidget {
                   onTap: () {
                     ref
                         .read(bibleReaderProvider.notifier)
-                        .navigateTo(
-                          bookId: bm.bookId,
-                          chapter: bm.chapter,
-                        );
+                        .navigateTo(bookId: bm.bookId, chapter: bm.chapter);
                     context.go('/bible');
                   },
                 ),

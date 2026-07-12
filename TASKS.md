@@ -1,25 +1,26 @@
 # TASKS
 
 ## Phase 1
-- Project setup
-- Theme
-- Routing
-- Database
+- [x] Project setup
+- [x] Theme
+- [x] Routing
+- [x] Database
 
 ## Phase 2
-- Bible Reader
-- Translation selector
+- [x] Full KJV and Korean RV Bible reader
+- [x] Translation selector
 
 ## Phase 3
-- Offline Dictionary
-- Vocabulary
+- [x] In-app offline dictionary for every tappable KJV word
+- [x] Korean meanings, IPA, pronunciation, senses, examples, and synonyms
+- [x] Vocabulary and spaced repetition
 
 ## Phase 4
-- Bookmark
-- Memo
-- Search
+- [x] Bookmark
+- [x] Memo
+- [x] Full-text search
 
 ## Phase 5
-- Audio
-- Testing
-- Deployment
+- [x] Offline device pronunciation
+- [x] Static analysis and automated tests
+- [x] Signed GitHub Actions APK deployment

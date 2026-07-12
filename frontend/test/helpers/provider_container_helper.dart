@@ -99,12 +99,11 @@ class _InMemoryBox extends Box<dynamic> {
   @override
   Map<dynamic, dynamic> toMap() => Map.from(_store);
 
-  @override
   dynamic operator [](dynamic key) => _store[key];
 
-  @override
   void operator []=(dynamic key, dynamic value) => _store[key] = value;
 
+  @override
   bool get lazy => false;
 
   @override
@@ -150,6 +149,7 @@ class _InMemoryBox extends Box<dynamic> {
   @override
   Stream<BoxEvent> watch({dynamic key}) => const Stream.empty();
 
+  @override
   Iterable<dynamic> valuesBetween({dynamic startKey, dynamic endKey}) =>
       _store.values;
 

@@ -25,7 +25,7 @@ void main() {
       // Migration onCreate 실행 확인
       // 어떤 테이블이든 쿼리가 성공하면 스키마가 정상 생성된 것
       final books = await db.getAllBooks();
-      expect(books, isEmpty);
+      expect(books, hasLength(66));
     });
 
     test('inserts default translation metadata on create', () async {
@@ -57,22 +57,9 @@ void main() {
   // ── Bible Books ──────────────────────────────────────────────────────
 
   group('BibleBooks', () {
-    test('insert and retrieve a book', () async {
-      await db.into(db.bibleBooks).insert(
-            const BibleBooksCompanion(
-              id: Value(1),
-              name: Value('Genesis'),
-              nameKorean: Value('창세기'),
-              abbreviation: Value('Gen'),
-              abbreviationKorean: Value('창'),
-              testament: Value('OT'),
-              orderIndex: Value(1),
-              chapterCount: Value(50),
-            ),
-          );
-
+    test('retrieve seeded books', () async {
       final books = await db.getAllBooks();
-      expect(books.length, 1);
+      expect(books.length, 66);
       expect(books.first.name, 'Genesis');
       expect(books.first.testament, 'OT');
     });
@@ -81,22 +68,6 @@ void main() {
   // ── Verse Translations ────────────────────────────────────────────────
 
   group('VerseTranslations', () {
-    setUp(() async {
-      // 창세기 삽입
-      await db.into(db.bibleBooks).insert(
-            const BibleBooksCompanion(
-              id: Value(1),
-              name: Value('Genesis'),
-              nameKorean: Value('창세기'),
-              abbreviation: Value('Gen'),
-              abbreviationKorean: Value('창'),
-              testament: Value('OT'),
-              orderIndex: Value(1),
-              chapterCount: Value(50),
-            ),
-          );
-    });
-
     test('insert and query chapter verses', () async {
       await db.batch((b) => b.insertAll(db.verseTranslations, [
         const VerseTranslationsCompanion(

@@ -2082,6 +2082,54 @@ class $DictionaryEntriesTable extends DictionaryEntries
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _koreanMeaningMeta = const VerificationMeta(
+    'koreanMeaning',
+  );
+  @override
+  late final GeneratedColumn<String> koreanMeaning = GeneratedColumn<String>(
+    'korean_meaning',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _synonymsJsonMeta = const VerificationMeta(
+    'synonymsJson',
+  );
+  @override
+  late final GeneratedColumn<String> synonymsJson = GeneratedColumn<String>(
+    'synonyms_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _antonymsJsonMeta = const VerificationMeta(
+    'antonymsJson',
+  );
+  @override
+  late final GeneratedColumn<String> antonymsJson = GeneratedColumn<String>(
+    'antonyms_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _relatedWordsJsonMeta = const VerificationMeta(
+    'relatedWordsJson',
+  );
+  @override
+  late final GeneratedColumn<String> relatedWordsJson = GeneratedColumn<String>(
+    'related_words_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2092,6 +2140,10 @@ class $DictionaryEntriesTable extends DictionaryEntries
     frequencyRank,
     bibleFrequency,
     etymology,
+    koreanMeaning,
+    synonymsJson,
+    antonymsJson,
+    relatedWordsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2163,6 +2215,42 @@ class $DictionaryEntriesTable extends DictionaryEntries
         etymology.isAcceptableOrUnknown(data['etymology']!, _etymologyMeta),
       );
     }
+    if (data.containsKey('korean_meaning')) {
+      context.handle(
+        _koreanMeaningMeta,
+        koreanMeaning.isAcceptableOrUnknown(
+          data['korean_meaning']!,
+          _koreanMeaningMeta,
+        ),
+      );
+    }
+    if (data.containsKey('synonyms_json')) {
+      context.handle(
+        _synonymsJsonMeta,
+        synonymsJson.isAcceptableOrUnknown(
+          data['synonyms_json']!,
+          _synonymsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('antonyms_json')) {
+      context.handle(
+        _antonymsJsonMeta,
+        antonymsJson.isAcceptableOrUnknown(
+          data['antonyms_json']!,
+          _antonymsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('related_words_json')) {
+      context.handle(
+        _relatedWordsJsonMeta,
+        relatedWordsJson.isAcceptableOrUnknown(
+          data['related_words_json']!,
+          _relatedWordsJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2216,6 +2304,26 @@ class $DictionaryEntriesTable extends DictionaryEntries
             DriftSqlType.string,
             data['${effectivePrefix}etymology'],
           )!,
+      koreanMeaning:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}korean_meaning'],
+          )!,
+      synonymsJson:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}synonyms_json'],
+          )!,
+      antonymsJson:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}antonyms_json'],
+          )!,
+      relatedWordsJson:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}related_words_json'],
+          )!,
     );
   }
 
@@ -2235,6 +2343,10 @@ class DictionaryEntryData extends DataClass
   final int frequencyRank;
   final int bibleFrequency;
   final String etymology;
+  final String koreanMeaning;
+  final String synonymsJson;
+  final String antonymsJson;
+  final String relatedWordsJson;
   const DictionaryEntryData({
     required this.id,
     required this.word,
@@ -2244,6 +2356,10 @@ class DictionaryEntryData extends DataClass
     required this.frequencyRank,
     required this.bibleFrequency,
     required this.etymology,
+    required this.koreanMeaning,
+    required this.synonymsJson,
+    required this.antonymsJson,
+    required this.relatedWordsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2256,6 +2372,10 @@ class DictionaryEntryData extends DataClass
     map['frequency_rank'] = Variable<int>(frequencyRank);
     map['bible_frequency'] = Variable<int>(bibleFrequency);
     map['etymology'] = Variable<String>(etymology);
+    map['korean_meaning'] = Variable<String>(koreanMeaning);
+    map['synonyms_json'] = Variable<String>(synonymsJson);
+    map['antonyms_json'] = Variable<String>(antonymsJson);
+    map['related_words_json'] = Variable<String>(relatedWordsJson);
     return map;
   }
 
@@ -2269,6 +2389,10 @@ class DictionaryEntryData extends DataClass
       frequencyRank: Value(frequencyRank),
       bibleFrequency: Value(bibleFrequency),
       etymology: Value(etymology),
+      koreanMeaning: Value(koreanMeaning),
+      synonymsJson: Value(synonymsJson),
+      antonymsJson: Value(antonymsJson),
+      relatedWordsJson: Value(relatedWordsJson),
     );
   }
 
@@ -2286,6 +2410,10 @@ class DictionaryEntryData extends DataClass
       frequencyRank: serializer.fromJson<int>(json['frequencyRank']),
       bibleFrequency: serializer.fromJson<int>(json['bibleFrequency']),
       etymology: serializer.fromJson<String>(json['etymology']),
+      koreanMeaning: serializer.fromJson<String>(json['koreanMeaning']),
+      synonymsJson: serializer.fromJson<String>(json['synonymsJson']),
+      antonymsJson: serializer.fromJson<String>(json['antonymsJson']),
+      relatedWordsJson: serializer.fromJson<String>(json['relatedWordsJson']),
     );
   }
   @override
@@ -2300,6 +2428,10 @@ class DictionaryEntryData extends DataClass
       'frequencyRank': serializer.toJson<int>(frequencyRank),
       'bibleFrequency': serializer.toJson<int>(bibleFrequency),
       'etymology': serializer.toJson<String>(etymology),
+      'koreanMeaning': serializer.toJson<String>(koreanMeaning),
+      'synonymsJson': serializer.toJson<String>(synonymsJson),
+      'antonymsJson': serializer.toJson<String>(antonymsJson),
+      'relatedWordsJson': serializer.toJson<String>(relatedWordsJson),
     };
   }
 
@@ -2312,6 +2444,10 @@ class DictionaryEntryData extends DataClass
     int? frequencyRank,
     int? bibleFrequency,
     String? etymology,
+    String? koreanMeaning,
+    String? synonymsJson,
+    String? antonymsJson,
+    String? relatedWordsJson,
   }) => DictionaryEntryData(
     id: id ?? this.id,
     word: word ?? this.word,
@@ -2321,6 +2457,10 @@ class DictionaryEntryData extends DataClass
     frequencyRank: frequencyRank ?? this.frequencyRank,
     bibleFrequency: bibleFrequency ?? this.bibleFrequency,
     etymology: etymology ?? this.etymology,
+    koreanMeaning: koreanMeaning ?? this.koreanMeaning,
+    synonymsJson: synonymsJson ?? this.synonymsJson,
+    antonymsJson: antonymsJson ?? this.antonymsJson,
+    relatedWordsJson: relatedWordsJson ?? this.relatedWordsJson,
   );
   DictionaryEntryData copyWithCompanion(DictionaryEntriesCompanion data) {
     return DictionaryEntryData(
@@ -2341,6 +2481,22 @@ class DictionaryEntryData extends DataClass
               ? data.bibleFrequency.value
               : this.bibleFrequency,
       etymology: data.etymology.present ? data.etymology.value : this.etymology,
+      koreanMeaning:
+          data.koreanMeaning.present
+              ? data.koreanMeaning.value
+              : this.koreanMeaning,
+      synonymsJson:
+          data.synonymsJson.present
+              ? data.synonymsJson.value
+              : this.synonymsJson,
+      antonymsJson:
+          data.antonymsJson.present
+              ? data.antonymsJson.value
+              : this.antonymsJson,
+      relatedWordsJson:
+          data.relatedWordsJson.present
+              ? data.relatedWordsJson.value
+              : this.relatedWordsJson,
     );
   }
 
@@ -2354,7 +2510,11 @@ class DictionaryEntryData extends DataClass
           ..write('ipaUk: $ipaUk, ')
           ..write('frequencyRank: $frequencyRank, ')
           ..write('bibleFrequency: $bibleFrequency, ')
-          ..write('etymology: $etymology')
+          ..write('etymology: $etymology, ')
+          ..write('koreanMeaning: $koreanMeaning, ')
+          ..write('synonymsJson: $synonymsJson, ')
+          ..write('antonymsJson: $antonymsJson, ')
+          ..write('relatedWordsJson: $relatedWordsJson')
           ..write(')'))
         .toString();
   }
@@ -2369,6 +2529,10 @@ class DictionaryEntryData extends DataClass
     frequencyRank,
     bibleFrequency,
     etymology,
+    koreanMeaning,
+    synonymsJson,
+    antonymsJson,
+    relatedWordsJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -2381,7 +2545,11 @@ class DictionaryEntryData extends DataClass
           other.ipaUk == this.ipaUk &&
           other.frequencyRank == this.frequencyRank &&
           other.bibleFrequency == this.bibleFrequency &&
-          other.etymology == this.etymology);
+          other.etymology == this.etymology &&
+          other.koreanMeaning == this.koreanMeaning &&
+          other.synonymsJson == this.synonymsJson &&
+          other.antonymsJson == this.antonymsJson &&
+          other.relatedWordsJson == this.relatedWordsJson);
 }
 
 class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
@@ -2393,6 +2561,10 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
   final Value<int> frequencyRank;
   final Value<int> bibleFrequency;
   final Value<String> etymology;
+  final Value<String> koreanMeaning;
+  final Value<String> synonymsJson;
+  final Value<String> antonymsJson;
+  final Value<String> relatedWordsJson;
   const DictionaryEntriesCompanion({
     this.id = const Value.absent(),
     this.word = const Value.absent(),
@@ -2402,6 +2574,10 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
     this.frequencyRank = const Value.absent(),
     this.bibleFrequency = const Value.absent(),
     this.etymology = const Value.absent(),
+    this.koreanMeaning = const Value.absent(),
+    this.synonymsJson = const Value.absent(),
+    this.antonymsJson = const Value.absent(),
+    this.relatedWordsJson = const Value.absent(),
   });
   DictionaryEntriesCompanion.insert({
     this.id = const Value.absent(),
@@ -2412,6 +2588,10 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
     this.frequencyRank = const Value.absent(),
     this.bibleFrequency = const Value.absent(),
     this.etymology = const Value.absent(),
+    this.koreanMeaning = const Value.absent(),
+    this.synonymsJson = const Value.absent(),
+    this.antonymsJson = const Value.absent(),
+    this.relatedWordsJson = const Value.absent(),
   }) : word = Value(word),
        wordNormalized = Value(wordNormalized);
   static Insertable<DictionaryEntryData> custom({
@@ -2423,6 +2603,10 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
     Expression<int>? frequencyRank,
     Expression<int>? bibleFrequency,
     Expression<String>? etymology,
+    Expression<String>? koreanMeaning,
+    Expression<String>? synonymsJson,
+    Expression<String>? antonymsJson,
+    Expression<String>? relatedWordsJson,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2433,6 +2617,10 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
       if (frequencyRank != null) 'frequency_rank': frequencyRank,
       if (bibleFrequency != null) 'bible_frequency': bibleFrequency,
       if (etymology != null) 'etymology': etymology,
+      if (koreanMeaning != null) 'korean_meaning': koreanMeaning,
+      if (synonymsJson != null) 'synonyms_json': synonymsJson,
+      if (antonymsJson != null) 'antonyms_json': antonymsJson,
+      if (relatedWordsJson != null) 'related_words_json': relatedWordsJson,
     });
   }
 
@@ -2445,6 +2633,10 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
     Value<int>? frequencyRank,
     Value<int>? bibleFrequency,
     Value<String>? etymology,
+    Value<String>? koreanMeaning,
+    Value<String>? synonymsJson,
+    Value<String>? antonymsJson,
+    Value<String>? relatedWordsJson,
   }) {
     return DictionaryEntriesCompanion(
       id: id ?? this.id,
@@ -2455,6 +2647,10 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
       frequencyRank: frequencyRank ?? this.frequencyRank,
       bibleFrequency: bibleFrequency ?? this.bibleFrequency,
       etymology: etymology ?? this.etymology,
+      koreanMeaning: koreanMeaning ?? this.koreanMeaning,
+      synonymsJson: synonymsJson ?? this.synonymsJson,
+      antonymsJson: antonymsJson ?? this.antonymsJson,
+      relatedWordsJson: relatedWordsJson ?? this.relatedWordsJson,
     );
   }
 
@@ -2485,6 +2681,18 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
     if (etymology.present) {
       map['etymology'] = Variable<String>(etymology.value);
     }
+    if (koreanMeaning.present) {
+      map['korean_meaning'] = Variable<String>(koreanMeaning.value);
+    }
+    if (synonymsJson.present) {
+      map['synonyms_json'] = Variable<String>(synonymsJson.value);
+    }
+    if (antonymsJson.present) {
+      map['antonyms_json'] = Variable<String>(antonymsJson.value);
+    }
+    if (relatedWordsJson.present) {
+      map['related_words_json'] = Variable<String>(relatedWordsJson.value);
+    }
     return map;
   }
 
@@ -2498,7 +2706,11 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntryData> {
           ..write('ipaUk: $ipaUk, ')
           ..write('frequencyRank: $frequencyRank, ')
           ..write('bibleFrequency: $bibleFrequency, ')
-          ..write('etymology: $etymology')
+          ..write('etymology: $etymology, ')
+          ..write('koreanMeaning: $koreanMeaning, ')
+          ..write('synonymsJson: $synonymsJson, ')
+          ..write('antonymsJson: $antonymsJson, ')
+          ..write('relatedWordsJson: $relatedWordsJson')
           ..write(')'))
         .toString();
   }
@@ -2574,6 +2786,18 @@ class $WordSensesTable extends WordSenses
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _definitionKoMeta = const VerificationMeta(
+    'definitionKo',
+  );
+  @override
+  late final GeneratedColumn<String> definitionKo = GeneratedColumn<String>(
+    'definition_ko',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _bibleDefinitionMeta = const VerificationMeta(
     'bibleDefinition',
   );
@@ -2620,6 +2844,7 @@ class $WordSensesTable extends WordSenses
     partOfSpeech,
     senseOrder,
     definition,
+    definitionKo,
     bibleDefinition,
     register,
     isArchaic,
@@ -2673,6 +2898,15 @@ class $WordSensesTable extends WordSenses
       );
     } else if (isInserting) {
       context.missing(_definitionMeta);
+    }
+    if (data.containsKey('definition_ko')) {
+      context.handle(
+        _definitionKoMeta,
+        definitionKo.isAcceptableOrUnknown(
+          data['definition_ko']!,
+          _definitionKoMeta,
+        ),
+      );
     }
     if (data.containsKey('bible_definition')) {
       context.handle(
@@ -2729,6 +2963,11 @@ class $WordSensesTable extends WordSenses
             DriftSqlType.string,
             data['${effectivePrefix}definition'],
           )!,
+      definitionKo:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}definition_ko'],
+          )!,
       bibleDefinition:
           attachedDatabase.typeMapping.read(
             DriftSqlType.string,
@@ -2759,6 +2998,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
   final String partOfSpeech;
   final int senseOrder;
   final String definition;
+  final String definitionKo;
   final String bibleDefinition;
   final String register;
   final bool isArchaic;
@@ -2768,6 +3008,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
     required this.partOfSpeech,
     required this.senseOrder,
     required this.definition,
+    required this.definitionKo,
     required this.bibleDefinition,
     required this.register,
     required this.isArchaic,
@@ -2780,6 +3021,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
     map['part_of_speech'] = Variable<String>(partOfSpeech);
     map['sense_order'] = Variable<int>(senseOrder);
     map['definition'] = Variable<String>(definition);
+    map['definition_ko'] = Variable<String>(definitionKo);
     map['bible_definition'] = Variable<String>(bibleDefinition);
     map['register'] = Variable<String>(register);
     map['is_archaic'] = Variable<bool>(isArchaic);
@@ -2793,6 +3035,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
       partOfSpeech: Value(partOfSpeech),
       senseOrder: Value(senseOrder),
       definition: Value(definition),
+      definitionKo: Value(definitionKo),
       bibleDefinition: Value(bibleDefinition),
       register: Value(register),
       isArchaic: Value(isArchaic),
@@ -2810,6 +3053,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
       partOfSpeech: serializer.fromJson<String>(json['partOfSpeech']),
       senseOrder: serializer.fromJson<int>(json['senseOrder']),
       definition: serializer.fromJson<String>(json['definition']),
+      definitionKo: serializer.fromJson<String>(json['definitionKo']),
       bibleDefinition: serializer.fromJson<String>(json['bibleDefinition']),
       register: serializer.fromJson<String>(json['register']),
       isArchaic: serializer.fromJson<bool>(json['isArchaic']),
@@ -2824,6 +3068,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
       'partOfSpeech': serializer.toJson<String>(partOfSpeech),
       'senseOrder': serializer.toJson<int>(senseOrder),
       'definition': serializer.toJson<String>(definition),
+      'definitionKo': serializer.toJson<String>(definitionKo),
       'bibleDefinition': serializer.toJson<String>(bibleDefinition),
       'register': serializer.toJson<String>(register),
       'isArchaic': serializer.toJson<bool>(isArchaic),
@@ -2836,6 +3081,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
     String? partOfSpeech,
     int? senseOrder,
     String? definition,
+    String? definitionKo,
     String? bibleDefinition,
     String? register,
     bool? isArchaic,
@@ -2845,6 +3091,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
     partOfSpeech: partOfSpeech ?? this.partOfSpeech,
     senseOrder: senseOrder ?? this.senseOrder,
     definition: definition ?? this.definition,
+    definitionKo: definitionKo ?? this.definitionKo,
     bibleDefinition: bibleDefinition ?? this.bibleDefinition,
     register: register ?? this.register,
     isArchaic: isArchaic ?? this.isArchaic,
@@ -2861,6 +3108,10 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
           data.senseOrder.present ? data.senseOrder.value : this.senseOrder,
       definition:
           data.definition.present ? data.definition.value : this.definition,
+      definitionKo:
+          data.definitionKo.present
+              ? data.definitionKo.value
+              : this.definitionKo,
       bibleDefinition:
           data.bibleDefinition.present
               ? data.bibleDefinition.value
@@ -2878,6 +3129,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
           ..write('partOfSpeech: $partOfSpeech, ')
           ..write('senseOrder: $senseOrder, ')
           ..write('definition: $definition, ')
+          ..write('definitionKo: $definitionKo, ')
           ..write('bibleDefinition: $bibleDefinition, ')
           ..write('register: $register, ')
           ..write('isArchaic: $isArchaic')
@@ -2892,6 +3144,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
     partOfSpeech,
     senseOrder,
     definition,
+    definitionKo,
     bibleDefinition,
     register,
     isArchaic,
@@ -2905,6 +3158,7 @@ class WordSenseData extends DataClass implements Insertable<WordSenseData> {
           other.partOfSpeech == this.partOfSpeech &&
           other.senseOrder == this.senseOrder &&
           other.definition == this.definition &&
+          other.definitionKo == this.definitionKo &&
           other.bibleDefinition == this.bibleDefinition &&
           other.register == this.register &&
           other.isArchaic == this.isArchaic);
@@ -2916,6 +3170,7 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
   final Value<String> partOfSpeech;
   final Value<int> senseOrder;
   final Value<String> definition;
+  final Value<String> definitionKo;
   final Value<String> bibleDefinition;
   final Value<String> register;
   final Value<bool> isArchaic;
@@ -2925,6 +3180,7 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
     this.partOfSpeech = const Value.absent(),
     this.senseOrder = const Value.absent(),
     this.definition = const Value.absent(),
+    this.definitionKo = const Value.absent(),
     this.bibleDefinition = const Value.absent(),
     this.register = const Value.absent(),
     this.isArchaic = const Value.absent(),
@@ -2935,6 +3191,7 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
     required String partOfSpeech,
     required int senseOrder,
     required String definition,
+    this.definitionKo = const Value.absent(),
     this.bibleDefinition = const Value.absent(),
     this.register = const Value.absent(),
     this.isArchaic = const Value.absent(),
@@ -2948,6 +3205,7 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
     Expression<String>? partOfSpeech,
     Expression<int>? senseOrder,
     Expression<String>? definition,
+    Expression<String>? definitionKo,
     Expression<String>? bibleDefinition,
     Expression<String>? register,
     Expression<bool>? isArchaic,
@@ -2958,6 +3216,7 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
       if (partOfSpeech != null) 'part_of_speech': partOfSpeech,
       if (senseOrder != null) 'sense_order': senseOrder,
       if (definition != null) 'definition': definition,
+      if (definitionKo != null) 'definition_ko': definitionKo,
       if (bibleDefinition != null) 'bible_definition': bibleDefinition,
       if (register != null) 'register': register,
       if (isArchaic != null) 'is_archaic': isArchaic,
@@ -2970,6 +3229,7 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
     Value<String>? partOfSpeech,
     Value<int>? senseOrder,
     Value<String>? definition,
+    Value<String>? definitionKo,
     Value<String>? bibleDefinition,
     Value<String>? register,
     Value<bool>? isArchaic,
@@ -2980,6 +3240,7 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
       partOfSpeech: partOfSpeech ?? this.partOfSpeech,
       senseOrder: senseOrder ?? this.senseOrder,
       definition: definition ?? this.definition,
+      definitionKo: definitionKo ?? this.definitionKo,
       bibleDefinition: bibleDefinition ?? this.bibleDefinition,
       register: register ?? this.register,
       isArchaic: isArchaic ?? this.isArchaic,
@@ -3004,6 +3265,9 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
     if (definition.present) {
       map['definition'] = Variable<String>(definition.value);
     }
+    if (definitionKo.present) {
+      map['definition_ko'] = Variable<String>(definitionKo.value);
+    }
     if (bibleDefinition.present) {
       map['bible_definition'] = Variable<String>(bibleDefinition.value);
     }
@@ -3024,6 +3288,7 @@ class WordSensesCompanion extends UpdateCompanion<WordSenseData> {
           ..write('partOfSpeech: $partOfSpeech, ')
           ..write('senseOrder: $senseOrder, ')
           ..write('definition: $definition, ')
+          ..write('definitionKo: $definitionKo, ')
           ..write('bibleDefinition: $bibleDefinition, ')
           ..write('register: $register, ')
           ..write('isArchaic: $isArchaic')
@@ -12850,6 +13115,10 @@ typedef $$DictionaryEntriesTableCreateCompanionBuilder =
       Value<int> frequencyRank,
       Value<int> bibleFrequency,
       Value<String> etymology,
+      Value<String> koreanMeaning,
+      Value<String> synonymsJson,
+      Value<String> antonymsJson,
+      Value<String> relatedWordsJson,
     });
 typedef $$DictionaryEntriesTableUpdateCompanionBuilder =
     DictionaryEntriesCompanion Function({
@@ -12861,6 +13130,10 @@ typedef $$DictionaryEntriesTableUpdateCompanionBuilder =
       Value<int> frequencyRank,
       Value<int> bibleFrequency,
       Value<String> etymology,
+      Value<String> koreanMeaning,
+      Value<String> synonymsJson,
+      Value<String> antonymsJson,
+      Value<String> relatedWordsJson,
     });
 
 final class $$DictionaryEntriesTableReferences
@@ -12989,6 +13262,26 @@ class $$DictionaryEntriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get koreanMeaning => $composableBuilder(
+    column: $table.koreanMeaning,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get synonymsJson => $composableBuilder(
+    column: $table.synonymsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get antonymsJson => $composableBuilder(
+    column: $table.antonymsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get relatedWordsJson => $composableBuilder(
+    column: $table.relatedWordsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> wordSensesRefs(
     Expression<bool> Function($$WordSensesTableFilterComposer f) f,
   ) {
@@ -13113,6 +13406,26 @@ class $$DictionaryEntriesTableOrderingComposer
     column: $table.etymology,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get koreanMeaning => $composableBuilder(
+    column: $table.koreanMeaning,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get synonymsJson => $composableBuilder(
+    column: $table.synonymsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get antonymsJson => $composableBuilder(
+    column: $table.antonymsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get relatedWordsJson => $composableBuilder(
+    column: $table.relatedWordsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DictionaryEntriesTableAnnotationComposer
@@ -13153,6 +13466,26 @@ class $$DictionaryEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get etymology =>
       $composableBuilder(column: $table.etymology, builder: (column) => column);
+
+  GeneratedColumn<String> get koreanMeaning => $composableBuilder(
+    column: $table.koreanMeaning,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get synonymsJson => $composableBuilder(
+    column: $table.synonymsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get antonymsJson => $composableBuilder(
+    column: $table.antonymsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get relatedWordsJson => $composableBuilder(
+    column: $table.relatedWordsJson,
+    builder: (column) => column,
+  );
 
   Expression<T> wordSensesRefs<T extends Object>(
     Expression<T> Function($$WordSensesTableAnnotationComposer a) f,
@@ -13281,6 +13614,10 @@ class $$DictionaryEntriesTableTableManager
                 Value<int> frequencyRank = const Value.absent(),
                 Value<int> bibleFrequency = const Value.absent(),
                 Value<String> etymology = const Value.absent(),
+                Value<String> koreanMeaning = const Value.absent(),
+                Value<String> synonymsJson = const Value.absent(),
+                Value<String> antonymsJson = const Value.absent(),
+                Value<String> relatedWordsJson = const Value.absent(),
               }) => DictionaryEntriesCompanion(
                 id: id,
                 word: word,
@@ -13290,6 +13627,10 @@ class $$DictionaryEntriesTableTableManager
                 frequencyRank: frequencyRank,
                 bibleFrequency: bibleFrequency,
                 etymology: etymology,
+                koreanMeaning: koreanMeaning,
+                synonymsJson: synonymsJson,
+                antonymsJson: antonymsJson,
+                relatedWordsJson: relatedWordsJson,
               ),
           createCompanionCallback:
               ({
@@ -13301,6 +13642,10 @@ class $$DictionaryEntriesTableTableManager
                 Value<int> frequencyRank = const Value.absent(),
                 Value<int> bibleFrequency = const Value.absent(),
                 Value<String> etymology = const Value.absent(),
+                Value<String> koreanMeaning = const Value.absent(),
+                Value<String> synonymsJson = const Value.absent(),
+                Value<String> antonymsJson = const Value.absent(),
+                Value<String> relatedWordsJson = const Value.absent(),
               }) => DictionaryEntriesCompanion.insert(
                 id: id,
                 word: word,
@@ -13310,6 +13655,10 @@ class $$DictionaryEntriesTableTableManager
                 frequencyRank: frequencyRank,
                 bibleFrequency: bibleFrequency,
                 etymology: etymology,
+                koreanMeaning: koreanMeaning,
+                synonymsJson: synonymsJson,
+                antonymsJson: antonymsJson,
+                relatedWordsJson: relatedWordsJson,
               ),
           withReferenceMapper:
               (p0) =>
@@ -13435,6 +13784,7 @@ typedef $$WordSensesTableCreateCompanionBuilder =
       required String partOfSpeech,
       required int senseOrder,
       required String definition,
+      Value<String> definitionKo,
       Value<String> bibleDefinition,
       Value<String> register,
       Value<bool> isArchaic,
@@ -13446,6 +13796,7 @@ typedef $$WordSensesTableUpdateCompanionBuilder =
       Value<String> partOfSpeech,
       Value<int> senseOrder,
       Value<String> definition,
+      Value<String> definitionKo,
       Value<String> bibleDefinition,
       Value<String> register,
       Value<bool> isArchaic,
@@ -13519,6 +13870,11 @@ class $$WordSensesTableFilterComposer
 
   ColumnFilters<String> get definition => $composableBuilder(
     column: $table.definition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get definitionKo => $composableBuilder(
+    column: $table.definitionKo,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13615,6 +13971,11 @@ class $$WordSensesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get definitionKo => $composableBuilder(
+    column: $table.definitionKo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get bibleDefinition => $composableBuilder(
     column: $table.bibleDefinition,
     builder: (column) => ColumnOrderings(column),
@@ -13678,6 +14039,11 @@ class $$WordSensesTableAnnotationComposer
 
   GeneratedColumn<String> get definition => $composableBuilder(
     column: $table.definition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get definitionKo => $composableBuilder(
+    column: $table.definitionKo,
     builder: (column) => column,
   );
 
@@ -13775,6 +14141,7 @@ class $$WordSensesTableTableManager
                 Value<String> partOfSpeech = const Value.absent(),
                 Value<int> senseOrder = const Value.absent(),
                 Value<String> definition = const Value.absent(),
+                Value<String> definitionKo = const Value.absent(),
                 Value<String> bibleDefinition = const Value.absent(),
                 Value<String> register = const Value.absent(),
                 Value<bool> isArchaic = const Value.absent(),
@@ -13784,6 +14151,7 @@ class $$WordSensesTableTableManager
                 partOfSpeech: partOfSpeech,
                 senseOrder: senseOrder,
                 definition: definition,
+                definitionKo: definitionKo,
                 bibleDefinition: bibleDefinition,
                 register: register,
                 isArchaic: isArchaic,
@@ -13795,6 +14163,7 @@ class $$WordSensesTableTableManager
                 required String partOfSpeech,
                 required int senseOrder,
                 required String definition,
+                Value<String> definitionKo = const Value.absent(),
                 Value<String> bibleDefinition = const Value.absent(),
                 Value<String> register = const Value.absent(),
                 Value<bool> isArchaic = const Value.absent(),
@@ -13804,6 +14173,7 @@ class $$WordSensesTableTableManager
                 partOfSpeech: partOfSpeech,
                 senseOrder: senseOrder,
                 definition: definition,
+                definitionKo: definitionKo,
                 bibleDefinition: bibleDefinition,
                 register: register,
                 isArchaic: isArchaic,

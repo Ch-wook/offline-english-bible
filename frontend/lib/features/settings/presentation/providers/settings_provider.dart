@@ -8,7 +8,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../domain/entities/app_settings.dart';
 
 // ── Hive Box Name ─────────────────────────────────────────────────────
-const _boxName = 'app_settings';
 const _settingsKey = 'settings';
 
 // ── Settings Repository ───────────────────────────────────────────────
@@ -45,8 +44,9 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepository(ref.watch(settingsBoxProvider));
 });
 
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
+final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
+  ref,
+) {
   final repo = ref.watch(settingsRepositoryProvider);
   return SettingsNotifier(repo);
 });
@@ -85,57 +85,44 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   final SettingsRepository _repo;
 
-  Future<void> setThemeMode(ThemeMode mode) => _update(
-        state.copyWith(themeMode: mode),
-      );
+  Future<void> setThemeMode(ThemeMode mode) =>
+      _update(state.copyWith(themeMode: mode));
 
-  Future<void> setFontSize(double size) => _update(
-        state.copyWith(fontSize: size.clamp(12.0, 28.0)),
-      );
+  Future<void> setFontSize(double size) =>
+      _update(state.copyWith(fontSize: size.clamp(12.0, 28.0)));
 
-  Future<void> setLineSpacing(double spacing) => _update(
-        state.copyWith(lineSpacing: spacing.clamp(1.4, 2.5)),
-      );
+  Future<void> setLineSpacing(double spacing) =>
+      _update(state.copyWith(lineSpacing: spacing.clamp(1.4, 2.5)));
 
-  Future<void> setFontFamily(String family) => _update(
-        state.copyWith(fontFamily: family),
-      );
+  Future<void> setFontFamily(String family) =>
+      _update(state.copyWith(fontFamily: family));
 
-  Future<void> setDefaultTranslation(String code) => _update(
-        state.copyWith(defaultTranslation: code),
-      );
+  Future<void> setDefaultTranslation(String code) =>
+      _update(state.copyWith(defaultTranslation: code));
 
-  Future<void> setDefaultKoreanTranslation(String code) => _update(
-        state.copyWith(defaultKoreanTranslation: code),
-      );
+  Future<void> setDefaultKoreanTranslation(String code) =>
+      _update(state.copyWith(defaultKoreanTranslation: code));
 
-  Future<void> toggleAutoScroll() => _update(
-        state.copyWith(autoScroll: !state.autoScroll),
-      );
+  Future<void> toggleAutoScroll() =>
+      _update(state.copyWith(autoScroll: !state.autoScroll));
 
-  Future<void> setAutoScrollSpeed(double speed) => _update(
-        state.copyWith(autoScrollSpeed: speed.clamp(10.0, 200.0)),
-      );
+  Future<void> setAutoScrollSpeed(double speed) =>
+      _update(state.copyWith(autoScrollSpeed: speed.clamp(10.0, 200.0)));
 
-  Future<void> toggleParallelView() => _update(
-        state.copyWith(parallelView: !state.parallelView),
-      );
+  Future<void> toggleParallelView() =>
+      _update(state.copyWith(parallelView: !state.parallelView));
 
-  Future<void> setParallelLeftLanguage(String lang) => _update(
-        state.copyWith(parallelLeftLanguage: lang),
-      );
+  Future<void> setParallelLeftLanguage(String lang) =>
+      _update(state.copyWith(parallelLeftLanguage: lang));
 
-  Future<void> toggleShowVerseNumbers() => _update(
-        state.copyWith(showVerseNumbers: !state.showVerseNumbers),
-      );
+  Future<void> toggleShowVerseNumbers() =>
+      _update(state.copyWith(showVerseNumbers: !state.showVerseNumbers));
 
-  Future<void> toggleShowStrongNumbers() => _update(
-        state.copyWith(showStrongNumbers: !state.showStrongNumbers),
-      );
+  Future<void> toggleShowStrongNumbers() =>
+      _update(state.copyWith(showStrongNumbers: !state.showStrongNumbers));
 
-  Future<void> toggleKeepScreenOn() => _update(
-        state.copyWith(keepScreenOn: !state.keepScreenOn),
-      );
+  Future<void> toggleKeepScreenOn() =>
+      _update(state.copyWith(keepScreenOn: !state.keepScreenOn));
 
   Future<void> resetToDefaults() => _update(const AppSettings());
 

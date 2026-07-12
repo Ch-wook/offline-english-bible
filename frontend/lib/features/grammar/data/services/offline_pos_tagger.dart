@@ -59,12 +59,14 @@ final class OfflinePosTagger {
 
       // 3. 고유명사 (대문자 시작 + 위치 확인)
       if (_isProperNoun(token, i)) {
-        result.add(TokenAnalysis(
-          token: token,
-          pos: 'NNP',
-          lemma: token,
-          dependencyRole: 'nsubj',
-        ));
+        result.add(
+          TokenAnalysis(
+            token: token,
+            pos: 'NNP',
+            lemma: token,
+            dependencyRole: 'nsubj',
+          ),
+        );
         continue;
       }
 
@@ -72,23 +74,27 @@ final class OfflinePosTagger {
       final lookupPos = _lexicon[lower];
       if (lookupPos != null) {
         final contextPos = _applyContextRules(lower, lookupPos, prev, next);
-        result.add(TokenAnalysis(
-          token: token,
-          pos: contextPos,
-          lemma: _lemmatize(lower, contextPos),
-          dependencyRole: _inferDependency(contextPos, i, result),
-        ));
+        result.add(
+          TokenAnalysis(
+            token: token,
+            pos: contextPos,
+            lemma: _lemmatize(lower, contextPos),
+            dependencyRole: _inferDependency(contextPos, i, result),
+          ),
+        );
         continue;
       }
 
       // 5. 형태소 규칙
       final morphPos = _morphologyTag(lower, prev, next);
-      result.add(TokenAnalysis(
-        token: token,
-        pos: morphPos,
-        lemma: _lemmatize(lower, morphPos),
-        dependencyRole: _inferDependency(morphPos, i, result),
-      ));
+      result.add(
+        TokenAnalysis(
+          token: token,
+          pos: morphPos,
+          lemma: _lemmatize(lower, morphPos),
+          dependencyRole: _inferDependency(morphPos, i, result),
+        ),
+      );
     }
 
     return result;
@@ -128,9 +134,12 @@ final class OfflinePosTagger {
 
     // 접미사 기반 품사 추정
     if (word.endsWith('ly')) return 'RB'; // quickly, greatly
-    if (word.endsWith('ness') || word.endsWith('ment') ||
-        word.endsWith('tion') || word.endsWith('sion') ||
-        word.endsWith('ance') || word.endsWith('ence') ||
+    if (word.endsWith('ness') ||
+        word.endsWith('ment') ||
+        word.endsWith('tion') ||
+        word.endsWith('sion') ||
+        word.endsWith('ance') ||
+        word.endsWith('ence') ||
         word.endsWith('ity')) {
       return 'NN';
     }
@@ -138,8 +147,10 @@ final class OfflinePosTagger {
     if (word.endsWith('ing')) return 'VBG';
     if (word.endsWith('er') && prev.isNotEmpty) return 'JJR'; // comparative
     if (word.endsWith('est')) return 'JJS'; // superlative
-    if (word.endsWith('ful') || word.endsWith('less') ||
-        word.endsWith('ous') || word.endsWith('al') ||
+    if (word.endsWith('ful') ||
+        word.endsWith('less') ||
+        word.endsWith('ous') ||
+        word.endsWith('al') ||
         word.endsWith('ive')) {
       return 'JJ';
     }
@@ -159,8 +170,12 @@ final class OfflinePosTagger {
   String _lemmatize(String word, String pos) {
     if (pos.startsWith('VB')) {
       // KJV 고어 활용형 제거
-      if (word.endsWith('eth')) return word.substring(0, word.length - 3);
-      if (word.endsWith('est')) return word.substring(0, word.length - 3);
+      if (word.endsWith('eth')) {
+        return _knownVerbStem(word.substring(0, word.length - 3));
+      }
+      if (word.endsWith('est')) {
+        return _knownVerbStem(word.substring(0, word.length - 3));
+      }
       if (word.endsWith('th') && word.length > 4) {
         return word.substring(0, word.length - 2);
       }
@@ -169,10 +184,10 @@ final class OfflinePosTagger {
         return '${word.substring(0, word.length - 3)}y';
       }
       if (word.endsWith('ed') && word.length > 4) {
-        return word.substring(0, word.length - 2);
+        return _knownVerbStem(word.substring(0, word.length - 2));
       }
       if (word.endsWith('ing') && word.length > 5) {
-        return word.substring(0, word.length - 3);
+        return _knownVerbStem(word.substring(0, word.length - 3));
       }
       if (word.endsWith('s') && !word.endsWith('ss')) {
         return word.substring(0, word.length - 1);
@@ -192,13 +207,21 @@ final class OfflinePosTagger {
     return word;
   }
 
+  String _knownVerbStem(String stem) {
+    final withSilentE = '${stem}e';
+    if ((_lexicon[withSilentE] ?? '').startsWith('VB')) return withSilentE;
+    if (stem.length > 2 && stem[stem.length - 1] == stem[stem.length - 2]) {
+      final withoutDouble = stem.substring(0, stem.length - 1);
+      if ((_lexicon[withoutDouble] ?? '').startsWith('VB')) {
+        return withoutDouble;
+      }
+    }
+    return stem;
+  }
+
   // ── Dependency ────────────────────────────────────────────────────
 
-  String _inferDependency(
-    String pos,
-    int index,
-    List<TokenAnalysis> prev,
-  ) {
+  String _inferDependency(String pos, int index, List<TokenAnalysis> prev) {
     if (index == 0 && pos.startsWith('NN')) return 'nsubj';
     if (pos.startsWith('VB') || pos == 'MD') return 'root';
     if (pos == 'IN') return 'prep';
@@ -219,17 +242,86 @@ final class OfflinePosTagger {
 
   // ── Closed-Class Word Sets ─────────────────────────────────────────
 
-  static const _punctuation = {'.', ',', ';', ':', '!', '?', '"', "'", '—', '-'};
+  static const _punctuation = {
+    '.',
+    ',',
+    ';',
+    ':',
+    '!',
+    '?',
+    '"',
+    "'",
+    '—',
+    '-',
+  };
   static const _articles = {'a', 'an', 'the'};
-  static const _modals = {'shall', 'will', 'would', 'should', 'can', 'could', 'may', 'might', 'must'};
+  static const _modals = {
+    'shall',
+    'will',
+    'would',
+    'should',
+    'can',
+    'could',
+    'may',
+    'might',
+    'must',
+  };
   static const _closedClassWords = {
-    'i', 'me', 'my', 'we', 'our', 'you', 'your', 'he', 'him', 'his',
-    'she', 'her', 'they', 'them', 'their', 'it', 'its',
-    'and', 'but', 'or', 'for', 'nor', 'so', 'yet',
-    'the', 'a', 'an', 'this', 'that', 'these', 'those',
-    'in', 'on', 'at', 'by', 'to', 'of', 'from', 'with', 'into', 'through',
-    'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
-    'do', 'does', 'did', 'have', 'has', 'had',
+    'i',
+    'me',
+    'my',
+    'we',
+    'our',
+    'you',
+    'your',
+    'he',
+    'him',
+    'his',
+    'she',
+    'her',
+    'they',
+    'them',
+    'their',
+    'it',
+    'its',
+    'and',
+    'but',
+    'or',
+    'for',
+    'nor',
+    'so',
+    'yet',
+    'the',
+    'a',
+    'an',
+    'this',
+    'that',
+    'these',
+    'those',
+    'in',
+    'on',
+    'at',
+    'by',
+    'to',
+    'of',
+    'from',
+    'with',
+    'into',
+    'through',
+    'is',
+    'are',
+    'was',
+    'were',
+    'be',
+    'been',
+    'being',
+    'am',
+    'do',
+    'does',
+    'did',
+    'have',
+    'has',
+    'had',
   };
 
   // ── Core Lexicon (KJV 핵심 단어) ─────────────────────────────────────
@@ -238,7 +330,7 @@ final class OfflinePosTagger {
   static const _lexicon = <String, String>{
     // Articles / Determiners
     'the': 'DT', 'a': 'DT', 'an': 'DT',
-    'this': 'DT', 'that': 'DT', 'these': 'DT', 'those': 'DT',
+    'this': 'DT', 'these': 'DT', 'those': 'DT',
     'every': 'DT', 'each': 'DT', 'all': 'DT', 'both': 'DT',
 
     // Pronouns
@@ -263,8 +355,8 @@ final class OfflinePosTagger {
 
     // Conjunctions
     'and': 'CC', 'but': 'CC', 'or': 'CC', 'nor': 'CC',
-    'yet': 'CC', 'so': 'CC', 'for': 'CC',
-    'that': 'IN', 'if': 'IN', 'when': 'WRB', 'where': 'WRB',
+    'yet': 'CC', 'so': 'CC',
+    'if': 'IN', 'when': 'WRB', 'where': 'WRB',
     'because': 'IN', 'though': 'IN', 'although': 'IN', 'lest': 'IN',
 
     // Modals
@@ -275,15 +367,12 @@ final class OfflinePosTagger {
     'am': 'VBP', 'is': 'VBZ', 'are': 'VBP', 'was': 'VBD', 'were': 'VBD',
     'be': 'VB', 'been': 'VBN', 'being': 'VBG',
     'art': 'VBP', // KJV "thou art"
-
     // Auxiliary Verbs (to have)
     'have': 'VBP', 'has': 'VBZ', 'had': 'VBD', 'having': 'VBG',
     'hath': 'VBZ', 'hast': 'VBP', // KJV
-
     // Auxiliary Verbs (to do)
     'do': 'VBP', 'does': 'VBZ', 'did': 'VBD', 'doing': 'VBG', 'done': 'VBN',
     'doth': 'VBZ', 'doest': 'VBP', // KJV
-
     // Core KJV Verbs
     'create': 'VB', 'created': 'VBD', 'creating': 'VBG',
     'say': 'VB', 'said': 'VBD', 'saith': 'VBZ', 'sayeth': 'VBZ',
@@ -329,7 +418,7 @@ final class OfflinePosTagger {
     'day': 'NN', 'night': 'NN', 'year': 'NN', 'time': 'NN',
     'word': 'NN', 'name': 'NN', 'law': 'NN', 'way': 'NN',
     'life': 'NN', 'death': 'NN', 'truth': 'NN', 'grace': 'NN',
-    'faith': 'NN', 'love': 'NN', 'hope': 'NN', 'peace': 'NN',
+    'faith': 'NN', 'hope': 'NN', 'peace': 'NN',
     'glory': 'NN', 'power': 'NN', 'king': 'NN', 'kingdom': 'NN',
     'son': 'NN', 'father': 'NN', 'mother': 'NN', 'man': 'NN',
     'woman': 'NN', 'people': 'NNS', 'nation': 'NN', 'land': 'NN',
@@ -338,7 +427,7 @@ final class OfflinePosTagger {
     'servant': 'NN', 'prophet': 'NN', 'priest': 'NN',
     'salvation': 'NN', 'righteousness': 'NN', 'sin': 'NN',
     'blood': 'NN', 'bread': 'NN', 'stone': 'NN', 'seed': 'NN',
-    'beginning': 'NN', 'end': 'NN', 'voice': 'NN', 'glory': 'NN',
+    'beginning': 'NN', 'end': 'NN', 'voice': 'NN',
 
     // Core Adjectives
     'great': 'JJ', 'good': 'JJ', 'holy': 'JJ', 'righteous': 'JJ',

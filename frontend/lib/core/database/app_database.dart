@@ -59,29 +59,38 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        beforeOpen: (details) async {
-          // 성능 최적화 PRAGMA
-          await customStatement('PRAGMA journal_mode=WAL');
-          await customStatement('PRAGMA foreign_keys=ON');
-          await customStatement('PRAGMA synchronous=NORMAL');
-          await customStatement('PRAGMA cache_size=-32000'); // 32MB 캐시
-          await customStatement('PRAGMA temp_store=MEMORY');
-          await customStatement('PRAGMA mmap_size=268435456'); // 256MB mmap
-        },
-        onCreate: (m) async {
-          await m.createAll();
-          await _createIndexes();
-          await _insertDefaultData();
-        },
-        onUpgrade: (m, from, to) async {
-          // 향후 마이그레이션 처리
-          // if (from < 2) { await m.addColumn(...); }
-        },
-      );
+    beforeOpen: (details) async {
+      // 성능 최적화 PRAGMA
+      await customStatement('PRAGMA journal_mode=WAL');
+      await customStatement('PRAGMA foreign_keys=ON');
+      await customStatement('PRAGMA synchronous=NORMAL');
+      await customStatement('PRAGMA cache_size=-32000'); // 32MB 캐시
+      await customStatement('PRAGMA temp_store=MEMORY');
+      await customStatement('PRAGMA mmap_size=268435456'); // 256MB mmap
+      await _createIndexes();
+    },
+    onCreate: (m) async {
+      await m.createAll();
+      await _createIndexes();
+      await _insertDefaultData();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(dictionaryEntries, dictionaryEntries.koreanMeaning);
+        await m.addColumn(dictionaryEntries, dictionaryEntries.synonymsJson);
+        await m.addColumn(dictionaryEntries, dictionaryEntries.antonymsJson);
+        await m.addColumn(
+          dictionaryEntries,
+          dictionaryEntries.relatedWordsJson,
+        );
+        await m.addColumn(wordSenses, wordSenses.definitionKo);
+      }
+    },
+  );
 
   // ── 인덱스 생성 (조회 성능 최적화) ─────────────────────────────────
 
@@ -96,6 +105,10 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_dict_word_normalized '
       'ON dictionary_entries (word_normalized)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_dict_word_form '
+      'ON word_forms (form)',
     );
 
     // Strong 번호 조회
@@ -195,20 +208,20 @@ class AppDatabase extends _$AppDatabase {
     final normalized = word.toLowerCase().trim();
 
     // 1차: 정확 일치
-    final exact = await (select(dictionaryEntries)
-          ..where((e) => e.wordNormalized.equals(normalized)))
-        .getSingleOrNull();
+    final exact =
+        await (select(
+          dictionaryEntries,
+        )..where((e) => e.wordNormalized.equals(normalized))).getSingleOrNull();
     if (exact != null) return exact;
 
     // 2차: 활용형 역추적
-    final form = await (select(wordForms)
-          ..where((f) => f.form.equals(normalized)))
-        .getSingleOrNull();
+    final form =
+        await (select(wordForms)
+          ..where((f) => f.form.equals(normalized))).getSingleOrNull();
     if (form == null) return null;
 
     return (select(dictionaryEntries)
-          ..where((e) => e.id.equals(form.entryId)))
-        .getSingleOrNull();
+      ..where((e) => e.id.equals(form.entryId))).getSingleOrNull();
   }
 
   /// 단어의 모든 뜻 조회 (품사별).
@@ -220,24 +233,20 @@ class AppDatabase extends _$AppDatabase {
 
   /// 단어 동의어/반의어 조회 (WordNet).
   Future<List<DictionaryEntryData>> getSynonyms(int entryId) async {
-    final lemmas = await (select(wordnetLemmas)
-          ..where((l) => l.entryId.equals(entryId)))
-        .get();
+    final lemmas =
+        await (select(wordnetLemmas)
+          ..where((l) => l.entryId.equals(entryId))).get();
     if (lemmas.isEmpty) return [];
 
     final synsetIds = lemmas.map((l) => l.synsetId).toList();
-    final synonymLemmas = await (select(wordnetLemmas)
-          ..where(
-            (l) =>
-                l.synsetId.isIn(synsetIds) & l.entryId.equals(entryId).not(),
-          ))
-        .get();
+    final synonymLemmas =
+        await (select(wordnetLemmas)..where(
+          (l) => l.synsetId.isIn(synsetIds) & l.entryId.equals(entryId).not(),
+        )).get();
 
     if (synonymLemmas.isEmpty) return [];
     final entryIds = synonymLemmas.map((l) => l.entryId).toSet().toList();
-    return (select(dictionaryEntries)
-          ..where((e) => e.id.isIn(entryIds)))
-        .get();
+    return (select(dictionaryEntries)..where((e) => e.id.isIn(entryIds))).get();
   }
 
   // ── 성경 조회 ─────────────────────────────────────────────────────
@@ -261,15 +270,13 @@ class AppDatabase extends _$AppDatabase {
   /// 모든 성경 책 목록 (순서대로).
   Future<List<BibleBook>> getAllBooks() =>
       (select(bibleBooks)
-            ..orderBy([(b) => OrderingTerm.asc(b.orderIndex)]))
-          .get();
+        ..orderBy([(b) => OrderingTerm.asc(b.orderIndex)])).get();
 
   // ── 북마크 ────────────────────────────────────────────────────────
 
   Future<List<Bookmark>> getAllBookmarks() =>
       (select(bookmarks)
-            ..orderBy([(b) => OrderingTerm.desc(b.createdAt)]))
-          .get();
+        ..orderBy([(b) => OrderingTerm.desc(b.createdAt)])).get();
 
   Future<bool> isVerseBookmarked({
     required int bookId,
@@ -277,15 +284,14 @@ class AppDatabase extends _$AppDatabase {
     required int verse,
     required String translationCode,
   }) async {
-    final result = await (select(bookmarks)
-          ..where(
-            (b) =>
-                b.bookId.equals(bookId) &
-                b.chapter.equals(chapter) &
-                b.verse.equals(verse) &
-                b.translationCode.equals(translationCode),
-          ))
-        .getSingleOrNull();
+    final result =
+        await (select(bookmarks)..where(
+          (b) =>
+              b.bookId.equals(bookId) &
+              b.chapter.equals(chapter) &
+              b.verse.equals(verse) &
+              b.translationCode.equals(translationCode),
+        )).getSingleOrNull();
     return result != null;
   }
 
@@ -323,12 +329,9 @@ QueryExecutor createDatabaseConnection(String dbName) {
   return LazyDatabase(() async {
     final dir = await getApplicationDocumentsDirectory();
     final file = File(p.join(dir.path, dbName));
-    return NativeDatabase.createInBackground(
-      file,
-    );
+    return NativeDatabase.createInBackground(file);
   });
 }
 
 /// 테스트용 인메모리 데이터베이스 연결.
-QueryExecutor createInMemoryConnection() =>
-    NativeDatabase.memory(logStatements: true);
+QueryExecutor createInMemoryConnection() => NativeDatabase.memory();

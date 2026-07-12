@@ -25,7 +25,7 @@
 | 기능 | 설명 | 상태 |
 |------|------|------|
 | 📖 **성경 읽기** | KJV + 개역한글 대역 보기, 단어 탭, 자동 스크롤 | ✅ |
-| 📚 **사전** | Wiktionary(IPA, 품사, 정의) + WordNet(동의어/반의어) | ✅ |
+| 📚 **앱 내부 사전** | 단어를 누르면 한국어 뜻, IPA, 품사, 예문, 유의어와 발음 재생을 앱 안에서 표시 | ✅ |
 | 🔤 **단어장** | SM-2 SRS 알고리즘 기반 간격 반복 복습 | ✅ |
 | 🔍 **전문 검색** | FTS5 기반 성경 전체 검색 (< 200ms) | ✅ |
 | 🖊️ **형광펜/북마크** | 6가지 색상 형광펜, 절 북마크 | ✅ |
@@ -81,7 +81,8 @@ frontend/lib/
 | KJV 성경 | King James Version (1611) | **공개 도메인** |
 | 개역한글 성경 | 한국 성경공회 (1961) | **공개 도메인** |
 | 단어 정의 | [Wiktionary](https://kaikki.org/dictionary/English/) | CC BY-SA 4.0 |
-| 동의어/반의어 | [WordNet 3.1](https://wordnet.princeton.edu/) | Princeton License |
+| 영문 정의·동의어·반의어 | [WordNet 3.0](https://wordnet.princeton.edu/) | Princeton WordNet License |
+| 발음 표기 | [CMU Pronouncing Dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) | CMUdict License |
 
 ---
 
@@ -109,27 +110,32 @@ flutter pub run build_runner build --delete-conflicting-outputs
 flutter run
 ```
 
-### 성경 데이터 임포트
+### 오프라인 데이터
 
-앱 최초 실행 시 `assets/data/kjv_sample.json` 의 샘플 데이터가 자동으로 임포트됩니다.
+앱에는 KJV 31,102절, 개역한글 전체 본문과 KJV에서 탭할 수 있는 모든 단어를 처리하는 사전 데이터가 함께 들어 있습니다. 최초 실행 시 이 자산을 로컬 SQLite 데이터베이스로 가져오며 이후 사전 조회를 포함한 핵심 기능은 네트워크 없이 동작합니다.
 
-전체 KJV 데이터는 별도 임포트 스크립트를 사용합니다:
+원본 성경 데이터를 다시 생성하려면 다음 스크립트를 사용합니다:
 
 ```bash
 dart run scripts/import_kjv.dart <kjv.json> assets/data/
 dart run scripts/import_korean_rv.dart <korean_rv.json> assets/data/
 ```
 
-### 사전 데이터 임포트
+### 사전 데이터 생성
 
 ```bash
-# 1. Wiktionary 덤프 처리
-# https://kaikki.org/dictionary/English/ 에서 다운로드
-dart run scripts/import_wiktionary.dart kaikki.org-dictionary-English.jsonl
-
-# 2. WordNet 동의어/반의어 병합
-dart run scripts/import_wordnet.dart wordnet.json
+dart run scripts/build_offline_dictionary.dart \
+  frontend/assets/data/kjv_full.json \
+  <kaikki-korean-extract.jsonl.gz> \
+  <wordnet-dict-directory> \
+  <cmudict-file>
 ```
+
+생성 데이터의 출처와 라이선스 전문은 [`THIRD_PARTY_DATA.md`](THIRD_PARTY_DATA.md)를 확인하세요.
+
+### Android APK 설치
+
+`main` 브랜치에 푸시하면 GitHub Actions가 테스트와 릴리스 서명 빌드를 수행하고 APK를 [GitHub Releases](https://github.com/Ch-wook/offline-english-bible/releases/latest)에 자동 업로드합니다.
 
 ---
 
@@ -174,6 +180,7 @@ test/
 | `scripts/import_korean_rv.dart` | 개역한글 JSON → SQLite |
 | `scripts/import_wiktionary.dart` | Wiktionary JSONL → 사전 JSON |
 | `scripts/import_wordnet.dart` | WordNet → 동의어/반의어 병합 |
+| `scripts/build_offline_dictionary.dart` | Wiktionary + WordNet + CMUdict + KJV를 통합한 전체 오프라인 사전 생성 |
 
 ---
 

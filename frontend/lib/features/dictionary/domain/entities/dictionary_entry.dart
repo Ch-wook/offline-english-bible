@@ -141,6 +141,11 @@ final class WordSense {
     'article': '관사',
     'pronoun': '대명사',
     'interjection': '감탄사',
+    'proper_noun': '고유명사',
+    'numeral': '수사',
+    'determiner': '한정사',
+    'particle': '불변화사',
+    'unknown': '단어',
   };
 }
 
@@ -166,10 +171,7 @@ final class WordExample {
 
 /// 활용형.
 final class InflectedForm {
-  const InflectedForm({
-    required this.formType,
-    required this.form,
-  });
+  const InflectedForm({required this.formType, required this.form});
 
   /// 활용 유형 (past_tense, past_participle, present_participle, plural).
   final String formType;

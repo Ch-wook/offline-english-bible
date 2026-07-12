@@ -126,8 +126,37 @@ class _EntryContent extends StatelessWidget {
               words: entry.relatedWords.take(12).toList(),
             ),
           ],
+          const SizedBox(height: AppSpacing.xxl),
+          const _SourceAttribution(),
         ],
       ),
+    );
+  }
+}
+
+class _SourceAttribution extends StatelessWidget {
+  const _SourceAttribution();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(
+          Icons.info_outline_rounded,
+          size: AppSpacing.iconXs,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Text(
+            'Wiktionary · WordNet · CMU Pronouncing Dictionary',
+            style: AppTypography.labelSmall.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -179,12 +208,57 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
+        _PronunciationButton(word: entry.word),
         IconButton(
           tooltip: '닫기',
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ],
+    );
+  }
+}
+
+class _PronunciationButton extends ConsumerStatefulWidget {
+  const _PronunciationButton({required this.word});
+
+  final String word;
+
+  @override
+  ConsumerState<_PronunciationButton> createState() =>
+      _PronunciationButtonState();
+}
+
+class _PronunciationButtonState extends ConsumerState<_PronunciationButton> {
+  bool _isSpeaking = false;
+
+  Future<void> _speak() async {
+    if (_isSpeaking) return;
+    setState(() => _isSpeaking = true);
+    final spoken = await ref
+        .read(pronunciationServiceProvider)
+        .speak(widget.word);
+    if (!mounted) return;
+    setState(() => _isSpeaking = false);
+    if (!spoken) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('기기에 영어 음성이 설치되어 있지 않습니다.')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: '발음 듣기',
+      onPressed: _isSpeaking ? null : _speak,
+      icon:
+          _isSpeaking
+              ? const SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+              : const Icon(Icons.volume_up_rounded),
     );
   }
 }

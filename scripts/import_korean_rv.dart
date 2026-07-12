@@ -23,8 +23,7 @@ Future<void> main(List<String> args) async {
   }
 
   final inputPath = args[0];
-  final outputDir =
-      args.length > 1 ? args[1] : 'frontend/assets/data';
+  final outputDir = args.length > 1 ? args[1] : 'frontend/assets/data';
 
   final inputFile = File(inputPath);
   if (!inputFile.existsSync()) {
@@ -38,7 +37,13 @@ Future<void> main(List<String> args) async {
   final List<dynamic> verses;
   try {
     final decoded = jsonDecode(raw);
-    verses = decoded is List ? decoded : [];
+    if (decoded is List) {
+      verses = decoded;
+    } else if (decoded is Map<String, dynamic> && decoded['books'] is List) {
+      verses = _flattenBooks(decoded['books'] as List<dynamic>);
+    } else {
+      throw const FormatException('지원하지 않는 JSON 구조입니다.');
+    }
   } catch (e) {
     stderr.writeln('❌ JSON 파싱 오류: $e');
     exit(1);
@@ -86,6 +91,28 @@ Future<void> main(List<String> args) async {
 
   stdout.writeln('✅ 완료! ${normalized.length}절 저장됨');
   if (errors > 0) stdout.writeln('   ⚠️  스킵: $errors');
+}
+
+List<dynamic> _flattenBooks(List<dynamic> books) {
+  final verses = <Map<String, dynamic>>[];
+  for (var bookIndex = 0; bookIndex < books.length; bookIndex++) {
+    final book = books[bookIndex] as Map<String, dynamic>;
+    final chapters = book['chapters'] as List<dynamic>? ?? const [];
+    for (final rawChapter in chapters) {
+      final chapter = rawChapter as Map<String, dynamic>;
+      final chapterNumber = chapter['chapter'] as int;
+      for (final rawVerse in chapter['verses'] as List<dynamic>? ?? const []) {
+        final verse = rawVerse as Map<String, dynamic>;
+        verses.add({
+          'b': bookIndex + 1,
+          'c': chapterNumber,
+          'v': verse['verse'] as int,
+          't': verse['text'].toString(),
+        });
+      }
+    }
+  }
+  return verses;
 }
 
 void _usage() {

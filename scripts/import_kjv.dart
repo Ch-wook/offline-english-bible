@@ -10,6 +10,8 @@
 // <input.json> 포맷 (두 가지 모두 지원):
 //   포맷 A: [{"b":1,"c":1,"v":1,"t":"In the beginning..."}]
 //   포맷 B: [{"book":1,"chapter":1,"verse":1,"text":"..."}]
+//   포맷 C: [[["Genesis 1:1", ...], ...], ...] (OpenBible 3D)
+//   포맷 D: {"books":[{"chapters":[{"verses":[...]}]}]} (Scrollmapper)
 //
 // 공개 도메인 KJV JSON 출처:
 //   https://github.com/aruljohn/Bible-kjv
@@ -30,8 +32,7 @@ Future<void> main(List<String> args) async {
   }
 
   final inputPath = args[0];
-  final outputDir =
-      args.length > 1 ? args[1] : 'frontend/assets/data';
+  final outputDir = args.length > 1 ? args[1] : 'frontend/assets/data';
 
   final inputFile = File(inputPath);
   if (!inputFile.existsSync()) {
@@ -49,7 +50,9 @@ Future<void> main(List<String> args) async {
   try {
     final decoded = jsonDecode(raw);
     if (decoded is List) {
-      verses = decoded;
+      verses = _flattenInput(decoded);
+    } else if (decoded is Map<String, dynamic> && decoded['books'] is List) {
+      verses = _flattenBooks(decoded['books'] as List<dynamic>);
     } else {
       stderr.writeln('❌ 지원하지 않는 JSON 포맷. 배열 형식이어야 합니다.');
       exit(1);
@@ -98,13 +101,9 @@ Future<void> main(List<String> args) async {
   });
 
   // 출력
-  final outputFile =
-      File('$outputDir/kjv_full.json');
+  final outputFile = File('$outputDir/kjv_full.json');
   await outputFile.parent.create(recursive: true);
-  await outputFile.writeAsString(
-    jsonEncode(normalized),
-    encoding: utf8,
-  );
+  await outputFile.writeAsString(jsonEncode(normalized), encoding: utf8);
 
   stdout.writeln('');
   stdout.writeln('✅ 완료!');
@@ -114,9 +113,55 @@ Future<void> main(List<String> args) async {
   stdout.writeln('');
   stdout.writeln('🔜 다음 단계:');
   stdout.writeln('   1. assets/data/kjv_full.json 을 앱에 포함');
-  stdout.writeln('   2. BibleImportService._kjvAssetPath 를 kjv_full.json 으로 변경');
+  stdout.writeln(
+    '   2. BibleImportService._kjvAssetPath 를 kjv_full.json 으로 변경',
+  );
   stdout.writeln('   3. flutter pub run build_runner build');
   stdout.writeln('   4. 앱 실행 → 자동 임포트');
+}
+
+List<dynamic> _flattenInput(List<dynamic> input) {
+  if (input.isEmpty || input.first is Map<String, dynamic>) return input;
+  if (input.first is! List<dynamic>) return input;
+
+  final verses = <Map<String, dynamic>>[];
+  for (var bookIndex = 0; bookIndex < input.length; bookIndex++) {
+    final book = input[bookIndex] as List<dynamic>;
+    for (var chapterIndex = 0; chapterIndex < book.length; chapterIndex++) {
+      final chapter = book[chapterIndex] as List<dynamic>;
+      for (var verseIndex = 0; verseIndex < chapter.length; verseIndex++) {
+        verses.add({
+          'b': bookIndex + 1,
+          'c': chapterIndex + 1,
+          'v': verseIndex + 1,
+          't': chapter[verseIndex].toString(),
+        });
+      }
+    }
+  }
+  return verses;
+}
+
+List<dynamic> _flattenBooks(List<dynamic> books) {
+  final verses = <Map<String, dynamic>>[];
+  for (var bookIndex = 0; bookIndex < books.length; bookIndex++) {
+    final book = books[bookIndex] as Map<String, dynamic>;
+    final chapters = book['chapters'] as List<dynamic>? ?? const [];
+    for (final rawChapter in chapters) {
+      final chapter = rawChapter as Map<String, dynamic>;
+      final chapterNumber = chapter['chapter'] as int;
+      for (final rawVerse in chapter['verses'] as List<dynamic>? ?? const []) {
+        final verse = rawVerse as Map<String, dynamic>;
+        verses.add({
+          'b': bookIndex + 1,
+          'c': chapterNumber,
+          'v': verse['verse'] as int,
+          't': verse['text'].toString(),
+        });
+      }
+    }
+  }
+  return verses;
 }
 
 void _usage() {

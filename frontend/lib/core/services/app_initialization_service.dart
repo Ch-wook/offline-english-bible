@@ -12,38 +12,29 @@ import 'dictionary_import_service.dart';
 
 // ── Hive Keys ─────────────────────────────────────────────────────────
 
-const _boxName = 'init_flags';
 const _kjvImportedKey = 'kjv_imported';
 const _koreanImportedKey = 'korean_rv_imported';
 const _booksSeededKey = 'books_seeded';
 const _dictionaryImportedKey = 'dictionary_imported';
+const _kjvDataVersionKey = 'kjv_data_version';
+const _dictionaryDataVersionKey = 'dictionary_data_version';
 
 // ── Init State ────────────────────────────────────────────────────────
 
-enum AppInitStatus {
-  checkingDatabase,
-  importRequired,
-  importing,
-  ready,
-  error,
-}
+enum AppInitStatus { checkingDatabase, importRequired, importing, ready, error }
 
 final class AppInitState {
-  const AppInitState({
-    required this.status,
-    this.importProgress,
-    this.error,
-  });
+  const AppInitState({required this.status, this.importProgress, this.error});
 
   const AppInitState.checking()
-      : status = AppInitStatus.checkingDatabase,
-        importProgress = null,
-        error = null;
+    : status = AppInitStatus.checkingDatabase,
+      importProgress = null,
+      error = null;
 
   const AppInitState.ready()
-      : status = AppInitStatus.ready,
-        importProgress = null,
-        error = null;
+    : status = AppInitStatus.ready,
+      importProgress = null,
+      error = null;
 
   final AppInitStatus status;
   final ImportProgress? importProgress;
@@ -52,10 +43,8 @@ final class AppInitState {
   bool get isReady => status == AppInitStatus.ready;
   bool get isImporting => status == AppInitStatus.importing;
   bool get hasError => status == AppInitStatus.error;
-  double get importProgressValue =>
-      importProgress?.progress ?? 0.0;
-  String get importMessage =>
-      importProgress?.message ?? '';
+  double get importProgressValue => importProgress?.progress ?? 0.0;
+  String get importMessage => importProgress?.message ?? '';
 }
 
 // ── Service ───────────────────────────────────────────────────────────
@@ -69,10 +58,10 @@ final class AppInitializationService {
   AppInitializationService({
     required AppDatabase db,
     required Box<dynamic> flagBox,
-  })  : _db = db,
-        _flagBox = flagBox,
-        _importService = BibleImportService(db),
-        _dictImportService = DictionaryImportService(db);
+  }) : _db = db,
+       _flagBox = flagBox,
+       _importService = BibleImportService(db),
+       _dictImportService = DictionaryImportService(db);
 
   final AppDatabase _db;
   final Box<dynamic> _flagBox;
@@ -95,13 +84,17 @@ final class AppInitializationService {
       }
 
       // 임포트 필요
-      _emit(
-        const AppInitState(status: AppInitStatus.importRequired),
-      );
+      _emit(const AppInitState(status: AppInitStatus.importRequired));
 
       // 1. 성경 임포트
-      final bool bibleImported = _flagBox.get(_kjvImportedKey) as bool? ?? false;
+      final bool bibleImported =
+          (_flagBox.get(_kjvImportedKey) as bool? ?? false) &&
+          (_flagBox.get(_koreanImportedKey) as bool? ?? false) &&
+          _flagBox.get(_kjvDataVersionKey) == BibleImportService.kjvDataVersion;
       if (!bibleImported) {
+        await (_db.delete(
+          _db.verseTranslations,
+        )..where((row) => row.translationCode.isIn(['KJV', 'KOREAN_RV']))).go();
         await for (final progress in _importService.runFullImport()) {
           if (progress.hasError) {
             _emit(
@@ -126,15 +119,23 @@ final class AppInitializationService {
               _flagBox.put(_kjvImportedKey, true),
               _flagBox.put(_koreanImportedKey, true),
               _flagBox.put(_booksSeededKey, true),
+              _flagBox.put(
+                _kjvDataVersionKey,
+                BibleImportService.kjvDataVersion,
+              ),
             ]);
           }
         }
       }
 
       // 2. 사전 임포트
-      final bool dictImported = _flagBox.get(_dictionaryImportedKey) as bool? ?? false;
+      final bool dictImported =
+          (_flagBox.get(_dictionaryImportedKey) as bool? ?? false) &&
+          _flagBox.get(_dictionaryDataVersionKey) ==
+              DictionaryImportService.dataVersion;
       if (!dictImported) {
-        await for (final (progress, message) in _dictImportService.importSampleDictionary()) {
+        await for (final (progress, message)
+            in _dictImportService.importDictionary()) {
           _emit(
             AppInitState(
               status: AppInitStatus.importing,
@@ -147,31 +148,26 @@ final class AppInitializationService {
           );
         }
         await _flagBox.put(_dictionaryImportedKey, true);
+        await _flagBox.put(
+          _dictionaryDataVersionKey,
+          DictionaryImportService.dataVersion,
+        );
       }
 
       _emit(const AppInitState.ready());
     } catch (e) {
-      _emit(
-        AppInitState(
-          status: AppInitStatus.error,
-          error: e,
-        ),
-      );
+      _emit(AppInitState(status: AppInitStatus.error, error: e));
     }
   }
 
   bool _isAlreadyImported() {
     return (_flagBox.get(_kjvImportedKey) as bool? ?? false) &&
+        (_flagBox.get(_koreanImportedKey) as bool? ?? false) &&
         (_flagBox.get(_booksSeededKey) as bool? ?? false) &&
-        (_flagBox.get(_dictionaryImportedKey) as bool? ?? false);
-  }
-
-  Future<void> _markImported() async {
-    await Future.wait([
-      _flagBox.put(_kjvImportedKey, true),
-      _flagBox.put(_koreanImportedKey, true),
-      _flagBox.put(_booksSeededKey, true),
-    ]);
+        (_flagBox.get(_dictionaryImportedKey) as bool? ?? false) &&
+        _flagBox.get(_kjvDataVersionKey) == BibleImportService.kjvDataVersion &&
+        _flagBox.get(_dictionaryDataVersionKey) ==
+            DictionaryImportService.dataVersion;
   }
 
   void _emit(AppInitState state) {
@@ -186,6 +182,9 @@ final class AppInitializationService {
       _flagBox.delete(_kjvImportedKey),
       _flagBox.delete(_koreanImportedKey),
       _flagBox.delete(_booksSeededKey),
+      _flagBox.delete(_kjvDataVersionKey),
+      _flagBox.delete(_dictionaryDataVersionKey),
+      _flagBox.delete(_dictionaryImportedKey),
     ]);
   }
 
@@ -195,7 +194,5 @@ final class AppInitializationService {
 // ── Provider ──────────────────────────────────────────────────────────
 
 final initFlagBoxProvider = Provider<Box<dynamic>>((ref) {
-  throw UnimplementedError(
-    'initFlagBoxProvider must be overridden in main()',
-  );
+  throw UnimplementedError('initFlagBoxProvider must be overridden in main()');
 });
