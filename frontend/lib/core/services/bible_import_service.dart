@@ -134,14 +134,8 @@ final class BibleImportService {
     late final String jsonStr;
     try {
       jsonStr = await rootBundle.loadString(assetPath);
-    } catch (_) {
-      // asset 파일이 없으면 스킵 (개발 단계에서 허용)
-      yield ImportProgress(
-        status: ImportStatus.inserting,
-        progress: progressEnd,
-        message: '$label asset 파일 없음 — 스킵',
-      );
-      return;
+    } catch (error) {
+      throw StateError('필수 $label 성경 파일을 읽을 수 없습니다: $error');
     }
 
     // 파싱

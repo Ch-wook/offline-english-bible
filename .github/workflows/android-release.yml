@@ -78,11 +78,20 @@ jobs:
           storeFile=release-keystore.jks
           EOF
 
+      - name: Analyze production code
+        run: flutter analyze --fatal-infos
+
+      - name: Run full test suite
+        run: flutter test --reporter compact
+
       - name: Verify offline data coverage
         run: flutter test test/core/data/offline_data_coverage_test.dart
 
       - name: Build release APK
         run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Run Android release lint
+        run: ./android/gradlew -p android lintRelease
 
       - name: Prepare APK asset
         shell: bash

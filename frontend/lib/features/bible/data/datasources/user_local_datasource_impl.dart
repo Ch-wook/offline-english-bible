@@ -66,18 +66,33 @@ final class UserLocalDataSourceImpl implements UserLocalDataSource {
     required int verse,
     required String translationCode,
     String? note,
-  }) => _db
-      .into(_db.bookmarks)
-      .insert(
-        BookmarksCompanion(
-          bookId: Value(bookId),
-          chapter: Value(chapter),
-          verse: Value(verse),
-          translationCode: Value(translationCode),
-          note: Value(note ?? ''),
-          createdAt: Value(DateTime.now()),
-        ),
-      );
+  }) async => _db.transaction(() async {
+    final existing =
+        await (_db.select(_db.bookmarks)..where(
+          (bookmark) =>
+              bookmark.bookId.equals(bookId) &
+              bookmark.chapter.equals(chapter) &
+              bookmark.verse.equals(verse) &
+              bookmark.translationCode.equals(translationCode),
+        )).getSingleOrNull();
+
+    final companion = BookmarksCompanion(
+      bookId: Value(bookId),
+      chapter: Value(chapter),
+      verse: Value(verse),
+      translationCode: Value(translationCode),
+      note: Value(note ?? existing?.note ?? ''),
+      createdAt: Value(existing?.createdAt ?? DateTime.now()),
+    );
+
+    if (existing == null) {
+      return _db.into(_db.bookmarks).insert(companion);
+    }
+
+    await (_db.update(_db.bookmarks)
+      ..where((bookmark) => bookmark.id.equals(existing.id))).write(companion);
+    return existing.id;
+  });
 
   @override
   Future<void> removeBookmark(int id) =>
@@ -107,20 +122,30 @@ final class UserLocalDataSourceImpl implements UserLocalDataSource {
     required String color,
     int? startOffset,
     int? endOffset,
-  }) => _db
-      .into(_db.highlights)
-      .insert(
-        HighlightsCompanion(
-          bookId: Value(bookId),
-          chapter: Value(chapter),
-          verse: Value(verse),
-          translationCode: Value(translationCode),
-          color: Value(color),
-          wordStart: Value(startOffset ?? 0),
-          wordEnd: Value(endOffset ?? startOffset ?? 0),
-          createdAt: Value(DateTime.now()),
-        ),
-      );
+  }) async => _db.transaction(() async {
+    await (_db.delete(_db.highlights)..where(
+      (h) =>
+          h.bookId.equals(bookId) &
+          h.chapter.equals(chapter) &
+          h.verse.equals(verse) &
+          h.translationCode.equals(translationCode),
+    )).go();
+
+    return _db
+        .into(_db.highlights)
+        .insert(
+          HighlightsCompanion(
+            bookId: Value(bookId),
+            chapter: Value(chapter),
+            verse: Value(verse),
+            translationCode: Value(translationCode),
+            color: Value(color),
+            wordStart: Value(startOffset ?? 0),
+            wordEnd: Value(endOffset ?? startOffset ?? 0),
+            createdAt: Value(DateTime.now()),
+          ),
+        );
+  });
 
   @override
   Future<void> removeHighlight(int id) =>

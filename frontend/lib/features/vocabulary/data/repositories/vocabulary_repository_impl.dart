@@ -1,9 +1,8 @@
 // lib/features/vocabulary/data/repositories/vocabulary_repository_impl.dart
-// [NEW] VocabularyRepository 援ы쁽泥?
+// [NEW] Vocabulary repository implementation
 import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
-
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/vocab_item.dart';
@@ -14,8 +13,6 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
   const VocabularyRepositoryImpl(this._dataSource);
 
   final VocabularyLocalDataSource _dataSource;
-
-  // ?? Mapper ????????????????????????????????????????????????????????
 
   VocabItem _rowToEntity(VocabularyItem row) {
     return VocabItem(
@@ -37,8 +34,6 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
     );
   }
 
-  // ?? CRUD ??????????????????????????????????????????????????????????
-
   @override
   Future<Result<List<VocabItem>, Failure>> getAllVocabItems() async {
     try {
@@ -54,9 +49,7 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
     try {
       final row = await _dataSource.getEntry(id);
       if (row == null) {
-        return const FailureResult(
-          RecordNotFoundFailure('?⑥뼱????ぉ??李얠쓣 ???놁뒿?덈떎'),
-        );
+        return const FailureResult(RecordNotFoundFailure('단어를 찾을 수 없습니다'));
       }
       return Success(_rowToEntity(row));
     } catch (e) {
@@ -82,17 +75,30 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
     required int verse,
     required String translationCode,
     String? definition,
+    String partOfSpeech = 'unknown',
+    String ipa = '',
+    String bibleDefinition = '',
   }) async {
     try {
+      final normalized = word.trim().toLowerCase();
+      final existing = await _dataSource.getEntryByWord(normalized);
+      if (existing != null) return Success(existing.id);
+
       final id = await _dataSource.insert(
         VocabularyItemsCompanion(
-          word: Value(word.toLowerCase()),
+          word: Value(normalized),
+          wordNormalized: Value(normalized),
+          partOfSpeech: Value(
+            partOfSpeech.trim().isEmpty ? 'unknown' : partOfSpeech,
+          ),
+          definition: Value(definition ?? ''),
+          bibleDefinition: Value(bibleDefinition),
+          ipa: Value(ipa),
           bookId: Value(bookId),
           chapter: Value(chapter),
           verse: Value(verse),
           translationCode: Value(translationCode),
           addedAt: Value(DateTime.now()),
-          definition: Value(definition ?? ''),
           repetitions: const Value(0),
           easeFactor: const Value(2.5),
           intervalDays: const Value(1),
@@ -143,8 +149,6 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
     }
   }
 
-  // ?? SRS ???????????????????????????????????????????????????????????
-
   @override
   Future<Result<List<VocabItem>, Failure>> getDueForReview() async {
     try {
@@ -163,9 +167,7 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
     try {
       final row = await _dataSource.getEntry(vocabId);
       if (row == null) {
-        return const FailureResult(
-          RecordNotFoundFailure('?⑥뼱瑜?李얠쓣 ???놁뒿?덈떎'),
-        );
+        return const FailureResult(RecordNotFoundFailure('단어를 찾을 수 없습니다'));
       }
       final item = _rowToEntity(row);
       final updated = item.updateWithQuality(quality);
@@ -174,8 +176,6 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
       return FailureResult(DatabaseFailure(e.toString()));
     }
   }
-
-  // ?? Stats ?????????????????????????????????????????????????????????
 
   @override
   Future<Result<VocabStats, Failure>> getStats() async {
@@ -190,7 +190,6 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
           total: results[0],
           dueCount: results[1],
           learnedCount: results[2],
-          streak: 0, // TASK 5 ?ы솕?먯꽌 援ы쁽
         ),
       );
     } catch (e) {
@@ -198,4 +197,3 @@ final class VocabularyRepositoryImpl implements VocabularyRepository {
     }
   }
 }
-

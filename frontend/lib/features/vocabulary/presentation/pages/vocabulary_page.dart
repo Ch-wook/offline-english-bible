@@ -29,31 +29,23 @@ class VocabularyPage extends ConsumerWidget {
             color: colorScheme.onSurface,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search_rounded),
-            onPressed: () {
-              // TASK 7 전문 검색에서 연결
-            },
-          ),
-        ],
       ),
       body: vocabAsync.when(
         loading: () => const Center(child: InlineLoader()),
         error: (e, _) => Center(child: Text('오류: $e')),
-        data: (items) => _VocabBody(
-          items: items,
-          stats: statsAsync.valueOrNull,
-        ),
+        data:
+            (items) => _VocabBody(items: items, stats: statsAsync.valueOrNull),
       ),
       floatingActionButton: statsAsync.whenOrNull(
-        data: (stats) => stats.dueCount > 0
-            ? FloatingActionButton.extended(
-                onPressed: () => _startReview(context, ref),
-                icon: const Icon(Icons.play_arrow_rounded),
-                label: Text('복습 (${stats.dueCount}개)'),
-              )
-            : null,
+        data:
+            (stats) =>
+                stats.dueCount > 0
+                    ? FloatingActionButton.extended(
+                      onPressed: () => _startReview(context, ref),
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: Text('복습 (${stats.dueCount}개)'),
+                    )
+                    : null,
       ),
     );
   }
@@ -85,10 +77,7 @@ class _VocabBody extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         // 통계 카드
-        if (stats != null)
-          SliverToBoxAdapter(
-            child: _StatsCard(stats: stats!),
-          ),
+        if (stats != null) SliverToBoxAdapter(child: _StatsCard(stats: stats!)),
 
         // 단어 목록
         SliverList.builder(
@@ -96,9 +85,7 @@ class _VocabBody extends StatelessWidget {
           itemBuilder: (_, i) => _VocabItemTile(item: items[i]),
         ),
 
-        const SliverToBoxAdapter(
-          child: SizedBox(height: AppSpacing.xxxxl),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxxxl)),
       ],
     );
   }
@@ -144,9 +131,7 @@ class _StatsCard extends StatelessWidget {
                 label: '복습 예정',
                 value: '${stats.dueCount}',
                 icon: Icons.schedule_rounded,
-                color: stats.dueCount > 0
-                    ? Colors.orange
-                    : colorScheme.primary,
+                color: stats.dueCount > 0 ? Colors.orange : colorScheme.primary,
               ),
               _StatItem(
                 label: '완료',
@@ -211,8 +196,9 @@ class _VocabItemTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final bookInfo = bookNameMap[item.bookId];
-    final bookName = bookInfo?.ko ?? '알 수 없음';
+    final bookName = bookInfo?.ko ?? '';
     final ref_ = '$bookName ${item.chapter}:${item.verse}';
+    final hasReference = bookInfo != null && item.chapter > 0 && item.verse > 0;
 
     return Dismissible(
       key: ValueKey(item.id),
@@ -221,10 +207,7 @@ class _VocabItemTile extends ConsumerWidget {
         color: colorScheme.errorContainer,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.xl),
-        child: Icon(
-          Icons.delete_rounded,
-          color: colorScheme.onErrorContainer,
-        ),
+        child: Icon(Icons.delete_rounded, color: colorScheme.onErrorContainer),
       ),
       onDismissed: (_) async {
         final repo = ref.read(vocabularyRepositoryProvider);
@@ -241,24 +224,25 @@ class _VocabItemTile extends ConsumerWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: item.isLearned
-                ? Colors.green.withAlpha(40)
-                : item.isDueForReview
+            color:
+                item.isLearned
+                    ? Colors.green.withAlpha(40)
+                    : item.isDueForReview
                     ? Colors.orange.withAlpha(40)
                     : colorScheme.surfaceContainerHighest,
-            borderRadius:
-                BorderRadius.circular(AppSpacing.radiusSm),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
           ),
           child: Icon(
             item.isLearned
                 ? Icons.check_rounded
                 : item.isDueForReview
-                    ? Icons.schedule_rounded
-                    : Icons.menu_book_outlined,
+                ? Icons.schedule_rounded
+                : Icons.menu_book_outlined,
             size: 20,
-            color: item.isLearned
-                ? Colors.green
-                : item.isDueForReview
+            color:
+                item.isLearned
+                    ? Colors.green
+                    : item.isDueForReview
                     ? Colors.orange
                     : colorScheme.onSurfaceVariant,
           ),
@@ -285,22 +269,24 @@ class _VocabItemTile extends ConsumerWidget {
               ),
             Row(
               children: [
-                Icon(
-                  Icons.menu_book_rounded,
-                  size: 10,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  ref_,
-                  style: AppTypography.labelSmall.copyWith(
-                    fontSize: 10,
+                if (hasReference) ...[
+                  Icon(
+                    Icons.menu_book_rounded,
+                    size: 10,
                     color: colorScheme.primary,
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: 4),
+                  Text(
+                    ref_,
+                    style: AppTypography.labelSmall.copyWith(
+                      fontSize: 10,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                ],
                 Text(
-                  'rep=${item.repetitions}',
+                  '복습 ${item.repetitions}회',
                   style: AppTypography.labelSmall.copyWith(
                     fontSize: 10,
                     color: colorScheme.onSurfaceVariant,
@@ -310,26 +296,27 @@ class _VocabItemTile extends ConsumerWidget {
             ),
           ],
         ),
-        trailing: item.isDueForReview && !item.isLearned
-            ? Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withAlpha(40),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '복습',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: Colors.orange.shade800,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 10,
+        trailing:
+            item.isDueForReview && !item.isLearned
+                ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
                   ),
-                ),
-              )
-            : null,
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withAlpha(40),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '복습',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: Colors.orange.shade800,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10,
+                    ),
+                  ),
+                )
+                : null,
       ),
     );
   }
@@ -357,58 +344,59 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
       expand: false,
       initialChildSize: 0.85,
       maxChildSize: 0.95,
-      builder: (_, __) => dueAsync.when(
-        loading: () => const Center(child: InlineLoader()),
-        error: (e, _) => Center(child: Text('오류: $e')),
-        data: (items) {
-          if (items.isEmpty || _currentIndex >= items.length) {
-            return _ReviewComplete(
-              total: _currentIndex,
-              onClose: () => Navigator.pop(context),
-            );
-          }
+      builder:
+          (_, __) => dueAsync.when(
+            loading: () => const Center(child: InlineLoader()),
+            error: (e, _) => Center(child: Text('오류: $e')),
+            data: (items) {
+              if (items.isEmpty || _currentIndex >= items.length) {
+                return _ReviewComplete(
+                  total: _currentIndex,
+                  onClose: () => Navigator.pop(context),
+                );
+              }
 
-          final item = items[_currentIndex];
+              final item = items[_currentIndex];
 
-          return Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              children: [
-                // 진행률
-                LinearProgressIndicator(
-                  value: _currentIndex / items.length,
-                  borderRadius: BorderRadius.circular(4),
+              return Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  children: [
+                    // 진행률
+                    LinearProgressIndicator(
+                      value: _currentIndex / items.length,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '${_currentIndex + 1} / ${items.length}',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+
+                    // 단어 카드
+                    Expanded(
+                      child: _ReviewCard(
+                        item: item,
+                        revealed: _revealed,
+                        onReveal: () => setState(() => _revealed = true),
+                      ),
+                    ),
+
+                    // 평가 버튼 (공개 후)
+                    if (_revealed) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _QualityButtons(
+                        onSelect: (q) => _submitReview(items, item, q),
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  '${_currentIndex + 1} / ${items.length}',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-
-                // 단어 카드
-                Expanded(
-                  child: _ReviewCard(
-                    item: item,
-                    revealed: _revealed,
-                    onReveal: () => setState(() => _revealed = true),
-                  ),
-                ),
-
-                // 평가 버튼 (공개 후)
-                if (_revealed) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  _QualityButtons(
-                    onSelect: (q) => _submitReview(items, item, q),
-                  ),
-                ],
-              ],
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
     );
   }
 
@@ -461,10 +449,7 @@ class _ReviewCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xl),
           if (!revealed)
-            FilledButton(
-              onPressed: onReveal,
-              child: const Text('뜻 보기'),
-            )
+            FilledButton(onPressed: onReveal, child: const Text('뜻 보기'))
           else ...[
             const Divider(),
             const SizedBox(height: AppSpacing.md),
@@ -639,11 +624,7 @@ class _ReviewComplete extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.celebration_rounded,
-            size: 64,
-            color: Colors.amber,
-          ),
+          const Icon(Icons.celebration_rounded, size: 64, color: Colors.amber),
           const SizedBox(height: AppSpacing.lg),
           Text(
             '복습 완료!',
@@ -659,10 +640,7 @@ class _ReviewComplete extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xxl),
-          FilledButton(
-            onPressed: onClose,
-            child: const Text('닫기'),
-          ),
+          FilledButton(onPressed: onClose, child: const Text('닫기')),
         ],
       ),
     );

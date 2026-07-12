@@ -3,6 +3,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:offline_english_bible/features/bible/domain/entities/verse.dart';
 import 'package:offline_english_bible/features/bible/presentation/providers/bible_providers.dart';
 import 'package:offline_english_bible/features/bible/presentation/providers/bible_reader_provider.dart';
 
@@ -25,10 +26,7 @@ void main() {
     });
 
     test('toChapterParams returns correct params', () {
-      const state = BibleReaderState(
-        bookId: 43,
-        chapter: 3,
-      );
+      const state = BibleReaderState(bookId: 43, chapter: 3);
       final params = state.toChapterParams();
       expect(params.bookId, 43);
       expect(params.chapter, 3);
@@ -37,9 +35,7 @@ void main() {
     });
 
     test('toChapterParams includes parallel when isParallelView', () {
-      const state = BibleReaderState(
-        isParallelView: true,
-      );
+      const state = BibleReaderState(isParallelView: true);
       final params = state.toChapterParams();
       expect(params.parallelTranslationCode, 'KOREAN_RV');
     });
@@ -58,10 +54,9 @@ void main() {
       final container = createContainer();
       addTearDown(container.dispose);
 
-      container.read(bibleReaderProvider.notifier).navigateTo(
-            bookId: 43,
-            chapter: 3,
-          );
+      container
+          .read(bibleReaderProvider.notifier)
+          .navigateTo(bookId: 43, chapter: 3);
 
       final state = container.read(bibleReaderProvider);
       expect(state.bookId, 43);
@@ -72,10 +67,9 @@ void main() {
       final container = createContainer();
       addTearDown(container.dispose);
 
-      container.read(bibleReaderProvider.notifier).navigateTo(
-            bookId: 19,
-            chapter: 23,
-          );
+      container
+          .read(bibleReaderProvider.notifier)
+          .navigateTo(bookId: 19, chapter: 23);
 
       final params = container.read(currentChapterParamsProvider);
       expect(params.bookId, 19);
@@ -89,9 +83,7 @@ void main() {
       container
           .read(bibleReaderProvider.notifier)
           .navigateTo(bookId: 1, chapter: 1);
-      container
-          .read(bibleReaderProvider.notifier)
-          .goToNextChapter(50);
+      container.read(bibleReaderProvider.notifier).goToNextChapter(50);
 
       expect(container.read(bibleReaderProvider).chapter, 2);
     });
@@ -103,9 +95,7 @@ void main() {
       container
           .read(bibleReaderProvider.notifier)
           .navigateTo(bookId: 1, chapter: 50);
-      container
-          .read(bibleReaderProvider.notifier)
-          .goToNextChapter(50);
+      container.read(bibleReaderProvider.notifier).goToNextChapter(50);
 
       expect(container.read(bibleReaderProvider).chapter, 50);
     });
@@ -117,9 +107,7 @@ void main() {
       container
           .read(bibleReaderProvider.notifier)
           .navigateTo(bookId: 1, chapter: 5);
-      container
-          .read(bibleReaderProvider.notifier)
-          .goToPreviousChapter();
+      container.read(bibleReaderProvider.notifier).goToPreviousChapter();
 
       expect(container.read(bibleReaderProvider).chapter, 4);
     });
@@ -131,9 +119,7 @@ void main() {
       container
           .read(bibleReaderProvider.notifier)
           .navigateTo(bookId: 1, chapter: 1);
-      container
-          .read(bibleReaderProvider.notifier)
-          .goToPreviousChapter();
+      container.read(bibleReaderProvider.notifier).goToPreviousChapter();
 
       expect(container.read(bibleReaderProvider).chapter, 1);
     });
@@ -169,6 +155,29 @@ void main() {
       expect(container.read(bibleReaderProvider).tappedWord, isNull);
     });
 
+    test('onWordTap preserves the tapped verse source', () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(bibleReaderProvider.notifier)
+          .onWordTap(
+            'Grace,',
+            source: const Verse(
+              bookId: 43,
+              chapter: 1,
+              verseNumber: 14,
+              text: 'full of grace and truth',
+            ),
+          );
+
+      final state = container.read(bibleReaderProvider);
+      expect(state.tappedBookId, 43);
+      expect(state.tappedChapter, 1);
+      expect(state.tappedVerse, 14);
+      expect(state.tappedTranslationCode, 'KJV');
+    });
+
     test('clearWordTap resets tappedWord to null', () {
       final container = createContainer();
       addTearDown(container.dispose);
@@ -186,10 +195,7 @@ void main() {
       addTearDown(container.dispose);
 
       container.read(bibleReaderProvider.notifier).selectVerse(16);
-      expect(
-        container.read(bibleReaderProvider).selectedVerseNumber,
-        16,
-      );
+      expect(container.read(bibleReaderProvider).selectedVerseNumber, 16);
     });
 
     test('clearVerseSelection resets to null', () {
@@ -199,10 +205,7 @@ void main() {
       final notifier = container.read(bibleReaderProvider.notifier);
       notifier.selectVerse(5);
       notifier.clearVerseSelection();
-      expect(
-        container.read(bibleReaderProvider).selectedVerseNumber,
-        isNull,
-      );
+      expect(container.read(bibleReaderProvider).selectedVerseNumber, isNull);
     });
 
     test('toggleAutoScroll flips autoScrollEnabled', () {
@@ -210,16 +213,13 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(bibleReaderProvider.notifier);
-      expect(
-          container.read(bibleReaderProvider).autoScrollEnabled, isFalse);
+      expect(container.read(bibleReaderProvider).autoScrollEnabled, isFalse);
 
       notifier.toggleAutoScroll();
-      expect(
-          container.read(bibleReaderProvider).autoScrollEnabled, isTrue);
+      expect(container.read(bibleReaderProvider).autoScrollEnabled, isTrue);
 
       notifier.toggleAutoScroll();
-      expect(
-          container.read(bibleReaderProvider).autoScrollEnabled, isFalse);
+      expect(container.read(bibleReaderProvider).autoScrollEnabled, isFalse);
     });
 
     test('navigateTo clears selectedVerseNumber and tappedWord', () {

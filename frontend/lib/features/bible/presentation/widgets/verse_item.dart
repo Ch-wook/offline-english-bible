@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
+import '../../../highlights/domain/entities/highlight.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/verse.dart';
 import '../providers/bible_reader_provider.dart';
@@ -19,12 +20,14 @@ class VerseItem extends ConsumerWidget {
     required this.verse,
     this.parallelVerse,
     this.isSelected = false,
+    this.highlightColorCode,
     super.key,
   });
 
   final Verse verse;
   final Verse? parallelVerse;
   final bool isSelected;
+  final String? highlightColorCode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,18 +39,31 @@ class VerseItem extends ConsumerWidget {
     final readerNotifier = ref.read(bibleReaderProvider.notifier);
 
     final isPrimaryEnglish = readerState.translationCode != 'KOREAN_RV';
-    final isParallelEnglish = readerState.parallelTranslationCode != 'KOREAN_RV';
+    final isParallelEnglish =
+        readerState.parallelTranslationCode != 'KOREAN_RV';
 
-    final selectedColor = isDark
-        ? AppColors.darkPrimaryContainer.withAlpha(180)
-        : AppColors.lightPrimaryContainer;
+    final selectedColor =
+        isDark
+            ? AppColors.darkPrimaryContainer.withAlpha(180)
+            : AppColors.lightPrimaryContainer;
+    final highlight = HighlightColor.fromCode(highlightColorCode ?? '');
+    final highlightColor =
+        highlight == null
+            ? null
+            : Color(
+              int.parse(
+                'FF${highlight.hexValue.replaceFirst('#', '')}',
+                radix: 16,
+              ),
+            ).withAlpha(isDark ? 70 : 95);
 
     return GestureDetector(
       onLongPress: () => readerNotifier.selectVerse(verse.verseNumber),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? selectedColor : Colors.transparent,
+          color:
+              isSelected ? selectedColor : highlightColor ?? Colors.transparent,
           borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
         ),
         padding: const EdgeInsets.symmetric(
@@ -68,30 +84,36 @@ class VerseItem extends ConsumerWidget {
                     '${verse.verseNumber}',
                     style: AppTypography.verseNumber.copyWith(
                       fontSize: fontSize * 0.72,
-                      color: isDark
-                          ? AppColors.verseNumberDark
-                          : AppColors.verseNumberLight,
+                      color:
+                          isDark
+                              ? AppColors.verseNumberDark
+                              : AppColors.verseNumberLight,
                     ),
                   ),
                 ),
                 // 본문
                 Expanded(
-                  child: isPrimaryEnglish
-                      ? _TappableVerseText(
-                          text: verse.text,
-                          fontSize: fontSize,
-                          lineSpacing: lineSpacing,
-                          color: colorScheme.onSurface,
-                          onWordTap: readerNotifier.onWordTap,
-                        )
-                      : Text(
-                          verse.text,
-                          style: AppTypography.bibleBody.copyWith(
+                  child:
+                      isPrimaryEnglish
+                          ? _TappableVerseText(
+                            text: verse.text,
                             fontSize: fontSize,
-                            height: lineSpacing,
+                            lineSpacing: lineSpacing,
                             color: colorScheme.onSurface,
+                            onWordTap:
+                                (word) => readerNotifier.onWordTap(
+                                  word,
+                                  source: verse,
+                                ),
+                          )
+                          : Text(
+                            verse.text,
+                            style: AppTypography.bibleBody.copyWith(
+                              fontSize: fontSize,
+                              height: lineSpacing,
+                              color: colorScheme.onSurface,
+                            ),
                           ),
-                        ),
                 ),
               ],
             ),
@@ -103,22 +125,27 @@ class VerseItem extends ConsumerWidget {
                 padding: const EdgeInsets.only(
                   left: AppSpacing.verseNumberWidth,
                 ),
-                child: isParallelEnglish
-                    ? _TappableVerseText(
-                        text: parallelVerse!.text,
-                        fontSize: fontSize * 0.85,
-                        lineSpacing: lineSpacing * 0.9,
-                        color: colorScheme.onSurfaceVariant,
-                        onWordTap: readerNotifier.onWordTap,
-                      )
-                    : Text(
-                        parallelVerse!.text,
-                        style: AppTypography.bibleBodySmall.copyWith(
+                child:
+                    isParallelEnglish
+                        ? _TappableVerseText(
+                          text: parallelVerse!.text,
                           fontSize: fontSize * 0.85,
-                          height: lineSpacing * 0.9,
+                          lineSpacing: lineSpacing * 0.9,
                           color: colorScheme.onSurfaceVariant,
+                          onWordTap:
+                              (word) => readerNotifier.onWordTap(
+                                word,
+                                source: parallelVerse,
+                              ),
+                        )
+                        : Text(
+                          parallelVerse!.text,
+                          style: AppTypography.bibleBodySmall.copyWith(
+                            fontSize: fontSize * 0.85,
+                            height: lineSpacing * 0.9,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
               ),
             ],
           ],
@@ -170,39 +197,39 @@ class _TappableVerseTextState extends State<_TappableVerseText> {
 
     final tokens = _tokenize(widget.text);
 
-    final spans = tokens.map((token) {
-      if (token.isWord) {
-        final recognizer = TapGestureRecognizer()
-          ..onTap = () => widget.onWordTap(token.text);
-        _recognizers.add(recognizer);
+    final spans =
+        tokens.map((token) {
+          if (token.isWord) {
+            final recognizer =
+                TapGestureRecognizer()
+                  ..onTap = () => widget.onWordTap(token.text);
+            _recognizers.add(recognizer);
 
-        return TextSpan(
-          text: token.text,
-          recognizer: recognizer,
-          style: TextStyle(
-            fontSize: widget.fontSize,
-            height: widget.lineSpacing,
-            color: widget.color,
-            fontFamily: 'NotoSerif',
-          ),
-        );
-      } else {
-        // 공백, 구두점 — 탭 불가
-        return TextSpan(
-          text: token.text,
-          style: TextStyle(
-            fontSize: widget.fontSize,
-            height: widget.lineSpacing,
-            color: widget.color,
-            fontFamily: 'NotoSerif',
-          ),
-        );
-      }
-    }).toList();
+            return TextSpan(
+              text: token.text,
+              recognizer: recognizer,
+              style: TextStyle(
+                fontSize: widget.fontSize,
+                height: widget.lineSpacing,
+                color: widget.color,
+                fontFamily: 'NotoSerif',
+              ),
+            );
+          } else {
+            // 공백, 구두점 — 탭 불가
+            return TextSpan(
+              text: token.text,
+              style: TextStyle(
+                fontSize: widget.fontSize,
+                height: widget.lineSpacing,
+                color: widget.color,
+                fontFamily: 'NotoSerif',
+              ),
+            );
+          }
+        }).toList();
 
-    return RichText(
-      text: TextSpan(children: spans),
-    );
+    return RichText(text: TextSpan(children: spans));
   }
 
   /// 텍스트를 단어/비단어 토큰으로 분리.

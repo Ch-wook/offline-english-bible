@@ -6,15 +6,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
+import '../../../vocabulary/presentation/providers/vocabulary_providers.dart';
 import '../../domain/entities/dictionary_entry.dart';
 import '../providers/dictionary_providers.dart';
 
 class DictionaryBottomSheet extends ConsumerWidget {
-  const DictionaryBottomSheet({required this.word, super.key});
+  const DictionaryBottomSheet({
+    required this.word,
+    this.bookId = 0,
+    this.chapter = 0,
+    this.verse = 0,
+    this.translationCode = 'KJV',
+    super.key,
+  });
 
   final String word;
+  final int bookId;
+  final int chapter;
+  final int verse;
+  final String translationCode;
 
-  static Future<void> show(BuildContext context, String word) {
+  static Future<void> show(
+    BuildContext context,
+    String word, {
+    int bookId = 0,
+    int chapter = 0,
+    int verse = 0,
+    String translationCode = 'KJV',
+  }) {
     final query = word.trim();
     if (query.isEmpty) return Future.value();
 
@@ -23,7 +42,14 @@ class DictionaryBottomSheet extends ConsumerWidget {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: false,
-      builder: (_) => DictionaryBottomSheet(word: query),
+      builder:
+          (_) => DictionaryBottomSheet(
+            word: query,
+            bookId: bookId,
+            chapter: chapter,
+            verse: verse,
+            translationCode: translationCode,
+          ),
     );
   }
 
@@ -47,6 +73,10 @@ class DictionaryBottomSheet extends ConsumerWidget {
                       : _EntryContent(
                         entry: entry,
                         scrollController: scrollController,
+                        bookId: bookId,
+                        chapter: chapter,
+                        verse: verse,
+                        translationCode: translationCode,
                       ),
         );
       },
@@ -55,10 +85,21 @@ class DictionaryBottomSheet extends ConsumerWidget {
 }
 
 class _EntryContent extends StatelessWidget {
-  const _EntryContent({required this.entry, required this.scrollController});
+  const _EntryContent({
+    required this.entry,
+    required this.scrollController,
+    required this.bookId,
+    required this.chapter,
+    required this.verse,
+    required this.translationCode,
+  });
 
   final DictionaryEntry entry;
   final ScrollController scrollController;
+  final int bookId;
+  final int chapter;
+  final int verse;
+  final String translationCode;
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +115,13 @@ class _EntryContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SheetHandle(),
-          _Header(entry: entry),
+          _Header(
+            entry: entry,
+            bookId: bookId,
+            chapter: chapter,
+            verse: verse,
+            translationCode: translationCode,
+          ),
           if (_koreanMeaning(entry).isNotEmpty) ...[
             const SizedBox(height: AppSpacing.lg),
             _KoreanMeaningPanel(text: _koreanMeaning(entry)),
@@ -108,6 +155,10 @@ class _EntryContent extends StatelessWidget {
               icon: Icons.swap_horiz_rounded,
               label: '비슷한 말',
               words: entry.synonyms,
+              bookId: bookId,
+              chapter: chapter,
+              verse: verse,
+              translationCode: translationCode,
             ),
           ],
           if (entry.antonyms.isNotEmpty) ...[
@@ -116,6 +167,10 @@ class _EntryContent extends StatelessWidget {
               icon: Icons.compare_arrows_rounded,
               label: '반대말',
               words: entry.antonyms,
+              bookId: bookId,
+              chapter: chapter,
+              verse: verse,
+              translationCode: translationCode,
             ),
           ],
           if (entry.relatedWords.isNotEmpty) ...[
@@ -124,6 +179,10 @@ class _EntryContent extends StatelessWidget {
               icon: Icons.link_rounded,
               label: '관련 단어',
               words: entry.relatedWords.take(12).toList(),
+              bookId: bookId,
+              chapter: chapter,
+              verse: verse,
+              translationCode: translationCode,
             ),
           ],
           const SizedBox(height: AppSpacing.xxl),
@@ -162,9 +221,19 @@ class _SourceAttribution extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.entry});
+  const _Header({
+    required this.entry,
+    required this.bookId,
+    required this.chapter,
+    required this.verse,
+    required this.translationCode,
+  });
 
   final DictionaryEntry entry;
+  final int bookId;
+  final int chapter;
+  final int verse;
+  final String translationCode;
 
   @override
   Widget build(BuildContext context) {
@@ -208,6 +277,13 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
+        _SaveVocabularyButton(
+          entry: entry,
+          bookId: bookId,
+          chapter: chapter,
+          verse: verse,
+          translationCode: translationCode,
+        ),
         _PronunciationButton(word: entry.word),
         IconButton(
           tooltip: '닫기',
@@ -215,6 +291,78 @@ class _Header extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ],
+    );
+  }
+}
+
+class _SaveVocabularyButton extends ConsumerWidget {
+  const _SaveVocabularyButton({
+    required this.entry,
+    required this.bookId,
+    required this.chapter,
+    required this.verse,
+    required this.translationCode,
+  });
+
+  final DictionaryEntry entry;
+  final int bookId;
+  final int chapter;
+  final int verse;
+  final String translationCode;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(isWordSavedProvider(entry.wordNormalized));
+    final isSaved = saved.valueOrNull ?? false;
+
+    return IconButton(
+      tooltip: isSaved ? '단어장에 저장됨' : '단어장에 저장',
+      onPressed:
+          isSaved
+              ? null
+              : () async {
+                try {
+                  await ref.read(addVocabWordProvider)(
+                    word: entry.wordNormalized,
+                    bookId: bookId,
+                    chapter: chapter,
+                    verse: verse,
+                    translationCode: translationCode,
+                    definition:
+                        _koreanMeaning(entry).isNotEmpty
+                            ? _koreanMeaning(entry)
+                            : entry.primaryDefinition,
+                    partOfSpeech: entry.primaryPartOfSpeech,
+                    ipa: entry.displayIpa,
+                    bibleDefinition: entry.senses
+                        .map((sense) => sense.bibleDefinition)
+                        .firstWhere(
+                          (definition) => definition.trim().isNotEmpty,
+                          orElse: () => '',
+                        ),
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('단어장에 저장했습니다'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                } catch (_) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('단어장을 저장하지 못했습니다'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
+              },
+      icon: Icon(
+        isSaved ? Icons.bookmark_rounded : Icons.bookmark_add_outlined,
+      ),
     );
   }
 }
@@ -474,11 +622,19 @@ class _WordChipSection extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.words,
+    required this.bookId,
+    required this.chapter,
+    required this.verse,
+    required this.translationCode,
   });
 
   final IconData icon;
   final String label;
   final List<String> words;
+  final int bookId;
+  final int chapter;
+  final int verse;
+  final String translationCode;
 
   @override
   Widget build(BuildContext context) {
@@ -498,7 +654,14 @@ class _WordChipSection extends StatelessWidget {
                       label: Text(word),
                       visualDensity: VisualDensity.compact,
                       onPressed:
-                          () => DictionaryBottomSheet.show(context, word),
+                          () => DictionaryBottomSheet.show(
+                            context,
+                            word,
+                            bookId: bookId,
+                            chapter: chapter,
+                            verse: verse,
+                            translationCode: translationCode,
+                          ),
                     ),
                   )
                   .toList(),

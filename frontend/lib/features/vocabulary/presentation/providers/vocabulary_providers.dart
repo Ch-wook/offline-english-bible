@@ -11,8 +11,7 @@ import '../../domain/repositories/vocabulary_repository.dart';
 
 // ── Repository ────────────────────────────────────────────────────────
 
-final vocabularyRepositoryProvider =
-    Provider<VocabularyRepository>((ref) {
+final vocabularyRepositoryProvider = Provider<VocabularyRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final ds = VocabularyLocalDataSourceImpl(db);
   return VocabularyRepositoryImpl(ds);
@@ -36,23 +35,19 @@ final dueForReviewProvider = FutureProvider<List<VocabItem>>((ref) async {
 
 // ── Stats ─────────────────────────────────────────────────────────────
 
-final vocabStatsProvider =
-    FutureProvider<VocabStats>((ref) async {
+final vocabStatsProvider = FutureProvider<VocabStats>((ref) async {
   final repo = ref.watch(vocabularyRepositoryProvider);
   final result = await repo.getStats();
   return result.valueOrNull ??
-      const VocabStats(
-        total: 0,
-        dueCount: 0,
-        learnedCount: 0,
-        streak: 0,
-      );
+      const VocabStats(total: 0, dueCount: 0, learnedCount: 0);
 });
 
 // ── Word Saved Check ──────────────────────────────────────────────────
 
-final isWordSavedProvider =
-    FutureProvider.family<bool, String>((ref, word) async {
+final isWordSavedProvider = FutureProvider.family<bool, String>((
+  ref,
+  word,
+) async {
   final repo = ref.watch(vocabularyRepositoryProvider);
   final result = await repo.isWordSaved(word);
   return result.valueOrNull ?? false;
@@ -60,16 +55,46 @@ final isWordSavedProvider =
 
 // ── Actions ───────────────────────────────────────────────────────────
 
-final addVocabWordProvider =
-    Provider<Future<void> Function(String, int, int, int, String)>((ref) {
-  return (word, bookId, chapter, verse, translationCode) async {
+typedef SaveVocabWord =
+    Future<void> Function({
+      required String word,
+      required int bookId,
+      required int chapter,
+      required int verse,
+      required String translationCode,
+      required String definition,
+      required String partOfSpeech,
+      required String ipa,
+      required String bibleDefinition,
+    });
+
+final addVocabWordProvider = Provider<SaveVocabWord>((ref) {
+  return ({
+    required word,
+    required bookId,
+    required chapter,
+    required verse,
+    required translationCode,
+    required definition,
+    required partOfSpeech,
+    required ipa,
+    required bibleDefinition,
+  }) async {
     final repo = ref.read(vocabularyRepositoryProvider);
-    await repo.addVocabItem(
+    final result = await repo.addVocabItem(
       word: word,
       bookId: bookId,
       chapter: chapter,
       verse: verse,
       translationCode: translationCode,
+      definition: definition,
+      partOfSpeech: partOfSpeech,
+      ipa: ipa,
+      bibleDefinition: bibleDefinition,
+    );
+    result.when(
+      success: (_) {},
+      failure: (failure) => throw StateError(failure.message),
     );
     ref.invalidate(allVocabItemsProvider);
     ref.invalidate(vocabStatsProvider);
@@ -78,8 +103,7 @@ final addVocabWordProvider =
   };
 });
 
-final submitReviewProvider =
-    Provider<Future<void> Function(int, int)>((ref) {
+final submitReviewProvider = Provider<Future<void> Function(int, int)>((ref) {
   return (vocabId, quality) async {
     final repo = ref.read(vocabularyRepositoryProvider);
     await repo.submitReview(vocabId: vocabId, quality: quality);

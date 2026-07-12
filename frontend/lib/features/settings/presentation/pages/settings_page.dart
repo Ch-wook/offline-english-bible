@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/di/providers.dart';
 import '../../../../theme/app_spacing.dart';
@@ -11,6 +12,8 @@ import '../providers/settings_provider.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
+
+  static final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -159,10 +162,20 @@ class SettingsPage extends ConsumerWidget {
           // ── 앱 정보 ───────────────────────────────────────────────
           const _SectionHeader(label: '앱 정보'),
 
-          const ListTile(
-            leading: Icon(Icons.info_outline_rounded),
-            title: Text('버전'),
-            trailing: Text('2.0.0'),
+          ListTile(
+            leading: const Icon(Icons.info_outline_rounded),
+            title: const Text('버전'),
+            trailing: FutureBuilder<PackageInfo>(
+              future: _packageInfo,
+              builder: (context, snapshot) {
+                final info = snapshot.data;
+                return Text(
+                  info == null
+                      ? '확인 중'
+                      : '${info.version} (${info.buildNumber})',
+                );
+              },
+            ),
           ),
 
           const ListTile(

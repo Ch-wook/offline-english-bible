@@ -38,10 +38,7 @@ Future<void> main() async {
   final db = AppDatabase(createDatabaseConnection('offline_bible.db'));
 
   // ── 초기화 서비스 ─────────────────────────────────────────────────
-  final initService = AppInitializationService(
-    db: db,
-    flagBox: initFlagBox,
-  );
+  final initService = AppInitializationService(db: db, flagBox: initFlagBox);
 
   runApp(
     ProviderScope(
@@ -91,16 +88,17 @@ class _AppWrapperState extends State<_AppWrapper> {
     if (_state.isReady) {
       return const App();
     }
-    return _InitScreen(state: _state);
+    return _InitScreen(state: _state, onRetry: widget.initService.initialize);
   }
 }
 
 // ── Init Screen ───────────────────────────────────────────────────────
 
 class _InitScreen extends StatelessWidget {
-  const _InitScreen({required this.state});
+  const _InitScreen({required this.state, required this.onRetry});
 
   final AppInitState state;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +151,7 @@ class _InitScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xxxxl),
 
                 if (state.hasError)
-                  _ErrorContent(state: state)
+                  _ErrorContent(state: state, onRetry: onRetry)
                 else
                   _LoadingContent(state: state),
               ],
@@ -173,9 +171,10 @@ class _LoadingContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = state.importProgressValue;
-    final message = state.importMessage.isNotEmpty
-        ? state.importMessage
-        : '데이터베이스를 초기화합니다…';
+    final message =
+        state.importMessage.isNotEmpty
+            ? state.importMessage
+            : '데이터베이스를 초기화합니다…';
 
     return Column(
       children: [
@@ -221,9 +220,10 @@ class _LoadingContent extends StatelessWidget {
 }
 
 class _ErrorContent extends StatelessWidget {
-  const _ErrorContent({required this.state});
+  const _ErrorContent({required this.state, required this.onRetry});
 
   final AppInitState state;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -248,6 +248,12 @@ class _ErrorContent extends StatelessWidget {
             color: AppColors.darkOnSurfaceVariant,
           ),
           textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        FilledButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded),
+          label: const Text('다시 시도'),
         ),
       ],
     );

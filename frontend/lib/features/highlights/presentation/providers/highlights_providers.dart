@@ -3,6 +3,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/database/app_database.dart' show Highlight;
 import '../../../../core/di/providers.dart';
 import '../../../bible/data/datasources/user_local_datasource_impl.dart';
 
@@ -22,34 +23,32 @@ final allBookmarksProvider = FutureProvider((ref) async {
 
 /// 특정 절 북마크 여부.
 final isVerseBookmarkedProvider = FutureProvider.family<
-    bool,
-    ({int bookId, int chapter, int verse, String translation})>(
-  (ref, params) async {
-    final ds = ref.watch(userDataSourceForHighlightsProvider);
-    return ds.isVerseBookmarked(
-      bookId: params.bookId,
-      chapter: params.chapter,
-      verse: params.verse,
-      translationCode: params.translation,
-    );
-  },
-);
+  bool,
+  ({int bookId, int chapter, int verse, String translation})
+>((ref, params) async {
+  final ds = ref.watch(userDataSourceForHighlightsProvider);
+  return ds.isVerseBookmarked(
+    bookId: params.bookId,
+    chapter: params.chapter,
+    verse: params.verse,
+    translationCode: params.translation,
+  );
+});
 
 // ── Highlights ────────────────────────────────────────────────────────
 
 /// 특정 장의 형광펜 목록.
 final chapterHighlightsProvider = FutureProvider.family<
-    List<dynamic>,
-    ({int bookId, int chapter, String translation})>(
-  (ref, params) async {
-    final ds = ref.watch(userDataSourceForHighlightsProvider);
-    return ds.getChapterHighlights(
-      bookId: params.bookId,
-      chapter: params.chapter,
-      translationCode: params.translation,
-    );
-  },
-);
+  List<Highlight>,
+  ({int bookId, int chapter, String translation})
+>((ref, params) async {
+  final ds = ref.watch(userDataSourceForHighlightsProvider);
+  return ds.getChapterHighlights(
+    bookId: params.bookId,
+    chapter: params.chapter,
+    translationCode: params.translation,
+  );
+});
 
 // ── Action Notifier ───────────────────────────────────────────────────
 
@@ -111,5 +110,5 @@ final class HighlightActionNotifier extends StateNotifier<void> {
 
 final highlightActionProvider =
     StateNotifierProvider<HighlightActionNotifier, void>((ref) {
-  return HighlightActionNotifier(ref);
-});
+      return HighlightActionNotifier(ref);
+    });

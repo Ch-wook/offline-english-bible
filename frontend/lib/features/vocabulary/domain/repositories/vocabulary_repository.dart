@@ -21,6 +21,9 @@ abstract interface class VocabularyRepository {
     required int verse,
     required String translationCode,
     String? definition,
+    String partOfSpeech = 'unknown',
+    String ipa = '',
+    String bibleDefinition = '',
   });
 
   Future<Result<void, Failure>> removeVocabItem(int id);
@@ -49,15 +52,11 @@ final class VocabStats {
     required this.total,
     required this.dueCount,
     required this.learnedCount,
-    required this.streak,
   });
 
   final int total;
   final int dueCount;
   final int learnedCount;
-
-  /// 연속 복습일수.
-  final int streak;
 
   int get notLearnedCount => total - learnedCount;
 }

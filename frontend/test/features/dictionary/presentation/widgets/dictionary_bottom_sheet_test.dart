@@ -5,12 +5,14 @@ import 'package:offline_english_bible/core/services/pronunciation_service.dart';
 import 'package:offline_english_bible/features/dictionary/domain/entities/dictionary_entry.dart';
 import 'package:offline_english_bible/features/dictionary/presentation/providers/dictionary_providers.dart';
 import 'package:offline_english_bible/features/dictionary/presentation/widgets/dictionary_bottom_sheet.dart';
+import 'package:offline_english_bible/features/vocabulary/presentation/providers/vocabulary_providers.dart';
 
 void main() {
   testWidgets('shows dictionary content in app and plays pronunciation', (
     tester,
   ) async {
     final pronunciation = _FakePronunciationService();
+    final savedWords = <String>[];
     const entry = DictionaryEntry(
       id: 1,
       word: 'grace',
@@ -34,6 +36,20 @@ void main() {
         overrides: [
           wordLookupProvider.overrideWith((ref, word) async => entry),
           pronunciationServiceProvider.overrideWithValue(pronunciation),
+          isWordSavedProvider.overrideWith((ref, word) async => false),
+          addVocabWordProvider.overrideWithValue(({
+            required word,
+            required bookId,
+            required chapter,
+            required verse,
+            required translationCode,
+            required definition,
+            required partOfSpeech,
+            required ipa,
+            required bibleDefinition,
+          }) async {
+            savedWords.add(word);
+          }),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -62,6 +78,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(pronunciation.spokenWords, ['grace']);
+
+    await tester.tap(find.byTooltip('단어장에 저장'));
+    await tester.pumpAndSettle();
+    expect(savedWords, ['grace']);
+    expect(find.text('단어장에 저장했습니다'), findsOneWidget);
   });
 }
 

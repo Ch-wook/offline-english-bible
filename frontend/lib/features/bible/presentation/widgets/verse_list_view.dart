@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../theme/app_spacing.dart';
+import '../../../highlights/presentation/providers/highlights_providers.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/chapter_content.dart';
 import '../providers/bible_reader_provider.dart';
@@ -15,10 +16,7 @@ import 'verse_item.dart';
 /// 장 전체를 스크롤 가능한 리스트 뷰로 표시.
 /// 자동 스크롤, 다음/이전 장 네비게이션 포함.
 class VerseListView extends ConsumerStatefulWidget {
-  const VerseListView({
-    required this.content,
-    super.key,
-  });
+  const VerseListView({required this.content, super.key});
 
   final ChapterContent content;
 
@@ -59,21 +57,16 @@ class _VerseListViewState extends ConsumerState<VerseListView> {
 
   void _startAutoScroll(double pixelsPerSecond) {
     _autoScrollTimer?.cancel();
-    _autoScrollTimer = Timer.periodic(
-      const Duration(milliseconds: 50),
-      (_) {
-        if (!_scrollController.hasClients) return;
-        final current = _scrollController.offset;
-        final max = _scrollController.position.maxScrollExtent;
-        if (current >= max) {
-          _autoScrollTimer?.cancel();
-          return;
-        }
-        _scrollController.jumpTo(
-          (current + pixelsPerSecond / 20).clamp(0, max),
-        );
-      },
-    );
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+      if (!_scrollController.hasClients) return;
+      final current = _scrollController.offset;
+      final max = _scrollController.position.maxScrollExtent;
+      if (current >= max) {
+        _autoScrollTimer?.cancel();
+        return;
+      }
+      _scrollController.jumpTo((current + pixelsPerSecond / 20).clamp(0, max));
+    });
   }
 
   void _stopAutoScroll() {
@@ -101,7 +94,19 @@ class _VerseListViewState extends ConsumerState<VerseListView> {
     });
 
     final content = widget.content;
-    final parallelView = readerState.isParallelView &&
+    final highlightParams = (
+      bookId: content.book.id,
+      chapter: content.chapterNumber,
+      translation: content.translationCode,
+    );
+    final highlights =
+        ref.watch(chapterHighlightsProvider(highlightParams)).valueOrNull ??
+        const [];
+    final highlightColors = {
+      for (final highlight in highlights) highlight.verse: highlight.color,
+    };
+    final parallelView =
+        readerState.isParallelView &&
         readerState.translationCode != readerState.parallelTranslationCode;
 
     return NotificationListener<ScrollNotification>(
@@ -122,14 +127,18 @@ class _VerseListViewState extends ConsumerState<VerseListView> {
             itemCount: content.verseCount,
             itemBuilder: (context, index) {
               final verse = content.verses[index];
-              final parallel = parallelView
-                  ? content.parallelVerseAt(verse.verseNumber)
-                  : null;
+              final parallel =
+                  parallelView
+                      ? content.parallelVerseAt(verse.verseNumber)
+                      : null;
 
               return VerseItem(
-                key: ValueKey('${verse.bookId}:${verse.chapter}:${verse.verseNumber}'),
+                key: ValueKey(
+                  '${verse.bookId}:${verse.chapter}:${verse.verseNumber}',
+                ),
                 verse: verse,
                 parallelVerse: parallel,
+                highlightColorCode: highlightColors[verse.verseNumber],
                 isSelected:
                     readerState.selectedVerseNumber == verse.verseNumber,
               );
@@ -140,20 +149,20 @@ class _VerseListViewState extends ConsumerState<VerseListView> {
           SliverToBoxAdapter(
             child: _ChapterNavigation(
               content: content,
-              onPrevious: content.hasPreviousChapter
-                  ? () => readerNotifier.goToPreviousChapter()
-                  : null,
-              onNext: content.hasNextChapter
-                  ? () => readerNotifier.goToNextChapter(
+              onPrevious:
+                  content.hasPreviousChapter
+                      ? () => readerNotifier.goToPreviousChapter()
+                      : null,
+              onNext:
+                  content.hasNextChapter
+                      ? () => readerNotifier.goToNextChapter(
                         content.book.chapterCount,
                       )
-                  : null,
+                      : null,
             ),
           ),
 
-          const SliverToBoxAdapter(
-            child: SizedBox(height: AppSpacing.xxxxl),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxxxl)),
         ],
       ),
     );
@@ -185,16 +194,17 @@ class _ChapterNavigation extends StatelessWidget {
         children: [
           // 이전 장
           Expanded(
-            child: onPrevious != null
-                ? OutlinedButton.icon(
-                    onPressed: onPrevious,
-                    icon: const Icon(Icons.chevron_left_rounded),
-                    label: Text(
-                      '${content.chapterNumber - 1}장',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
-                : const SizedBox.shrink(),
+            child:
+                onPrevious != null
+                    ? OutlinedButton.icon(
+                      onPressed: onPrevious,
+                      icon: const Icon(Icons.chevron_left_rounded),
+                      label: Text(
+                        '${content.chapterNumber - 1}장',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                    : const SizedBox.shrink(),
           ),
           const SizedBox(width: AppSpacing.md),
           // 현재 장 표시
@@ -218,17 +228,18 @@ class _ChapterNavigation extends StatelessWidget {
           const SizedBox(width: AppSpacing.md),
           // 다음 장
           Expanded(
-            child: onNext != null
-                ? OutlinedButton.icon(
-                    onPressed: onNext,
-                    icon: const Icon(Icons.chevron_right_rounded),
-                    iconAlignment: IconAlignment.end,
-                    label: Text(
-                      '${content.chapterNumber + 1}장',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
-                : const SizedBox.shrink(),
+            child:
+                onNext != null
+                    ? OutlinedButton.icon(
+                      onPressed: onNext,
+                      icon: const Icon(Icons.chevron_right_rounded),
+                      iconAlignment: IconAlignment.end,
+                      label: Text(
+                        '${content.chapterNumber + 1}장',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                    : const SizedBox.shrink(),
           ),
         ],
       ),

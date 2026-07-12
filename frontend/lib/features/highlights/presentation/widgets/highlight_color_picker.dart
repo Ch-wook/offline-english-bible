@@ -26,7 +26,7 @@ class HighlightColorPicker extends ConsumerWidget {
   final String translationCode;
   final String verseText;
 
-  static Future<void> show(
+  static Future<String?> show(
     BuildContext context, {
     required int bookId,
     required int chapter,
@@ -34,15 +34,16 @@ class HighlightColorPicker extends ConsumerWidget {
     required String translationCode,
     required String verseText,
   }) {
-    return showModalBottomSheet<void>(
+    return showModalBottomSheet<String>(
       context: context,
-      builder: (_) => HighlightColorPicker(
-        bookId: bookId,
-        chapter: chapter,
-        verse: verse,
-        translationCode: translationCode,
-        verseText: verseText,
-      ),
+      builder:
+          (_) => HighlightColorPicker(
+            bookId: bookId,
+            chapter: chapter,
+            verse: verse,
+            translationCode: translationCode,
+            verseText: verseText,
+          ),
     );
   }
 
@@ -82,86 +83,53 @@ class HighlightColorPicker extends ConsumerWidget {
           // 색상 팔레트
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: HighlightColor.presets.map((hc) {
-              final hex = hc.hexValue;
-              final color = _hexToColor(hex);
+            children:
+                HighlightColor.presets.map((hc) {
+                  final hex = hc.hexValue;
+                  final color = _hexToColor(hex);
 
-              return GestureDetector(
-                onTap: () async {
-                  Navigator.pop(context);
-                  await notifier.addHighlight(
-                    bookId: bookId,
-                    chapter: chapter,
-                    verse: verse,
-                    translationCode: translationCode,
-                    color: hc.code,
-                  );
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            Text('${hc.label} 형광펜이 적용되었습니다'),
-                        duration: const Duration(seconds: 2),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                },
-                child: Column(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colorScheme.outlineVariant,
-                          width: 1.5,
+                  return GestureDetector(
+                    onTap: () async {
+                      await notifier.addHighlight(
+                        bookId: bookId,
+                        chapter: chapter,
+                        verse: verse,
+                        translationCode: translationCode,
+                        color: hc.code,
+                      );
+                      if (context.mounted) {
+                        Navigator.pop(context, hc.label);
+                      }
+                    },
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                              width: 1.5,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          hc.label,
+                          style: AppTypography.labelSmall.copyWith(
+                            fontSize: 10,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      hc.label,
-                      style: AppTypography.labelSmall.copyWith(
-                        fontSize: 10,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
 
           const SizedBox(height: AppSpacing.lg),
-
-          // 북마크 추가 버튼
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                Navigator.pop(context);
-                await ref.read(highlightActionProvider.notifier).addBookmark(
-                      bookId: bookId,
-                      chapter: chapter,
-                      verse: verse,
-                      translationCode: translationCode,
-                    );
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('북마크가 추가되었습니다'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              },
-              icon: const Icon(Icons.bookmark_add_rounded, size: 18),
-              label: const Text('북마크 추가'),
-            ),
-          ),
         ],
       ),
     );

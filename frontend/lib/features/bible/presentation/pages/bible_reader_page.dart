@@ -3,13 +3,21 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../../routes/route_names.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../../../dictionary/presentation/widgets/dictionary_bottom_sheet.dart';
+import '../../../highlights/presentation/pages/bookmarks_page.dart';
+import '../../../highlights/presentation/providers/highlights_providers.dart';
+import '../../../highlights/presentation/widgets/highlight_color_picker.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/chapter_content.dart';
+import '../../domain/entities/verse.dart';
+import '../../domain/services/bible_share_formatter.dart';
 import '../providers/bible_providers.dart';
 import '../providers/bible_reader_provider.dart';
 import '../widgets/book_selector_sheet.dart';
@@ -27,7 +35,14 @@ class BibleReaderPage extends ConsumerWidget {
     // 단어 탭 → 바텀시트 트리거
     ref.listen<BibleReaderState>(bibleReaderProvider, (_, next) {
       if (next.tappedWord != null && context.mounted) {
-        DictionaryBottomSheet.show(context, next.tappedWord!);
+        DictionaryBottomSheet.show(
+          context,
+          next.tappedWord!,
+          bookId: next.tappedBookId ?? 0,
+          chapter: next.tappedChapter ?? 0,
+          verse: next.tappedVerse ?? 0,
+          translationCode: next.tappedTranslationCode ?? 'KJV',
+        );
         ref.read(bibleReaderProvider.notifier).clearWordTap();
       }
     });
@@ -169,6 +184,16 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
                   ),
                 ),
                 const PopupMenuItem(
+                  value: _MenuAction.bookmarks,
+                  child: Row(
+                    children: [
+                      Icon(Icons.bookmarks_rounded, size: 20),
+                      SizedBox(width: 12),
+                      Text('북마크'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
                   value: _MenuAction.share,
                   child: Row(
                     children: [
@@ -196,22 +221,38 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
     );
   }
 
-  void _onMenuAction(_MenuAction action) {
+  Future<void> _onMenuAction(_MenuAction action) async {
     final notifier = ref.read(bibleReaderProvider.notifier);
     switch (action) {
       case _MenuAction.autoScroll:
         notifier.toggleAutoScroll();
       case _MenuAction.search:
-        // TASK 7 에서 구현
-        break;
+        context.go(RoutePaths.search);
+      case _MenuAction.bookmarks:
+        await Navigator.of(
+          context,
+        ).push<void>(MaterialPageRoute(builder: (_) => const BookmarksPage()));
       case _MenuAction.share:
-        // TASK 8 에서 구현
-        break;
+        final content = ref.read(currentChapterProvider).valueOrNull;
+        if (content == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('본문을 불러온 뒤 다시 시도하세요')));
+          }
+          return;
+        }
+        await SharePlus.instance.share(
+          ShareParams(
+            text: BibleShareFormatter.chapter(content),
+            subject: '${content.book.nameKorean} ${content.chapterNumber}장',
+          ),
+        );
     }
   }
 }
 
-enum _MenuAction { autoScroll, search, share }
+enum _MenuAction { autoScroll, search, bookmarks, share }
 
 // ── Body ──────────────────────────────────────────────────────────────
 
@@ -230,7 +271,8 @@ class _ReaderBody extends ConsumerWidget {
         VerseListView(content: content),
 
         // 절 선택 액션 바
-        if (readerState.selectedVerseNumber != null)
+        if (readerState.selectedVerseNumber != null &&
+            content.verseAt(readerState.selectedVerseNumber!) != null)
           Positioned(
             bottom: 0,
             left: 0,
@@ -240,6 +282,8 @@ class _ReaderBody extends ConsumerWidget {
               bookId: content.book.id,
               chapter: content.chapterNumber,
               translationCode: content.translationCode,
+              bookName: content.book.nameKorean,
+              verse: content.verseAt(readerState.selectedVerseNumber!)!,
             ),
           ),
       ],
@@ -306,12 +350,16 @@ class _VerseActionBar extends ConsumerWidget {
     required this.bookId,
     required this.chapter,
     required this.translationCode,
+    required this.bookName,
+    required this.verse,
   });
 
   final int verseNumber;
   final int bookId;
   final int chapter;
   final String translationCode;
+  final String bookName;
+  final Verse verse;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -340,39 +388,67 @@ class _VerseActionBar extends ConsumerWidget {
             ),
           ),
           const Spacer(),
-          // 형광펜 (TASK 6)
           IconButton(
             icon: const Icon(Icons.highlight_rounded),
             tooltip: '형광펜',
-            onPressed: () {
-              notifier.clearVerseSelection();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('형광펜 기능은 TASK 6에서 구현됩니다'),
-                  behavior: SnackBarBehavior.floating,
-                ),
+            onPressed: () async {
+              final colorLabel = await HighlightColorPicker.show(
+                context,
+                bookId: bookId,
+                chapter: chapter,
+                verse: verseNumber,
+                translationCode: translationCode,
+                verseText: verse.text,
               );
+              notifier.clearVerseSelection();
+              if (context.mounted && colorLabel != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$colorLabel 형광펜이 적용되었습니다'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
           ),
-          // 북마크 (TASK 6)
           IconButton(
             icon: const Icon(Icons.bookmark_add_rounded),
             tooltip: '북마크',
-            onPressed: () {
+            onPressed: () async {
+              await ref
+                  .read(highlightActionProvider.notifier)
+                  .addBookmark(
+                    bookId: bookId,
+                    chapter: chapter,
+                    verse: verseNumber,
+                    translationCode: translationCode,
+                  );
               notifier.clearVerseSelection();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('북마크 기능은 TASK 6에서 구현됩니다'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('북마크에 저장했습니다'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
           ),
-          // 공유
           IconButton(
             icon: const Icon(Icons.share_rounded),
             tooltip: '공유',
-            onPressed: () => notifier.clearVerseSelection(),
+            onPressed: () async {
+              await SharePlus.instance.share(
+                ShareParams(
+                  text: BibleShareFormatter.verse(
+                    bookName: bookName,
+                    verse: verse,
+                  ),
+                  subject: '$bookName $chapter:$verseNumber',
+                ),
+              );
+              notifier.clearVerseSelection();
+            },
           ),
           // 닫기
           IconButton(
