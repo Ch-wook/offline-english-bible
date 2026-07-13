@@ -13,6 +13,9 @@ The application bundles offline data generated from the following sources.
   [WordNet License](https://wordnet.princeton.edu/license-and-commercial-use).
 - CMU Pronouncing Dictionary: Copyright Carnegie Mellon University, used
   under its permissive license.
+- quick_english-korean StarDict: Korean meanings distributed under the
+  [GNU GPL](https://stardict.uber.space/ko/index.html). Only entries needed
+  to complete the bundled KJV vocabulary are included in the generated data.
 
 The generated dictionary is limited to words that occur in the bundled KJV.
 Source links and attribution are also shown in the in-app dictionary sheet.

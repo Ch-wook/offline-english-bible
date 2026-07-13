@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../dictionary/domain/services/dictionary_query_normalizer.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
+import '../../domain/entities/reading_tab.dart';
 import '../../domain/entities/verse.dart';
 import '../../domain/usecases/get_chapter_usecase.dart';
 import '../providers/bible_providers.dart';
@@ -138,6 +139,17 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
 
   void navigateTo({required int bookId, required int chapter}) {
     state = state.copyWith(bookId: bookId, chapter: chapter);
+    _syncToChapterParams();
+  }
+
+  void restoreReadingTab(BibleReadingTab tab) {
+    state = BibleReaderState(
+      bookId: tab.bookId,
+      chapter: tab.chapter,
+      translationCode: tab.translationCode,
+      isParallelView: tab.isParallelView,
+      parallelTranslationCode: tab.parallelTranslationCode,
+    );
     _syncToChapterParams();
   }
 

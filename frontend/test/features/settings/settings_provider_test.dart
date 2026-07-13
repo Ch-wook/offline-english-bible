@@ -77,8 +77,8 @@ void main() {
       await notifier.setFontSize(5.0); // below min (12)
       expect(container.read(settingsProvider).fontSize, 12.0);
 
-      await notifier.setFontSize(100.0); // above max (28)
-      expect(container.read(settingsProvider).fontSize, 28.0);
+      await notifier.setFontSize(100.0); // above max (32)
+      expect(container.read(settingsProvider).fontSize, 32.0);
     });
 
     test('toggleParallelView flips boolean', () async {

@@ -133,6 +133,22 @@ class ReadingHistory extends Table {
       integer().withDefault(const Constant(1))();
 }
 
+/// 여러 성경 읽기 위치를 독립적으로 보존하는 탭.
+@DataClassName('ReadingTabData')
+class ReadingTabs extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get bookId => integer().withDefault(const Constant(1))();
+  IntColumn get chapter => integer().withDefault(const Constant(1))();
+  TextColumn get translationCode => text().withDefault(const Constant('KJV'))();
+  BoolColumn get isParallelView =>
+      boolean().withDefault(const Constant(false))();
+  TextColumn get parallelTranslationCode =>
+      text().withDefault(const Constant('KOREAN_RV'))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
 /// 읽기 계획 (사용자 정의).
 class ReadingPlans extends Table {
   IntColumn get id => integer().autoIncrement()();

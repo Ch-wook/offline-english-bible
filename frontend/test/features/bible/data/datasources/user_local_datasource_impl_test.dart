@@ -59,4 +59,36 @@ void main() {
     expect(highlights, hasLength(1));
     expect(highlights.single.color, 'blue');
   });
+
+  test(
+    'reading tabs preserve independent locations and one active tab',
+    () async {
+      final firstId = await dataSource.createReadingTab(
+        bookId: 1,
+        chapter: 3,
+        translationCode: 'KJV',
+        isParallelView: true,
+        parallelTranslationCode: 'KOREAN_RV',
+        sortOrder: 0,
+      );
+      final secondId = await dataSource.createReadingTab(
+        bookId: 43,
+        chapter: 3,
+        translationCode: 'KJV',
+        isParallelView: false,
+        parallelTranslationCode: 'KOREAN_RV',
+        sortOrder: 1,
+      );
+
+      var tabs = await dataSource.getReadingTabs();
+      expect(tabs.map((tab) => tab.id), [firstId, secondId]);
+      expect(tabs.where((tab) => tab.isActive).single.id, secondId);
+
+      await dataSource.setActiveReadingTab(firstId);
+      tabs = await dataSource.getReadingTabs();
+      expect(tabs.where((tab) => tab.isActive).single.id, firstId);
+      expect(tabs.first.chapter, 3);
+      expect(tabs.last.bookId, 43);
+    },
+  );
 }

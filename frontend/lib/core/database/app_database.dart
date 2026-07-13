@@ -52,6 +52,7 @@ part 'app_database.g.dart';
     ReviewSessions,
     ReviewAnswers,
     ReadingHistory,
+    ReadingTabs,
     ReadingPlans,
   ],
 )
@@ -59,7 +60,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -88,6 +89,9 @@ class AppDatabase extends _$AppDatabase {
           dictionaryEntries.relatedWordsJson,
         );
         await m.addColumn(wordSenses, wordSenses.definitionKo);
+      }
+      if (from < 3) {
+        await m.createTable(readingTabs);
       }
     },
   );
@@ -145,6 +149,11 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_reading_history_accessed '
       'ON reading_history (accessed_at DESC)',
+    );
+
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_reading_tabs_order '
+      'ON reading_tabs (sort_order, id)',
     );
 
     // 단어장 복습 스케줄

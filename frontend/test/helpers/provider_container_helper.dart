@@ -12,14 +12,19 @@ import 'package:offline_english_bible/features/settings/presentation/providers/s
 ProviderContainer createTestContainer({
   AppDatabase? db,
   Box<dynamic>? settingsBox,
+  bool closeDatabaseOnDispose = true,
   List<Override> additionalOverrides = const [],
 }) {
   final testDb = db ?? AppDatabase(createInMemoryConnection());
   final testBox = settingsBox ?? _createEmptyBox();
+  final databaseOverride =
+      closeDatabaseOnDispose
+          ? appDatabaseOverride(testDb)
+          : appDatabaseProvider.overrideWithValue(testDb);
 
   return ProviderContainer(
     overrides: [
-      appDatabaseOverride(testDb),
+      databaseOverride,
       settingsBoxProvider.overrideWithValue(testBox),
       ...additionalOverrides,
     ],

@@ -14,12 +14,15 @@ import '../../../dictionary/presentation/widgets/dictionary_bottom_sheet.dart';
 import '../../../highlights/presentation/pages/bookmarks_page.dart';
 import '../../../highlights/presentation/providers/highlights_providers.dart';
 import '../../../highlights/presentation/widgets/highlight_color_picker.dart';
+import '../../../settings/domain/entities/app_settings.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/chapter_content.dart';
 import '../../domain/entities/verse.dart';
 import '../../domain/services/bible_share_formatter.dart';
 import '../providers/bible_providers.dart';
 import '../providers/bible_reader_provider.dart';
+import '../providers/reading_tabs_provider.dart';
+import '../widgets/bible_reading_tabs_bar.dart';
 import '../widgets/book_selector_sheet.dart';
 import '../widgets/verse_list_view.dart';
 
@@ -28,6 +31,7 @@ class BibleReaderPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(readingTabsAutoSaveProvider);
     final readerState = ref.watch(bibleReaderProvider);
     final chapterAsync = ref.watch(currentChapterProvider);
     final settings = ref.watch(settingsProvider);
@@ -55,6 +59,7 @@ class BibleReaderPage extends ConsumerWidget {
         error: (error, _) => _ErrorBody(message: error.toString()),
         data: (content) => _ReaderBody(content: content),
       ),
+      bottomNavigationBar: const BibleReadingTabsBar(),
       floatingActionButton: chapterAsync.whenOrNull(
         data: (content) => _AutoScrollFAB(content: content),
       ),
@@ -69,7 +74,7 @@ class _BibleAppBar extends ConsumerStatefulWidget
   const _BibleAppBar({required this.readerState, required this.settings});
 
   final BibleReaderState readerState;
-  final dynamic settings; // AppSettings
+  final AppSettings settings;
 
   @override
   Size get preferredSize => const Size.fromHeight(AppSpacing.appBarHeight);
@@ -164,6 +169,16 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
           itemBuilder:
               (_) => [
                 const PopupMenuItem(
+                  value: _MenuAction.readingSettings,
+                  child: Row(
+                    children: [
+                      Icon(Icons.text_fields_rounded, size: 20),
+                      SizedBox(width: 12),
+                      Text('읽기 설정'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
                   value: _MenuAction.autoScroll,
                   child: Row(
                     children: [
@@ -224,6 +239,12 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
   Future<void> _onMenuAction(_MenuAction action) async {
     final notifier = ref.read(bibleReaderProvider.notifier);
     switch (action) {
+      case _MenuAction.readingSettings:
+        await showModalBottomSheet<void>(
+          context: context,
+          useSafeArea: true,
+          builder: (_) => const _ReadingSettingsSheet(),
+        );
       case _MenuAction.autoScroll:
         notifier.toggleAutoScroll();
       case _MenuAction.search:
@@ -252,7 +273,113 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
   }
 }
 
-enum _MenuAction { autoScroll, search, bookmarks, share }
+enum _MenuAction { readingSettings, autoScroll, search, bookmarks, share }
+
+class _ReadingSettingsSheet extends ConsumerWidget {
+  const _ReadingSettingsSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final settingsNotifier = ref.read(settingsProvider.notifier);
+    final reader = ref.watch(bibleReaderProvider);
+    final readerNotifier = ref.read(bibleReaderProvider.notifier);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Text('읽기 설정', style: AppTypography.titleMedium),
+              const Spacer(),
+              IconButton(
+                tooltip: '닫기',
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.format_size_rounded),
+            title: const Text('글자 크기'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: '글자 작게',
+                  onPressed:
+                      settings.fontSize <= 12
+                          ? null
+                          : () => settingsNotifier.setFontSize(
+                            settings.fontSize - 1,
+                          ),
+                  icon: const Icon(Icons.remove_rounded),
+                ),
+                SizedBox(
+                  width: 42,
+                  child: Text(
+                    '${settings.fontSize.round()}',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.titleMedium.copyWith(
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: '글자 크게',
+                  onPressed:
+                      settings.fontSize >= 32
+                          ? null
+                          : () => settingsNotifier.setFontSize(
+                            settings.fontSize + 1,
+                          ),
+                  icon: const Icon(Icons.add_rounded),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.format_line_spacing_rounded),
+            title: const Text('줄 간격'),
+            subtitle: Slider(
+              value: settings.lineSpacing.clamp(1.4, 2.5),
+              min: 1.4,
+              max: 2.5,
+              divisions: 11,
+              label: settings.lineSpacing.toStringAsFixed(1),
+              onChanged: settingsNotifier.setLineSpacing,
+            ),
+            trailing: Text(settings.lineSpacing.toStringAsFixed(1)),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            secondary: const Icon(Icons.format_list_numbered_rounded),
+            title: const Text('절 번호 표시'),
+            value: settings.showVerseNumbers,
+            onChanged: (_) => settingsNotifier.toggleShowVerseNumbers(),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            secondary: const Icon(Icons.view_agenda_rounded),
+            title: const Text('대역 보기'),
+            value: reader.isParallelView,
+            onChanged: (_) => readerNotifier.toggleParallelView(),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 // ── Body ──────────────────────────────────────────────────────────────
 

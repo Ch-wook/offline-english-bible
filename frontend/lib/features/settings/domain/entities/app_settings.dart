@@ -25,7 +25,7 @@ class AppSettings {
   /// 테마 모드 (라이트 / 다크 / 시스템).
   final ThemeMode themeMode;
 
-  /// 성경 본문 폰트 크기 (12.0 ~ 28.0).
+  /// 성경 본문 폰트 크기 (12.0 ~ 32.0).
   final double fontSize;
 
   /// 행간 (1.4 ~ 2.5).

@@ -89,7 +89,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       _update(state.copyWith(themeMode: mode));
 
   Future<void> setFontSize(double size) =>
-      _update(state.copyWith(fontSize: size.clamp(12.0, 28.0)));
+      _update(state.copyWith(fontSize: size.clamp(12.0, 32.0)));
 
   Future<void> setLineSpacing(double spacing) =>
       _update(state.copyWith(lineSpacing: spacing.clamp(1.4, 2.5)));

@@ -20,6 +20,7 @@ void main() {
       ipaUs: '/ɡreɪs/',
       koreanMeaning: '은혜, 은총',
       bibleFrequency: 170,
+      synonyms: ['favor'],
       senses: [
         WordSense(
           id: 1,
@@ -73,6 +74,13 @@ void main() {
     expect(find.text('은혜, 은총'), findsOneWidget);
     expect(find.text('/ɡreɪs/'), findsOneWidget);
     expect(find.text('unmerited divine favor'), findsOneWidget);
+    final synonymChip = tester.widget<ActionChip>(
+      find.widgetWithText(ActionChip, 'favor'),
+    );
+    expect(
+      synonymChip.labelStyle?.color,
+      Theme.of(tester.element(find.text('favor'))).colorScheme.onSurfaceVariant,
+    );
 
     await tester.tap(find.byTooltip('발음 듣기'));
     await tester.pumpAndSettle();

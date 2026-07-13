@@ -41,6 +41,83 @@ final class UserLocalDataSourceImpl implements UserLocalDataSource {
             ..limit(limit))
           .get();
 
+  // ── Reading Tabs ─────────────────────────────────────────────────
+
+  @override
+  Future<List<ReadingTabData>> getReadingTabs() =>
+      (_db.select(_db.readingTabs)..orderBy([
+        (tab) => OrderingTerm.asc(tab.sortOrder),
+        (tab) => OrderingTerm.asc(tab.id),
+      ])).get();
+
+  @override
+  Future<int> createReadingTab({
+    required int bookId,
+    required int chapter,
+    required String translationCode,
+    required bool isParallelView,
+    required String parallelTranslationCode,
+    required int sortOrder,
+  }) => _db.transaction(() async {
+    await _db
+        .update(_db.readingTabs)
+        .write(const ReadingTabsCompanion(isActive: Value(false)));
+    return _db
+        .into(_db.readingTabs)
+        .insert(
+          ReadingTabsCompanion(
+            bookId: Value(bookId),
+            chapter: Value(chapter),
+            translationCode: Value(translationCode),
+            isParallelView: Value(isParallelView),
+            parallelTranslationCode: Value(parallelTranslationCode),
+            sortOrder: Value(sortOrder),
+            isActive: const Value(true),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+  });
+
+  @override
+  Future<void> updateReadingTab(ReadingTabData tab) async {
+    await (_db.update(_db.readingTabs)
+      ..where((row) => row.id.equals(tab.id))).write(
+      ReadingTabsCompanion(
+        bookId: Value(tab.bookId),
+        chapter: Value(tab.chapter),
+        translationCode: Value(tab.translationCode),
+        isParallelView: Value(tab.isParallelView),
+        parallelTranslationCode: Value(tab.parallelTranslationCode),
+        sortOrder: Value(tab.sortOrder),
+        isActive: Value(tab.isActive),
+        updatedAt: Value(tab.updatedAt),
+      ),
+    );
+  }
+
+  @override
+  Future<void> setActiveReadingTab(int id) => _db.transaction(() async {
+    final target =
+        await (_db.select(_db.readingTabs)
+          ..where((tab) => tab.id.equals(id))).getSingleOrNull();
+    if (target == null) throw StateError('읽기 탭을 찾을 수 없습니다: $id');
+
+    await _db
+        .update(_db.readingTabs)
+        .write(const ReadingTabsCompanion(isActive: Value(false)));
+    await (_db.update(_db.readingTabs)
+      ..where((tab) => tab.id.equals(id))).write(
+      ReadingTabsCompanion(
+        isActive: const Value(true),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  });
+
+  @override
+  Future<void> deleteReadingTab(int id) =>
+      (_db.delete(_db.readingTabs)..where((tab) => tab.id.equals(id))).go();
+
   // ── Bookmarks ──────────────────────────────────────────────────────
 
   @override

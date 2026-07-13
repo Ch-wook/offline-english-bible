@@ -4,6 +4,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'src/bible_korean_supplement.dart';
+import 'src/dictionary_korean_backfill.dart';
+import 'src/stardict_reader.dart';
+
 const _bookNames = <String>[
   'Genesis',
   'Exodus',
@@ -81,7 +85,7 @@ Future<void> main(List<String> args) async {
     stderr.writeln('''
 Usage: dart run scripts/build_offline_dictionary.dart \\
   <kjv_full.json> <ko-extract.jsonl[.gz]> <wordnet-dir> <cmudict> \\
-  [output.json] [fallback-map.dart]
+  [output.json] [fallback-map.dart] [english-korean-stardict-dir]
 ''');
     exitCode = 64;
     return;
@@ -109,13 +113,22 @@ Usage: dart run scripts/build_offline_dictionary.dart \\
   stdout.writeln('    고유 단어 ${corpus.frequency.length}개');
 
   stdout.writeln('2/6 한국어 내장 뜻 로드');
-  final curatedMeanings = _readCuratedMeanings(fallbackPath);
+  final curatedMeanings = <String, String>{};
+  if (args.length > 6) {
+    final starDictMeanings = readStarDict(args[6]);
+    curatedMeanings.addAll(starDictMeanings);
+    stdout.writeln('    StarDict 한국어 뜻 ${starDictMeanings.length}개');
+  }
+  curatedMeanings
+    ..addAll(_readCuratedMeanings(fallbackPath))
+    ..addAll(bibleKoreanSupplement);
 
   stdout.writeln('3/6 WordNet 색인과 활용형 분석');
   final wordnet = _WordNetIndex.load(wordnetDir);
   final resolvedRoots = <String, String>{};
   for (final word in corpus.frequency.keys) {
-    resolvedRoots[word] = wordnet.resolveLemma(word) ?? word;
+    resolvedRoots[word] =
+        kjvWordRootOverrides[word] ?? wordnet.resolveLemma(word) ?? word;
   }
   final roots = resolvedRoots.values.toSet();
   final selectedRefs = <_SenseRef>{};
@@ -145,6 +158,15 @@ Usage: dart run scripts/build_offline_dictionary.dart \\
     wordnetSenses: wordnetSenses,
     references: wordnet.references,
     pronunciations: pronunciations,
+  );
+  applyBibleKoreanSupplements(entries);
+  final backfill = backfillKoreanMeanings(
+    entries,
+    curatedMeanings: curatedMeanings,
+  );
+  stdout.writeln(
+    '    한국어 뜻 보강 ${backfill.total}개 '
+    '(뜻 승계 ${backfill.inherited}, 문맥 분류 ${backfill.classified})',
   );
 
   final output = File(outputPath);
@@ -664,33 +686,35 @@ Iterable<String> _lemmaCandidates(String word) sync* {
 
   if (word.endsWith('ies')) add('${word.substring(0, word.length - 3)}y');
   if (word.endsWith('es')) {
-    add(word.substring(0, word.length - 2));
     add(word.substring(0, word.length - 1));
+    add(word.substring(0, word.length - 2));
   }
   if (word.endsWith('s')) add(word.substring(0, word.length - 1));
   if (word.endsWith('ed')) {
     final stem = word.substring(0, word.length - 2);
-    add(stem);
     add('${stem}e');
     add(_withoutDoubledConsonant(stem));
+    add(stem);
   }
   if (word.endsWith('ing')) {
     final stem = word.substring(0, word.length - 3);
-    add(stem);
     add('${stem}e');
     add(_withoutDoubledConsonant(stem));
+    add(stem);
   }
   if (word.endsWith('eth')) {
     final stem = word.substring(0, word.length - 3);
-    add(stem);
+    if (stem.endsWith('i')) add('${stem.substring(0, stem.length - 1)}y');
     add('${stem}e');
     add(_withoutDoubledConsonant(stem));
+    add(stem);
   }
   if (word.endsWith('est')) {
     final stem = word.substring(0, word.length - 3);
-    add(stem);
+    if (stem.endsWith('i')) add('${stem.substring(0, stem.length - 1)}y');
     add('${stem}e');
     add(_withoutDoubledConsonant(stem));
+    add(stem);
   }
   yield* candidates;
 }

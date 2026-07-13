@@ -32,9 +32,64 @@ void main() {
       }
     }
 
+    expect(
+      entriesByWord.length,
+      dictionary.length,
+      reason: 'Dictionary headwords must be unique',
+    );
+    const generatedClassifications = {
+      '성경의 책 이름',
+      '성경에 등장하는 인명 또는 지명',
+      '킹제임스 성경에서 사용되는 고어 또는 특수 표현',
+      '성경 문맥에서 사용되는 동사',
+      '성경 문맥에서 사용되는 형용사',
+      '성경 문맥에서 사용되는 부사',
+      '성경 문맥에서 사용되는 명사',
+      '킹제임스 성경에서 사용되는 영어 표현',
+    };
+    for (final entry in entriesByWord.values) {
+      final meaning = entry['korean_meaning']! as String;
+      expect(
+        RegExp(r'[가-힣]').hasMatch(meaning),
+        isTrue,
+        reason: '${entry['word']} must have a Korean meaning: $meaning',
+      );
+      expect(
+        generatedClassifications,
+        isNot(contains(meaning)),
+        reason: '${entry['word']} must have a specific meaning',
+      );
+    }
+
     final missing = words.difference({...entryWords, ...forms});
     expect(missing, isEmpty, reason: 'Missing KJV words: ${missing.take(30)}');
     expect(words.length, greaterThan(12000));
+
+    const expectedBibleMeanings = {
+      'acts': '사도행전',
+      'foe': '적, 원수',
+      'jetheth': '여뎃',
+      'mite': '렙돈, 매우 작은 동전',
+      'peleth': '벨렛',
+      'urias': '우리아',
+      'vulture': '독수리류, 솔개',
+    };
+    for (final expected in expectedBibleMeanings.entries) {
+      expect(entriesByWord[expected.key]?['korean_meaning'], expected.value);
+    }
+    for (final invalidRoot in [
+      'chang',
+      'fo',
+      'liv',
+      'mak',
+      'mit',
+      'mus',
+      'se',
+      'trad',
+      'vultur',
+    ]) {
+      expect(entryWords, isNot(contains(invalidRoot)));
+    }
 
     for (final word in ['grace', 'beginning', 'create', 'love', 'jesus']) {
       final entry = entriesByWord[word];

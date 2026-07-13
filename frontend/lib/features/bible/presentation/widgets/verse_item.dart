@@ -35,6 +35,9 @@ class VerseItem extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fontSize = ref.watch(bibleFontSizeProvider);
     final lineSpacing = ref.watch(bibleLineSpacingProvider);
+    final showVerseNumbers = ref.watch(
+      settingsProvider.select((settings) => settings.showVerseNumbers),
+    );
     final readerState = ref.watch(bibleReaderProvider);
     final readerNotifier = ref.read(bibleReaderProvider.notifier);
 
@@ -68,83 +71,84 @@ class VerseItem extends ConsumerWidget {
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+          vertical: 6,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 주 번역본 (영어) ────────────────────────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 절 번호
-                SizedBox(
-                  width: AppSpacing.verseNumberWidth,
-                  child: Text(
-                    '${verse.verseNumber}',
-                    style: AppTypography.verseNumber.copyWith(
-                      fontSize: fontSize * 0.72,
-                      color:
-                          isDark
-                              ? AppColors.verseNumberDark
-                              : AppColors.verseNumberLight,
-                    ),
-                  ),
+            // ── 주 번역본 ──────────────────────────────────────────
+            if (isPrimaryEnglish)
+              _TappableVerseText(
+                key: ValueKey(
+                  'primary-${verse.translationCode}-${verse.verseNumber}',
                 ),
-                // 본문
-                Expanded(
-                  child:
-                      isPrimaryEnglish
-                          ? _TappableVerseText(
-                            text: verse.text,
-                            fontSize: fontSize,
-                            lineSpacing: lineSpacing,
-                            color: colorScheme.onSurface,
-                            onWordTap:
-                                (word) => readerNotifier.onWordTap(
-                                  word,
-                                  source: verse,
-                                ),
-                          )
-                          : Text(
-                            verse.text,
-                            style: AppTypography.bibleBody.copyWith(
-                              fontSize: fontSize,
-                              height: lineSpacing,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
+                text: verse.text,
+                verseNumber: showVerseNumbers ? verse.verseNumber : null,
+                fontSize: fontSize,
+                lineSpacing: lineSpacing,
+                color: colorScheme.onSurface,
+                verseNumberColor:
+                    isDark
+                        ? AppColors.verseNumberDark
+                        : AppColors.verseNumberLight,
+                onWordTap:
+                    (word) => readerNotifier.onWordTap(word, source: verse),
+              )
+            else
+              _PlainVerseText(
+                key: ValueKey(
+                  'primary-${verse.translationCode}-${verse.verseNumber}',
                 ),
-              ],
-            ),
+                text: verse.text,
+                verseNumber: showVerseNumbers ? verse.verseNumber : null,
+                fontSize: fontSize,
+                lineSpacing: lineSpacing,
+                color: colorScheme.onSurface,
+                verseNumberColor:
+                    isDark
+                        ? AppColors.verseNumberDark
+                        : AppColors.verseNumberLight,
+              ),
 
             // ── 대역 번역본 ────────────────────────────────
             if (parallelVerse != null) ...[
-              const SizedBox(height: AppSpacing.xs),
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: AppSpacing.verseNumberWidth,
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.only(left: AppSpacing.sm),
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(
+                      color: colorScheme.primary.withAlpha(55),
+                      width: 2,
+                    ),
+                  ),
                 ),
                 child:
                     isParallelEnglish
                         ? _TappableVerseText(
+                          key: ValueKey(
+                            'parallel-${parallelVerse!.translationCode}-${parallelVerse!.verseNumber}',
+                          ),
                           text: parallelVerse!.text,
-                          fontSize: fontSize * 0.85,
-                          lineSpacing: lineSpacing * 0.9,
+                          fontSize: fontSize,
+                          lineSpacing: lineSpacing,
                           color: colorScheme.onSurfaceVariant,
+                          verseNumberColor: colorScheme.onSurfaceVariant,
                           onWordTap:
                               (word) => readerNotifier.onWordTap(
                                 word,
                                 source: parallelVerse,
                               ),
                         )
-                        : Text(
-                          parallelVerse!.text,
-                          style: AppTypography.bibleBodySmall.copyWith(
-                            fontSize: fontSize * 0.85,
-                            height: lineSpacing * 0.9,
-                            color: colorScheme.onSurfaceVariant,
+                        : _PlainVerseText(
+                          key: ValueKey(
+                            'parallel-${parallelVerse!.translationCode}-${parallelVerse!.verseNumber}',
                           ),
+                          text: parallelVerse!.text,
+                          fontSize: fontSize,
+                          lineSpacing: lineSpacing,
+                          color: colorScheme.onSurfaceVariant,
+                          verseNumberColor: colorScheme.onSurfaceVariant,
                         ),
               ),
             ],
@@ -163,13 +167,18 @@ class _TappableVerseText extends StatefulWidget {
     required this.fontSize,
     required this.lineSpacing,
     required this.color,
+    required this.verseNumberColor,
     required this.onWordTap,
+    this.verseNumber,
+    super.key,
   });
 
   final String text;
   final double fontSize;
   final double lineSpacing;
   final Color color;
+  final Color verseNumberColor;
+  final int? verseNumber;
   final void Function(String word) onWordTap;
 
   @override
@@ -197,37 +206,47 @@ class _TappableVerseTextState extends State<_TappableVerseText> {
 
     final tokens = _tokenize(widget.text);
 
-    final spans =
-        tokens.map((token) {
-          if (token.isWord) {
-            final recognizer =
-                TapGestureRecognizer()
-                  ..onTap = () => widget.onWordTap(token.text);
-            _recognizers.add(recognizer);
+    final spans = <InlineSpan>[
+      if (widget.verseNumber != null)
+        TextSpan(
+          text: '${widget.verseNumber}  ',
+          style: AppTypography.verseNumber.copyWith(
+            fontSize: widget.fontSize * 0.7,
+            height: widget.lineSpacing,
+            color: widget.verseNumberColor,
+          ),
+        ),
+      ...tokens.map((token) {
+        if (token.isWord) {
+          final recognizer =
+              TapGestureRecognizer()
+                ..onTap = () => widget.onWordTap(token.text);
+          _recognizers.add(recognizer);
 
-            return TextSpan(
-              text: token.text,
-              recognizer: recognizer,
-              style: TextStyle(
-                fontSize: widget.fontSize,
-                height: widget.lineSpacing,
-                color: widget.color,
-                fontFamily: 'NotoSerif',
-              ),
-            );
-          } else {
-            // 공백, 구두점 — 탭 불가
-            return TextSpan(
-              text: token.text,
-              style: TextStyle(
-                fontSize: widget.fontSize,
-                height: widget.lineSpacing,
-                color: widget.color,
-                fontFamily: 'NotoSerif',
-              ),
-            );
-          }
-        }).toList();
+          return TextSpan(
+            text: token.text,
+            recognizer: recognizer,
+            style: TextStyle(
+              fontSize: widget.fontSize,
+              height: widget.lineSpacing,
+              color: widget.color,
+              fontFamily: 'NotoSerif',
+            ),
+          );
+        } else {
+          // 공백, 구두점 — 탭 불가
+          return TextSpan(
+            text: token.text,
+            style: TextStyle(
+              fontSize: widget.fontSize,
+              height: widget.lineSpacing,
+              color: widget.color,
+              fontFamily: 'NotoSerif',
+            ),
+          );
+        }
+      }),
+    ];
 
     return RichText(text: TextSpan(children: spans));
   }
@@ -242,6 +261,52 @@ class _TappableVerseTextState extends State<_TappableVerseText> {
       tokens.add(_Token(t, isWord: wordCheck.hasMatch(t)));
     }
     return tokens;
+  }
+}
+
+class _PlainVerseText extends StatelessWidget {
+  const _PlainVerseText({
+    required this.text,
+    required this.fontSize,
+    required this.lineSpacing,
+    required this.color,
+    required this.verseNumberColor,
+    this.verseNumber,
+    super.key,
+  });
+
+  final String text;
+  final double fontSize;
+  final double lineSpacing;
+  final Color color;
+  final Color verseNumberColor;
+  final int? verseNumber;
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          if (verseNumber != null)
+            TextSpan(
+              text: '$verseNumber  ',
+              style: AppTypography.verseNumber.copyWith(
+                fontSize: fontSize * 0.7,
+                height: lineSpacing,
+                color: verseNumberColor,
+              ),
+            ),
+          TextSpan(
+            text: text,
+            style: AppTypography.bibleBody.copyWith(
+              fontSize: fontSize,
+              height: lineSpacing,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

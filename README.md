@@ -16,7 +16,7 @@
 - 🌐 **완전 오프라인** — 인터넷 없이 모든 핵심 기능 동작
 - 🤖 **AI-Free** — OpenAI/Gemini/Claude API 미사용
 - 📱 **Android + iOS** 지원
-- 🔒 **저작권 안전** — 공개 도메인 데이터만 사용
+- 🔒 **라이선스 준수** — 공개 도메인 및 오픈 라이선스 데이터의 출처와 조건 명시
 
 ---
 
@@ -24,7 +24,7 @@
 
 | 기능 | 설명 | 상태 |
 |------|------|------|
-| 📖 **성경 읽기** | KJV + 개역한글 대역 보기, 단어 탭, 자동 스크롤 | ✅ |
+| 📖 **성경 읽기** | KJV + 개역한글 대역 보기, 여러 읽기 탭, 빠른 글자 설정, 자동 스크롤 | ✅ |
 | 📚 **앱 내부 사전** | 단어를 누르면 한국어 뜻, IPA, 품사, 예문, 유의어와 발음 재생을 앱 안에서 표시 | ✅ |
 | 🔤 **단어장** | SM-2 SRS 알고리즘 기반 간격 반복 복습 | ✅ |
 | 🔍 **전문 검색** | FTS5 기반 성경 전체 검색 (< 200ms) | ✅ |
@@ -83,6 +83,9 @@ frontend/lib/
 | 단어 정의 | [Wiktionary](https://kaikki.org/dictionary/English/) | CC BY-SA 4.0 |
 | 영문 정의·동의어·반의어 | [WordNet 3.0](https://wordnet.princeton.edu/) | Princeton WordNet License |
 | 발음 표기 | [CMU Pronouncing Dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) | CMUdict License |
+| 영한 뜻 보강 | [quick_english-korean StarDict](https://stardict.uber.space/ko/index.html) | GNU GPL |
+
+앱 코드는 MIT 라이선스이며, 번들 데이터에는 각 데이터 소스의 라이선스가 별도로 적용됩니다.
 
 ---
 
@@ -128,7 +131,10 @@ dart run scripts/build_offline_dictionary.dart \
   frontend/assets/data/kjv_full.json \
   <kaikki-korean-extract.jsonl.gz> \
   <wordnet-dict-directory> \
-  <cmudict-file>
+  <cmudict-file> \
+  frontend/assets/data/dictionary_full.json \
+  frontend/lib/core/data/bible_word_korean_dict.dart \
+  <quick-english-korean-stardict-directory>
 ```
 
 생성 데이터의 출처와 라이선스 전문은 [`THIRD_PARTY_DATA.md`](THIRD_PARTY_DATA.md)를 확인하세요.

@@ -10,6 +10,7 @@ import '../../../../theme/app_spacing.dart';
 import '../../../highlights/presentation/providers/highlights_providers.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/chapter_content.dart';
+import '../providers/bible_providers.dart';
 import '../providers/bible_reader_provider.dart';
 import 'verse_item.dart';
 
@@ -108,6 +109,28 @@ class _VerseListViewState extends ConsumerState<VerseListView> {
     final parallelView =
         readerState.isParallelView &&
         readerState.translationCode != readerState.parallelTranslationCode;
+    final books = ref.watch(allBooksProvider).valueOrNull ?? const [];
+    final currentBookIndex = books.indexWhere(
+      (book) => book.id == content.book.id,
+    );
+    final previousBook =
+        currentBookIndex > 0 ? books[currentBookIndex - 1] : null;
+    final nextBook =
+        currentBookIndex >= 0 && currentBookIndex < books.length - 1
+            ? books[currentBookIndex + 1]
+            : null;
+    final previousLabel =
+        content.hasPreviousChapter
+            ? '${content.chapterNumber - 1}장'
+            : previousBook == null
+            ? null
+            : '${previousBook.abbreviationKorean} ${previousBook.chapterCount}장';
+    final nextLabel =
+        content.hasNextChapter
+            ? '${content.chapterNumber + 1}장'
+            : nextBook == null
+            ? null
+            : '${nextBook.abbreviationKorean} 1장';
 
     return NotificationListener<ScrollNotification>(
       // 사용자가 스크롤하면 자동 스크롤 중지
@@ -149,16 +172,28 @@ class _VerseListViewState extends ConsumerState<VerseListView> {
           SliverToBoxAdapter(
             child: _ChapterNavigation(
               content: content,
+              previousLabel: previousLabel,
+              nextLabel: nextLabel,
               onPrevious:
                   content.hasPreviousChapter
                       ? () => readerNotifier.goToPreviousChapter()
-                      : null,
+                      : previousBook == null
+                      ? null
+                      : () => readerNotifier.navigateTo(
+                        bookId: previousBook.id,
+                        chapter: previousBook.chapterCount,
+                      ),
               onNext:
                   content.hasNextChapter
                       ? () => readerNotifier.goToNextChapter(
                         content.book.chapterCount,
                       )
-                      : null,
+                      : nextBook == null
+                      ? null
+                      : () => readerNotifier.navigateTo(
+                        bookId: nextBook.id,
+                        chapter: 1,
+                      ),
             ),
           ),
 
@@ -174,11 +209,15 @@ class _VerseListViewState extends ConsumerState<VerseListView> {
 class _ChapterNavigation extends StatelessWidget {
   const _ChapterNavigation({
     required this.content,
+    required this.previousLabel,
+    required this.nextLabel,
     this.onPrevious,
     this.onNext,
   });
 
   final ChapterContent content;
+  final String? previousLabel;
+  final String? nextLabel;
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
 
@@ -200,7 +239,7 @@ class _ChapterNavigation extends StatelessWidget {
                       onPressed: onPrevious,
                       icon: const Icon(Icons.chevron_left_rounded),
                       label: Text(
-                        '${content.chapterNumber - 1}장',
+                        previousLabel!,
                         overflow: TextOverflow.ellipsis,
                       ),
                     )
@@ -234,10 +273,7 @@ class _ChapterNavigation extends StatelessWidget {
                       onPressed: onNext,
                       icon: const Icon(Icons.chevron_right_rounded),
                       iconAlignment: IconAlignment.end,
-                      label: Text(
-                        '${content.chapterNumber + 1}장',
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      label: Text(nextLabel!, overflow: TextOverflow.ellipsis),
                     )
                     : const SizedBox.shrink(),
           ),

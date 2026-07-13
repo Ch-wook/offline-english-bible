@@ -16,6 +16,24 @@ abstract interface class UserLocalDataSource {
 
   Future<List<ReadingHistoryData>> getRecentReadingHistory({int limit = 20});
 
+  // ── Reading Tabs ─────────────────────────────────────────────────
+  Future<List<ReadingTabData>> getReadingTabs();
+
+  Future<int> createReadingTab({
+    required int bookId,
+    required int chapter,
+    required String translationCode,
+    required bool isParallelView,
+    required String parallelTranslationCode,
+    required int sortOrder,
+  });
+
+  Future<void> updateReadingTab(ReadingTabData tab);
+
+  Future<void> setActiveReadingTab(int id);
+
+  Future<void> deleteReadingTab(int id);
+
   // ── Bookmarks ──────────────────────────────────────────────────────
   Future<List<Bookmark>> getAllBookmarks();
 

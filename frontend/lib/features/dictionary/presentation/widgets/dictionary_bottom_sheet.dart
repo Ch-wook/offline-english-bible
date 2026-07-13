@@ -209,7 +209,7 @@ class _SourceAttribution extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Text(
-            'Wiktionary · WordNet · CMU Pronouncing Dictionary',
+            'Wiktionary · WordNet · quick_english-korean · CMUdict',
             style: AppTypography.labelSmall.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -638,6 +638,7 @@ class _WordChipSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -652,6 +653,10 @@ class _WordChipSection extends StatelessWidget {
                   .map(
                     (word) => ActionChip(
                       label: Text(word),
+                      labelStyle: AppTypography.labelMedium.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      backgroundColor: colorScheme.surfaceContainerHighest,
                       visualDensity: VisualDensity.compact,
                       onPressed:
                           () => DictionaryBottomSheet.show(

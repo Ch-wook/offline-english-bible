@@ -11459,6 +11459,584 @@ class ReadingHistoryCompanion extends UpdateCompanion<ReadingHistoryData> {
   }
 }
 
+class $ReadingTabsTable extends ReadingTabs
+    with TableInfo<$ReadingTabsTable, ReadingTabData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReadingTabsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<int> bookId = GeneratedColumn<int>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _chapterMeta = const VerificationMeta(
+    'chapter',
+  );
+  @override
+  late final GeneratedColumn<int> chapter = GeneratedColumn<int>(
+    'chapter',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _translationCodeMeta = const VerificationMeta(
+    'translationCode',
+  );
+  @override
+  late final GeneratedColumn<String> translationCode = GeneratedColumn<String>(
+    'translation_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('KJV'),
+  );
+  static const VerificationMeta _isParallelViewMeta = const VerificationMeta(
+    'isParallelView',
+  );
+  @override
+  late final GeneratedColumn<bool> isParallelView = GeneratedColumn<bool>(
+    'is_parallel_view',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_parallel_view" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _parallelTranslationCodeMeta =
+      const VerificationMeta('parallelTranslationCode');
+  @override
+  late final GeneratedColumn<String> parallelTranslationCode =
+      GeneratedColumn<String>(
+        'parallel_translation_code',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('KOREAN_RV'),
+      );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    bookId,
+    chapter,
+    translationCode,
+    isParallelView,
+    parallelTranslationCode,
+    sortOrder,
+    isActive,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reading_tabs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReadingTabData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    }
+    if (data.containsKey('chapter')) {
+      context.handle(
+        _chapterMeta,
+        chapter.isAcceptableOrUnknown(data['chapter']!, _chapterMeta),
+      );
+    }
+    if (data.containsKey('translation_code')) {
+      context.handle(
+        _translationCodeMeta,
+        translationCode.isAcceptableOrUnknown(
+          data['translation_code']!,
+          _translationCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_parallel_view')) {
+      context.handle(
+        _isParallelViewMeta,
+        isParallelView.isAcceptableOrUnknown(
+          data['is_parallel_view']!,
+          _isParallelViewMeta,
+        ),
+      );
+    }
+    if (data.containsKey('parallel_translation_code')) {
+      context.handle(
+        _parallelTranslationCodeMeta,
+        parallelTranslationCode.isAcceptableOrUnknown(
+          data['parallel_translation_code']!,
+          _parallelTranslationCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReadingTabData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReadingTabData(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      bookId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}book_id'],
+          )!,
+      chapter:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}chapter'],
+          )!,
+      translationCode:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}translation_code'],
+          )!,
+      isParallelView:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}is_parallel_view'],
+          )!,
+      parallelTranslationCode:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}parallel_translation_code'],
+          )!,
+      sortOrder:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}sort_order'],
+          )!,
+      isActive:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}is_active'],
+          )!,
+      updatedAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}updated_at'],
+          )!,
+    );
+  }
+
+  @override
+  $ReadingTabsTable createAlias(String alias) {
+    return $ReadingTabsTable(attachedDatabase, alias);
+  }
+}
+
+class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
+  final int id;
+  final int bookId;
+  final int chapter;
+  final String translationCode;
+  final bool isParallelView;
+  final String parallelTranslationCode;
+  final int sortOrder;
+  final bool isActive;
+  final DateTime updatedAt;
+  const ReadingTabData({
+    required this.id,
+    required this.bookId,
+    required this.chapter,
+    required this.translationCode,
+    required this.isParallelView,
+    required this.parallelTranslationCode,
+    required this.sortOrder,
+    required this.isActive,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['book_id'] = Variable<int>(bookId);
+    map['chapter'] = Variable<int>(chapter);
+    map['translation_code'] = Variable<String>(translationCode);
+    map['is_parallel_view'] = Variable<bool>(isParallelView);
+    map['parallel_translation_code'] = Variable<String>(
+      parallelTranslationCode,
+    );
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['is_active'] = Variable<bool>(isActive);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ReadingTabsCompanion toCompanion(bool nullToAbsent) {
+    return ReadingTabsCompanion(
+      id: Value(id),
+      bookId: Value(bookId),
+      chapter: Value(chapter),
+      translationCode: Value(translationCode),
+      isParallelView: Value(isParallelView),
+      parallelTranslationCode: Value(parallelTranslationCode),
+      sortOrder: Value(sortOrder),
+      isActive: Value(isActive),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ReadingTabData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReadingTabData(
+      id: serializer.fromJson<int>(json['id']),
+      bookId: serializer.fromJson<int>(json['bookId']),
+      chapter: serializer.fromJson<int>(json['chapter']),
+      translationCode: serializer.fromJson<String>(json['translationCode']),
+      isParallelView: serializer.fromJson<bool>(json['isParallelView']),
+      parallelTranslationCode: serializer.fromJson<String>(
+        json['parallelTranslationCode'],
+      ),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'bookId': serializer.toJson<int>(bookId),
+      'chapter': serializer.toJson<int>(chapter),
+      'translationCode': serializer.toJson<String>(translationCode),
+      'isParallelView': serializer.toJson<bool>(isParallelView),
+      'parallelTranslationCode': serializer.toJson<String>(
+        parallelTranslationCode,
+      ),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'isActive': serializer.toJson<bool>(isActive),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ReadingTabData copyWith({
+    int? id,
+    int? bookId,
+    int? chapter,
+    String? translationCode,
+    bool? isParallelView,
+    String? parallelTranslationCode,
+    int? sortOrder,
+    bool? isActive,
+    DateTime? updatedAt,
+  }) => ReadingTabData(
+    id: id ?? this.id,
+    bookId: bookId ?? this.bookId,
+    chapter: chapter ?? this.chapter,
+    translationCode: translationCode ?? this.translationCode,
+    isParallelView: isParallelView ?? this.isParallelView,
+    parallelTranslationCode:
+        parallelTranslationCode ?? this.parallelTranslationCode,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isActive: isActive ?? this.isActive,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ReadingTabData copyWithCompanion(ReadingTabsCompanion data) {
+    return ReadingTabData(
+      id: data.id.present ? data.id.value : this.id,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      chapter: data.chapter.present ? data.chapter.value : this.chapter,
+      translationCode:
+          data.translationCode.present
+              ? data.translationCode.value
+              : this.translationCode,
+      isParallelView:
+          data.isParallelView.present
+              ? data.isParallelView.value
+              : this.isParallelView,
+      parallelTranslationCode:
+          data.parallelTranslationCode.present
+              ? data.parallelTranslationCode.value
+              : this.parallelTranslationCode,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReadingTabData(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapter: $chapter, ')
+          ..write('translationCode: $translationCode, ')
+          ..write('isParallelView: $isParallelView, ')
+          ..write('parallelTranslationCode: $parallelTranslationCode, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    bookId,
+    chapter,
+    translationCode,
+    isParallelView,
+    parallelTranslationCode,
+    sortOrder,
+    isActive,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReadingTabData &&
+          other.id == this.id &&
+          other.bookId == this.bookId &&
+          other.chapter == this.chapter &&
+          other.translationCode == this.translationCode &&
+          other.isParallelView == this.isParallelView &&
+          other.parallelTranslationCode == this.parallelTranslationCode &&
+          other.sortOrder == this.sortOrder &&
+          other.isActive == this.isActive &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
+  final Value<int> id;
+  final Value<int> bookId;
+  final Value<int> chapter;
+  final Value<String> translationCode;
+  final Value<bool> isParallelView;
+  final Value<String> parallelTranslationCode;
+  final Value<int> sortOrder;
+  final Value<bool> isActive;
+  final Value<DateTime> updatedAt;
+  const ReadingTabsCompanion({
+    this.id = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.chapter = const Value.absent(),
+    this.translationCode = const Value.absent(),
+    this.isParallelView = const Value.absent(),
+    this.parallelTranslationCode = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ReadingTabsCompanion.insert({
+    this.id = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.chapter = const Value.absent(),
+    this.translationCode = const Value.absent(),
+    this.isParallelView = const Value.absent(),
+    this.parallelTranslationCode = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    required DateTime updatedAt,
+  }) : updatedAt = Value(updatedAt);
+  static Insertable<ReadingTabData> custom({
+    Expression<int>? id,
+    Expression<int>? bookId,
+    Expression<int>? chapter,
+    Expression<String>? translationCode,
+    Expression<bool>? isParallelView,
+    Expression<String>? parallelTranslationCode,
+    Expression<int>? sortOrder,
+    Expression<bool>? isActive,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (bookId != null) 'book_id': bookId,
+      if (chapter != null) 'chapter': chapter,
+      if (translationCode != null) 'translation_code': translationCode,
+      if (isParallelView != null) 'is_parallel_view': isParallelView,
+      if (parallelTranslationCode != null)
+        'parallel_translation_code': parallelTranslationCode,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (isActive != null) 'is_active': isActive,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ReadingTabsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? bookId,
+    Value<int>? chapter,
+    Value<String>? translationCode,
+    Value<bool>? isParallelView,
+    Value<String>? parallelTranslationCode,
+    Value<int>? sortOrder,
+    Value<bool>? isActive,
+    Value<DateTime>? updatedAt,
+  }) {
+    return ReadingTabsCompanion(
+      id: id ?? this.id,
+      bookId: bookId ?? this.bookId,
+      chapter: chapter ?? this.chapter,
+      translationCode: translationCode ?? this.translationCode,
+      isParallelView: isParallelView ?? this.isParallelView,
+      parallelTranslationCode:
+          parallelTranslationCode ?? this.parallelTranslationCode,
+      sortOrder: sortOrder ?? this.sortOrder,
+      isActive: isActive ?? this.isActive,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<int>(bookId.value);
+    }
+    if (chapter.present) {
+      map['chapter'] = Variable<int>(chapter.value);
+    }
+    if (translationCode.present) {
+      map['translation_code'] = Variable<String>(translationCode.value);
+    }
+    if (isParallelView.present) {
+      map['is_parallel_view'] = Variable<bool>(isParallelView.value);
+    }
+    if (parallelTranslationCode.present) {
+      map['parallel_translation_code'] = Variable<String>(
+        parallelTranslationCode.value,
+      );
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReadingTabsCompanion(')
+          ..write('id: $id, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapter: $chapter, ')
+          ..write('translationCode: $translationCode, ')
+          ..write('isParallelView: $isParallelView, ')
+          ..write('parallelTranslationCode: $parallelTranslationCode, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ReadingPlansTable extends ReadingPlans
     with TableInfo<$ReadingPlansTable, ReadingPlan> {
   @override
@@ -12020,6 +12598,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReviewSessionsTable reviewSessions = $ReviewSessionsTable(this);
   late final $ReviewAnswersTable reviewAnswers = $ReviewAnswersTable(this);
   late final $ReadingHistoryTable readingHistory = $ReadingHistoryTable(this);
+  late final $ReadingTabsTable readingTabs = $ReadingTabsTable(this);
   late final $ReadingPlansTable readingPlans = $ReadingPlansTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -12048,6 +12627,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     reviewSessions,
     reviewAnswers,
     readingHistory,
+    readingTabs,
     readingPlans,
   ];
 }
@@ -19646,6 +20226,290 @@ typedef $$ReadingHistoryTableProcessedTableManager =
       ReadingHistoryData,
       PrefetchHooks Function()
     >;
+typedef $$ReadingTabsTableCreateCompanionBuilder =
+    ReadingTabsCompanion Function({
+      Value<int> id,
+      Value<int> bookId,
+      Value<int> chapter,
+      Value<String> translationCode,
+      Value<bool> isParallelView,
+      Value<String> parallelTranslationCode,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      required DateTime updatedAt,
+    });
+typedef $$ReadingTabsTableUpdateCompanionBuilder =
+    ReadingTabsCompanion Function({
+      Value<int> id,
+      Value<int> bookId,
+      Value<int> chapter,
+      Value<String> translationCode,
+      Value<bool> isParallelView,
+      Value<String> parallelTranslationCode,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      Value<DateTime> updatedAt,
+    });
+
+class $$ReadingTabsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReadingTabsTable> {
+  $$ReadingTabsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get chapter => $composableBuilder(
+    column: $table.chapter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get translationCode => $composableBuilder(
+    column: $table.translationCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isParallelView => $composableBuilder(
+    column: $table.isParallelView,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get parallelTranslationCode => $composableBuilder(
+    column: $table.parallelTranslationCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReadingTabsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReadingTabsTable> {
+  $$ReadingTabsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get chapter => $composableBuilder(
+    column: $table.chapter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get translationCode => $composableBuilder(
+    column: $table.translationCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isParallelView => $composableBuilder(
+    column: $table.isParallelView,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get parallelTranslationCode => $composableBuilder(
+    column: $table.parallelTranslationCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReadingTabsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReadingTabsTable> {
+  $$ReadingTabsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get bookId =>
+      $composableBuilder(column: $table.bookId, builder: (column) => column);
+
+  GeneratedColumn<int> get chapter =>
+      $composableBuilder(column: $table.chapter, builder: (column) => column);
+
+  GeneratedColumn<String> get translationCode => $composableBuilder(
+    column: $table.translationCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isParallelView => $composableBuilder(
+    column: $table.isParallelView,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get parallelTranslationCode => $composableBuilder(
+    column: $table.parallelTranslationCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ReadingTabsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReadingTabsTable,
+          ReadingTabData,
+          $$ReadingTabsTableFilterComposer,
+          $$ReadingTabsTableOrderingComposer,
+          $$ReadingTabsTableAnnotationComposer,
+          $$ReadingTabsTableCreateCompanionBuilder,
+          $$ReadingTabsTableUpdateCompanionBuilder,
+          (
+            ReadingTabData,
+            BaseReferences<_$AppDatabase, $ReadingTabsTable, ReadingTabData>,
+          ),
+          ReadingTabData,
+          PrefetchHooks Function()
+        > {
+  $$ReadingTabsTableTableManager(_$AppDatabase db, $ReadingTabsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$ReadingTabsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$ReadingTabsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () =>
+                  $$ReadingTabsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> bookId = const Value.absent(),
+                Value<int> chapter = const Value.absent(),
+                Value<String> translationCode = const Value.absent(),
+                Value<bool> isParallelView = const Value.absent(),
+                Value<String> parallelTranslationCode = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ReadingTabsCompanion(
+                id: id,
+                bookId: bookId,
+                chapter: chapter,
+                translationCode: translationCode,
+                isParallelView: isParallelView,
+                parallelTranslationCode: parallelTranslationCode,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> bookId = const Value.absent(),
+                Value<int> chapter = const Value.absent(),
+                Value<String> translationCode = const Value.absent(),
+                Value<bool> isParallelView = const Value.absent(),
+                Value<String> parallelTranslationCode = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                required DateTime updatedAt,
+              }) => ReadingTabsCompanion.insert(
+                id: id,
+                bookId: bookId,
+                chapter: chapter,
+                translationCode: translationCode,
+                isParallelView: isParallelView,
+                parallelTranslationCode: parallelTranslationCode,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReadingTabsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReadingTabsTable,
+      ReadingTabData,
+      $$ReadingTabsTableFilterComposer,
+      $$ReadingTabsTableOrderingComposer,
+      $$ReadingTabsTableAnnotationComposer,
+      $$ReadingTabsTableCreateCompanionBuilder,
+      $$ReadingTabsTableUpdateCompanionBuilder,
+      (
+        ReadingTabData,
+        BaseReferences<_$AppDatabase, $ReadingTabsTable, ReadingTabData>,
+      ),
+      ReadingTabData,
+      PrefetchHooks Function()
+    >;
 typedef $$ReadingPlansTableCreateCompanionBuilder =
     ReadingPlansCompanion Function({
       Value<int> id,
@@ -19959,6 +20823,8 @@ class $AppDatabaseManager {
       $$ReviewAnswersTableTableManager(_db, _db.reviewAnswers);
   $$ReadingHistoryTableTableManager get readingHistory =>
       $$ReadingHistoryTableTableManager(_db, _db.readingHistory);
+  $$ReadingTabsTableTableManager get readingTabs =>
+      $$ReadingTabsTableTableManager(_db, _db.readingTabs);
   $$ReadingPlansTableTableManager get readingPlans =>
       $$ReadingPlansTableTableManager(_db, _db.readingPlans);
 }
