@@ -190,22 +190,34 @@ void main() {
       expect(container.read(bibleReaderProvider).tappedWord, isNull);
     });
 
-    test('selectVerse sets selectedVerseNumber', () {
+    test('selectVerse starts a multi-verse selection', () {
       final container = createContainer();
       addTearDown(container.dispose);
 
       container.read(bibleReaderProvider.notifier).selectVerse(16);
-      expect(container.read(bibleReaderProvider).selectedVerseNumber, 16);
+      expect(container.read(bibleReaderProvider).selectedVerseNumbers, {16});
     });
 
-    test('clearVerseSelection resets to null', () {
+    test('toggleVerseSelection adds and removes verses', () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(bibleReaderProvider.notifier);
+      notifier.selectVerse(5);
+      notifier.toggleVerseSelection(7);
+      expect(container.read(bibleReaderProvider).selectedVerseNumbers, {5, 7});
+      notifier.toggleVerseSelection(5);
+      expect(container.read(bibleReaderProvider).selectedVerseNumbers, {7});
+    });
+
+    test('clearVerseSelection resets to an empty set', () {
       final container = createContainer();
       addTearDown(container.dispose);
 
       final notifier = container.read(bibleReaderProvider.notifier);
       notifier.selectVerse(5);
       notifier.clearVerseSelection();
-      expect(container.read(bibleReaderProvider).selectedVerseNumber, isNull);
+      expect(container.read(bibleReaderProvider).selectedVerseNumbers, isEmpty);
     });
 
     test('toggleAutoScroll flips autoScrollEnabled', () {
@@ -222,19 +234,37 @@ void main() {
       expect(container.read(bibleReaderProvider).autoScrollEnabled, isFalse);
     });
 
-    test('navigateTo clears selectedVerseNumber and tappedWord', () {
+    test('navigateTo clears selection, tapped word, and reading position', () {
       final container = createContainer();
       addTearDown(container.dispose);
 
       final notifier = container.read(bibleReaderProvider.notifier);
       notifier.selectVerse(3);
       notifier.onWordTap('light');
+      notifier.updateReadingPosition(verse: 12, fraction: 0.4, offset: 500);
 
       notifier.navigateTo(bookId: 2, chapter: 1);
 
       final state = container.read(bibleReaderProvider);
-      expect(state.selectedVerseNumber, isNull);
+      expect(state.selectedVerseNumbers, isEmpty);
       expect(state.tappedWord, isNull);
+      expect(state.scrollVerse, 1);
+      expect(state.scrollFraction, 0);
+      expect(state.scrollOffset, 0);
+    });
+
+    test('parallel view keeps the current reading position', () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(bibleReaderProvider.notifier);
+      notifier.updateReadingPosition(verse: 18, fraction: 0.35, offset: 860);
+      notifier.toggleParallelView();
+
+      final state = container.read(bibleReaderProvider);
+      expect(state.scrollVerse, 18);
+      expect(state.scrollFraction, 0.35);
+      expect(state.scrollOffset, 860);
     });
   });
 }

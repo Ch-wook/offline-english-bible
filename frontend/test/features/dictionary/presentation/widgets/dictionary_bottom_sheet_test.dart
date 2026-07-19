@@ -92,6 +92,123 @@ void main() {
     expect(savedWords, ['grace']);
     expect(find.text('단어장에 저장했습니다'), findsOneWidget);
   });
+
+  testWidgets('renders every inflection without raw source labels', (
+    tester,
+  ) async {
+    const entry = DictionaryEntry(
+      id: 2,
+      word: 'have',
+      wordNormalized: 'have',
+      koreanMeaning: '가지다, 소유하다',
+      inflectedForms: [
+        InflectedForm(formType: 'inflected_form', form: 'had'),
+        InflectedForm(formType: 'archaic_form', form: 'hast'),
+        InflectedForm(formType: 'archaic_form', form: 'hath'),
+        InflectedForm(formType: 'present_participle', form: 'having'),
+        InflectedForm(formType: 'plural_or_third_person', form: 'possesses'),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          wordLookupProvider.overrideWith((ref, word) async => entry),
+          pronunciationServiceProvider.overrideWithValue(
+            _FakePronunciationService(),
+          ),
+          isWordSavedProvider.overrideWith((ref, word) async => false),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder:
+                  (context) => TextButton(
+                    onPressed:
+                        () => DictionaryBottomSheet.show(context, 'have'),
+                    child: const Text('open'),
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -500),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('고어 활용형'), findsNWidgets(2));
+    expect(find.text('현재분사'), findsOneWidget);
+    expect(find.text('복수형·3인칭 단수'), findsOneWidget);
+    expect(find.text('had'), findsOneWidget);
+    expect(find.text('hast'), findsOneWidget);
+    expect(find.text('hath'), findsOneWidget);
+    expect(find.text('having'), findsOneWidget);
+    expect(find.text('inflected_form'), findsNothing);
+    expect(find.text('archaic_form'), findsNothing);
+  });
+
+  testWidgets(
+    'hides generic KJV labels when a concrete Korean meaning exists',
+    (tester) async {
+      const genericDefinition =
+          'An archaic or specialized word form used in the King James Version.';
+      const entry = DictionaryEntry(
+        id: 3,
+        word: 'whithersoever',
+        wordNormalized: 'whithersoever',
+        koreanMeaning: '어디로 가든지, 어디든지',
+        senses: [
+          WordSense(
+            id: 3,
+            partOfSpeech: 'unknown',
+            senseOrder: 1,
+            definition: genericDefinition,
+            definitionKo: '어디로 가든지, 어디든지',
+            isArchaic: true,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            wordLookupProvider.overrideWith((ref, word) async => entry),
+            pronunciationServiceProvider.overrideWithValue(
+              _FakePronunciationService(),
+            ),
+            isWordSavedProvider.overrideWith((ref, word) async => false),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder:
+                    (context) => TextButton(
+                      onPressed:
+                          () => DictionaryBottomSheet.show(
+                            context,
+                            'whithersoever',
+                          ),
+                      child: const Text('open'),
+                    ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('어디로 가든지, 어디든지'), findsNWidgets(2));
+      expect(find.text(genericDefinition), findsNothing);
+    },
+  );
 }
 
 final class _FakePronunciationService implements PronunciationService {

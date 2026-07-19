@@ -69,6 +69,9 @@ void main() {
         translationCode: 'KJV',
         isParallelView: true,
         parallelTranslationCode: 'KOREAN_RV',
+        scrollVerse: 9,
+        scrollFraction: 0.25,
+        scrollOffset: 420,
         sortOrder: 0,
       );
       final secondId = await dataSource.createReadingTab(
@@ -77,6 +80,9 @@ void main() {
         translationCode: 'KJV',
         isParallelView: false,
         parallelTranslationCode: 'KOREAN_RV',
+        scrollVerse: 4,
+        scrollFraction: 0.5,
+        scrollOffset: 180,
         sortOrder: 1,
       );
 
@@ -88,6 +94,9 @@ void main() {
       tabs = await dataSource.getReadingTabs();
       expect(tabs.where((tab) => tab.isActive).single.id, firstId);
       expect(tabs.first.chapter, 3);
+      expect(tabs.first.scrollVerse, 9);
+      expect(tabs.first.scrollFraction, 0.25);
+      expect(tabs.first.scrollOffset, 420);
       expect(tabs.last.bookId, 43);
     },
   );

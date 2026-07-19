@@ -2,6 +2,30 @@ import 'bible_korean_supplement.dart';
 
 typedef DictionaryJson = Map<String, dynamic>;
 
+void removeGeneratedKoreanClassifications(List<DictionaryJson> entries) {
+  const generated = {
+    '성경의 책 이름',
+    '성경에 등장하는 인명 또는 지명',
+    '킹제임스 성경에 등장하는 인명 또는 지명',
+    '킹제임스 성경에서 사용된 고어 또는 고유 표현',
+    '킹제임스 성경에서 사용되는 고어 또는 특수 표현',
+    '성경 문맥에서 사용되는 동사',
+    '성경 문맥에서 사용되는 형용사',
+    '성경 문맥에서 사용되는 부사',
+    '성경 문맥에서 사용되는 명사',
+    '킹제임스 성경에서 사용되는 영어 표현',
+  };
+  for (final entry in entries) {
+    final current = entry['korean_meaning']?.toString() ?? '';
+    if (!generated.contains(current)) continue;
+    entry['korean_meaning'] = '';
+    for (final rawSense in entry['senses'] as List<dynamic>? ?? const []) {
+      final sense = rawSense as Map<String, dynamic>;
+      if (sense['definition_ko'] == current) sense['definition_ko'] = '';
+    }
+  }
+}
+
 final class KoreanBackfillReport {
   const KoreanBackfillReport({
     required this.inherited,
@@ -74,6 +98,7 @@ int _integer(Object? value, {int fallback = 0}) =>
 KoreanBackfillReport backfillKoreanMeanings(
   List<DictionaryJson> entries, {
   Map<String, String> curatedMeanings = const {},
+  bool classifyMissing = true,
 }) {
   final byWord = <String, DictionaryJson>{
     for (final entry in entries) _normalize(entry['word']): entry,
@@ -109,6 +134,9 @@ KoreanBackfillReport backfillKoreanMeanings(
   }
 
   var classified = 0;
+  if (!classifyMissing) {
+    return KoreanBackfillReport(inherited: inherited, classified: 0);
+  }
   for (final entry in entries) {
     if (_meaningOf(entry).isNotEmpty) continue;
     _setMeaning(entry, _koreanClassification(entry));
@@ -175,9 +203,11 @@ Iterable<String> _lemmaCandidates(String word) sync* {
     'went': 'go',
     'gone': 'go',
     'said': 'say',
+    'saidst': 'say',
     'saith': 'say',
     'shalt': 'shall',
     'wilt': 'will',
+    'wrought': 'work',
   };
   final result = <String>{};
   void add(String value) {
@@ -187,12 +217,21 @@ Iterable<String> _lemmaCandidates(String word) sync* {
   final irregularRoot = irregular[word];
   if (irregularRoot != null) add(irregularRoot);
   if (word.endsWith('ies')) add('${word.substring(0, word.length - 3)}y');
+  if (word.endsWith('edst') && word.length > 5) {
+    add(word.substring(0, word.length - 4));
+  }
+  if (word.endsWith('ieth')) {
+    add('${word.substring(0, word.length - 4)}y');
+  }
   if (word.endsWith('ied')) add('${word.substring(0, word.length - 3)}y');
   if (word.endsWith('es')) {
     add(word.substring(0, word.length - 2));
     add(word.substring(0, word.length - 1));
   }
   if (word.endsWith('s')) add(word.substring(0, word.length - 1));
+  if (word.endsWith('men') && word.length > 4) {
+    add('${word.substring(0, word.length - 3)}man');
+  }
   for (final suffix in const ['ed', 'eth', 'est']) {
     if (!word.endsWith(suffix) || word.length <= suffix.length + 1) continue;
     final stem = word.substring(0, word.length - suffix.length);
@@ -234,6 +273,23 @@ Iterable<String> _lemmaCandidates(String word) sync* {
   if (word.contains('our')) {
     add(word.replaceFirst('our', 'or'));
   }
+  const historicalSpellings = <String, String>{
+    'baken': 'bake',
+    'cloke': 'cloak',
+    'compleat': 'complete',
+    'ensample': 'example',
+    'intreat': 'entreat',
+    'morter': 'mortar',
+    'plaister': 'plaster',
+    'recompence': 'recompense',
+    'shew': 'show',
+    'stedfast': 'steadfast',
+    'stablish': 'establish',
+    'throughly': 'thoroughly',
+    'withholden': 'withhold',
+  };
+  final modernSpelling = historicalSpellings[word];
+  if (modernSpelling != null) add(modernSpelling);
   yield* result;
 }
 

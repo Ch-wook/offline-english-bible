@@ -465,7 +465,9 @@ class _SenseBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final showEnglish =
-        !suppressEnglishDefinition && sense.definition.trim().isNotEmpty;
+        !suppressEnglishDefinition &&
+        sense.definition.trim().isNotEmpty &&
+        !_isGenericKjvDefinition(sense.definition);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.lg),
@@ -918,6 +920,13 @@ String _koreanMeaning(DictionaryEntry entry) {
   }
 
   return '';
+}
+
+bool _isGenericKjvDefinition(String definition) {
+  final normalized = definition.trim().toLowerCase();
+  return normalized == 'a proper name used in the king james version.' ||
+      normalized ==
+          'an archaic or specialized word form used in the king james version.';
 }
 
 String _posLabel(WordSense sense) {

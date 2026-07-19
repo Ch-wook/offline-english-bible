@@ -61,7 +61,7 @@ jobs:
       - name: Generate Drift code
         timeout-minutes: 5
         run: |
-          dart run build_runner build --delete-conflicting-outputs \
+          dart run build_runner build \
             --build-filter=lib/core/database/app_database.g.dart
           git diff --exit-code -- lib/core/database/app_database.g.dart
 

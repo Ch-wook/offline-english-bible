@@ -40,6 +40,8 @@ void main() {
     const generatedClassifications = {
       '성경의 책 이름',
       '성경에 등장하는 인명 또는 지명',
+      '킹제임스 성경에 등장하는 인명 또는 지명',
+      '킹제임스 성경에서 사용된 고어 또는 고유 표현',
       '킹제임스 성경에서 사용되는 고어 또는 특수 표현',
       '성경 문맥에서 사용되는 동사',
       '성경 문맥에서 사용되는 형용사',
@@ -58,6 +60,11 @@ void main() {
         generatedClassifications,
         isNot(contains(meaning)),
         reason: '${entry['word']} must have a specific meaning',
+      );
+      expect(
+        meaning,
+        isNot(matches(RegExp(r'킹제임스 성경.*(고어|고유 표현|영어 표현)'))),
+        reason: '${entry['word']} must not expose a generic KJV placeholder',
       );
     }
 

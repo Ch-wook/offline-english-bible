@@ -2,6 +2,7 @@
 // [MODIFY] 성경 읽기 메인 화면 — 완전 구현
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -189,12 +190,32 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
                   ),
                 ),
                 const PopupMenuItem(
+                  value: _MenuAction.vocabulary,
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_stories_rounded, size: 20),
+                      SizedBox(width: 12),
+                      Text('단어장'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
                   value: _MenuAction.search,
                   child: Row(
                     children: [
                       Icon(Icons.search_rounded, size: 20),
                       SizedBox(width: 12),
                       Text('검색'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: _MenuAction.settings,
+                  child: Row(
+                    children: [
+                      Icon(Icons.settings_rounded, size: 20),
+                      SizedBox(width: 12),
+                      Text('설정'),
                     ],
                   ),
                 ),
@@ -247,8 +268,12 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
         );
       case _MenuAction.autoScroll:
         notifier.toggleAutoScroll();
+      case _MenuAction.vocabulary:
+        await context.push(RoutePaths.vocabulary);
       case _MenuAction.search:
-        context.go(RoutePaths.search);
+        await context.push(RoutePaths.search);
+      case _MenuAction.settings:
+        await context.push(RoutePaths.settings);
       case _MenuAction.bookmarks:
         await Navigator.of(
           context,
@@ -273,7 +298,15 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
   }
 }
 
-enum _MenuAction { readingSettings, autoScroll, search, bookmarks, share }
+enum _MenuAction {
+  readingSettings,
+  autoScroll,
+  vocabulary,
+  search,
+  settings,
+  bookmarks,
+  share,
+}
 
 class _ReadingSettingsSheet extends ConsumerWidget {
   const _ReadingSettingsSheet();
@@ -391,6 +424,10 @@ class _ReaderBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final readerState = ref.watch(bibleReaderProvider);
+    final selectedVerses = [
+      for (final number in readerState.selectedVerseNumbers)
+        if (content.verseAt(number) case final verse?) verse,
+    ]..sort((left, right) => left.verseNumber.compareTo(right.verseNumber));
 
     // 절 선택 시 바텀 액션 바 표시
     return Stack(
@@ -398,19 +435,17 @@ class _ReaderBody extends ConsumerWidget {
         VerseListView(content: content),
 
         // 절 선택 액션 바
-        if (readerState.selectedVerseNumber != null &&
-            content.verseAt(readerState.selectedVerseNumber!) != null)
+        if (selectedVerses.isNotEmpty)
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: _VerseActionBar(
-              verseNumber: readerState.selectedVerseNumber!,
               bookId: content.book.id,
               chapter: content.chapterNumber,
               translationCode: content.translationCode,
               bookName: content.book.nameKorean,
-              verse: content.verseAt(readerState.selectedVerseNumber!)!,
+              verses: selectedVerses,
             ),
           ),
       ],
@@ -473,25 +508,29 @@ class _ErrorBody extends StatelessWidget {
 
 class _VerseActionBar extends ConsumerWidget {
   const _VerseActionBar({
-    required this.verseNumber,
     required this.bookId,
     required this.chapter,
     required this.translationCode,
     required this.bookName,
-    required this.verse,
+    required this.verses,
   });
 
-  final int verseNumber;
   final int bookId;
   final int chapter;
   final String translationCode;
   final String bookName;
-  final Verse verse;
+  final List<Verse> verses;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final notifier = ref.read(bibleReaderProvider.notifier);
+    final singleVerse = verses.length == 1 ? verses.single : null;
+    const buttonConstraints = BoxConstraints.tightFor(width: 40, height: 40);
+    final formatted = BibleShareFormatter.verses(
+      bookName: bookName,
+      verses: verses,
+    );
 
     return Container(
       padding: EdgeInsets.only(
@@ -509,7 +548,7 @@ class _VerseActionBar extends ConsumerWidget {
       child: Row(
         children: [
           Text(
-            '$verseNumber절 선택됨',
+            '${verses.length}절 선택',
             style: AppTypography.labelMedium.copyWith(
               color: colorScheme.onSurface,
             ),
@@ -517,21 +556,53 @@ class _VerseActionBar extends ConsumerWidget {
           const Spacer(),
           IconButton(
             icon: const Icon(Icons.highlight_rounded),
-            tooltip: '형광펜',
+            tooltip: singleVerse == null ? '형광펜은 한 절씩 적용' : '형광펜',
+            constraints: buttonConstraints,
+            visualDensity: VisualDensity.compact,
+            onPressed:
+                singleVerse == null
+                    ? null
+                    : () async {
+                      final colorLabel = await HighlightColorPicker.show(
+                        context,
+                        bookId: bookId,
+                        chapter: chapter,
+                        verse: singleVerse.verseNumber,
+                        translationCode: translationCode,
+                        verseText: singleVerse.text,
+                      );
+                      notifier.clearVerseSelection();
+                      if (context.mounted && colorLabel != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('$colorLabel 형광펜이 적용되었습니다'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+          ),
+          IconButton(
+            icon: const Icon(Icons.bookmark_add_rounded),
+            tooltip: '북마크',
+            constraints: buttonConstraints,
+            visualDensity: VisualDensity.compact,
             onPressed: () async {
-              final colorLabel = await HighlightColorPicker.show(
-                context,
-                bookId: bookId,
-                chapter: chapter,
-                verse: verseNumber,
-                translationCode: translationCode,
-                verseText: verse.text,
-              );
+              for (final verse in verses) {
+                await ref
+                    .read(highlightActionProvider.notifier)
+                    .addBookmark(
+                      bookId: bookId,
+                      chapter: chapter,
+                      verse: verse.verseNumber,
+                      translationCode: translationCode,
+                    );
+              }
               notifier.clearVerseSelection();
-              if (context.mounted && colorLabel != null) {
+              if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('$colorLabel 형광펜이 적용되었습니다'),
+                  const SnackBar(
+                    content: Text('선택한 절을 북마크에 저장했습니다'),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -539,22 +610,17 @@ class _VerseActionBar extends ConsumerWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.bookmark_add_rounded),
-            tooltip: '북마크',
+            icon: const Icon(Icons.copy_rounded),
+            tooltip: '선택한 절 복사',
+            constraints: buttonConstraints,
+            visualDensity: VisualDensity.compact,
             onPressed: () async {
-              await ref
-                  .read(highlightActionProvider.notifier)
-                  .addBookmark(
-                    bookId: bookId,
-                    chapter: chapter,
-                    verse: verseNumber,
-                    translationCode: translationCode,
-                  );
+              await Clipboard.setData(ClipboardData(text: formatted));
               notifier.clearVerseSelection();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('북마크에 저장했습니다'),
+                    content: Text('선택한 절을 복사했습니다'),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -564,14 +630,15 @@ class _VerseActionBar extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.share_rounded),
             tooltip: '공유',
+            constraints: buttonConstraints,
+            visualDensity: VisualDensity.compact,
             onPressed: () async {
               await SharePlus.instance.share(
                 ShareParams(
-                  text: BibleShareFormatter.verse(
-                    bookName: bookName,
-                    verse: verse,
-                  ),
-                  subject: '$bookName $chapter:$verseNumber',
+                  text: formatted,
+                  subject:
+                      '$bookName $chapter '
+                      '${verses.map((verse) => verse.verseNumber).join(',')}절',
                 ),
               );
               notifier.clearVerseSelection();
@@ -580,6 +647,9 @@ class _VerseActionBar extends ConsumerWidget {
           // 닫기
           IconButton(
             icon: const Icon(Icons.close_rounded),
+            tooltip: '선택 취소',
+            constraints: buttonConstraints,
+            visualDensity: VisualDensity.compact,
             onPressed: notifier.clearVerseSelection,
           ),
         ],

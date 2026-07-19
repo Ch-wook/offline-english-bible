@@ -19,6 +19,9 @@ final class ReadingTabsRepositoryImpl implements ReadingTabsRepository {
     required String translationCode,
     required bool isParallelView,
     required String parallelTranslationCode,
+    required int scrollVerse,
+    required double scrollFraction,
+    required double scrollOffset,
     required int sortOrder,
   }) async {
     final id = await _dataSource.createReadingTab(
@@ -27,6 +30,9 @@ final class ReadingTabsRepositoryImpl implements ReadingTabsRepository {
       translationCode: translationCode,
       isParallelView: isParallelView,
       parallelTranslationCode: parallelTranslationCode,
+      scrollVerse: scrollVerse,
+      scrollFraction: scrollFraction,
+      scrollOffset: scrollOffset,
       sortOrder: sortOrder,
     );
     final created = (await _dataSource.getReadingTabs()).firstWhere(
@@ -52,6 +58,9 @@ final class ReadingTabsRepositoryImpl implements ReadingTabsRepository {
     translationCode: row.translationCode,
     isParallelView: row.isParallelView,
     parallelTranslationCode: row.parallelTranslationCode,
+    scrollVerse: row.scrollVerse,
+    scrollFraction: row.scrollFraction,
+    scrollOffset: row.scrollOffset,
     sortOrder: row.sortOrder,
     isActive: row.isActive,
     updatedAt: row.updatedAt,
@@ -64,6 +73,9 @@ final class ReadingTabsRepositoryImpl implements ReadingTabsRepository {
     translationCode: tab.translationCode,
     isParallelView: tab.isParallelView,
     parallelTranslationCode: tab.parallelTranslationCode,
+    scrollVerse: tab.scrollVerse,
+    scrollFraction: tab.scrollFraction,
+    scrollOffset: tab.scrollOffset,
     sortOrder: tab.sortOrder,
     isActive: tab.isActive,
     updatedAt: tab.updatedAt,

@@ -51,4 +51,27 @@ void main() {
     expect(text, contains('1 In the beginning'));
     expect(text, contains('2 And the earth'));
   });
+
+  test('formats multiple selected verses in canonical order', () {
+    const verses = [
+      Verse(
+        bookId: 1,
+        chapter: 1,
+        verseNumber: 3,
+        text: 'And God said, Let there be light.',
+      ),
+      verse,
+    ];
+
+    final text = BibleShareFormatter.verses(
+      bookName: book.nameKorean,
+      verses: verses,
+    );
+
+    expect(text, startsWith('창세기 1:1-3 (KJV)'));
+    expect(
+      text.indexOf('1 In the beginning'),
+      lessThan(text.indexOf('3 And God')),
+    );
+  });
 }

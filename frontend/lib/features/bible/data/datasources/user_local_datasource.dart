@@ -25,6 +25,9 @@ abstract interface class UserLocalDataSource {
     required String translationCode,
     required bool isParallelView,
     required String parallelTranslationCode,
+    required int scrollVerse,
+    required double scrollFraction,
+    required double scrollOffset,
     required int sortOrder,
   });
 

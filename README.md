@@ -107,7 +107,7 @@ cd offline-english-bible/frontend
 flutter pub get
 
 # Drift 코드 생성
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 
 # 실행
 flutter run

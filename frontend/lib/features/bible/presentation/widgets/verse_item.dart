@@ -61,7 +61,16 @@ class VerseItem extends ConsumerWidget {
             ).withAlpha(isDark ? 70 : 95);
 
     return GestureDetector(
-      onLongPress: () => readerNotifier.selectVerse(verse.verseNumber),
+      behavior: HitTestBehavior.opaque,
+      onTap:
+          readerState.isVerseSelectionActive
+              ? () => readerNotifier.toggleVerseSelection(verse.verseNumber)
+              : null,
+      onLongPress:
+          () =>
+              readerState.isVerseSelectionActive
+                  ? readerNotifier.toggleVerseSelection(verse.verseNumber)
+                  : readerNotifier.selectVerse(verse.verseNumber),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
@@ -73,86 +82,89 @@ class VerseItem extends ConsumerWidget {
           horizontal: AppSpacing.lg,
           vertical: 6,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── 주 번역본 ──────────────────────────────────────────
-            if (isPrimaryEnglish)
-              _TappableVerseText(
-                key: ValueKey(
-                  'primary-${verse.translationCode}-${verse.verseNumber}',
+        child: IgnorePointer(
+          ignoring: readerState.isVerseSelectionActive,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── 주 번역본 ──────────────────────────────────────────
+              if (isPrimaryEnglish)
+                _TappableVerseText(
+                  key: ValueKey(
+                    'primary-${verse.translationCode}-${verse.verseNumber}',
+                  ),
+                  text: verse.text,
+                  verseNumber: showVerseNumbers ? verse.verseNumber : null,
+                  fontSize: fontSize,
+                  lineSpacing: lineSpacing,
+                  color: colorScheme.onSurface,
+                  verseNumberColor:
+                      isDark
+                          ? AppColors.verseNumberDark
+                          : AppColors.verseNumberLight,
+                  onWordTap:
+                      (word) => readerNotifier.onWordTap(word, source: verse),
+                )
+              else
+                _PlainVerseText(
+                  key: ValueKey(
+                    'primary-${verse.translationCode}-${verse.verseNumber}',
+                  ),
+                  text: verse.text,
+                  verseNumber: showVerseNumbers ? verse.verseNumber : null,
+                  fontSize: fontSize,
+                  lineSpacing: lineSpacing,
+                  color: colorScheme.onSurface,
+                  verseNumberColor:
+                      isDark
+                          ? AppColors.verseNumberDark
+                          : AppColors.verseNumberLight,
                 ),
-                text: verse.text,
-                verseNumber: showVerseNumbers ? verse.verseNumber : null,
-                fontSize: fontSize,
-                lineSpacing: lineSpacing,
-                color: colorScheme.onSurface,
-                verseNumberColor:
-                    isDark
-                        ? AppColors.verseNumberDark
-                        : AppColors.verseNumberLight,
-                onWordTap:
-                    (word) => readerNotifier.onWordTap(word, source: verse),
-              )
-            else
-              _PlainVerseText(
-                key: ValueKey(
-                  'primary-${verse.translationCode}-${verse.verseNumber}',
-                ),
-                text: verse.text,
-                verseNumber: showVerseNumbers ? verse.verseNumber : null,
-                fontSize: fontSize,
-                lineSpacing: lineSpacing,
-                color: colorScheme.onSurface,
-                verseNumberColor:
-                    isDark
-                        ? AppColors.verseNumberDark
-                        : AppColors.verseNumberLight,
-              ),
 
-            // ── 대역 번역본 ────────────────────────────────
-            if (parallelVerse != null) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.only(left: AppSpacing.sm),
-                decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(
-                      color: colorScheme.primary.withAlpha(55),
-                      width: 2,
+              // ── 대역 번역본 ────────────────────────────────
+              if (parallelVerse != null) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.only(left: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(
+                        color: colorScheme.primary.withAlpha(55),
+                        width: 2,
+                      ),
                     ),
                   ),
+                  child:
+                      isParallelEnglish
+                          ? _TappableVerseText(
+                            key: ValueKey(
+                              'parallel-${parallelVerse!.translationCode}-${parallelVerse!.verseNumber}',
+                            ),
+                            text: parallelVerse!.text,
+                            fontSize: fontSize,
+                            lineSpacing: lineSpacing,
+                            color: colorScheme.onSurfaceVariant,
+                            verseNumberColor: colorScheme.onSurfaceVariant,
+                            onWordTap:
+                                (word) => readerNotifier.onWordTap(
+                                  word,
+                                  source: parallelVerse,
+                                ),
+                          )
+                          : _PlainVerseText(
+                            key: ValueKey(
+                              'parallel-${parallelVerse!.translationCode}-${parallelVerse!.verseNumber}',
+                            ),
+                            text: parallelVerse!.text,
+                            fontSize: fontSize,
+                            lineSpacing: lineSpacing,
+                            color: colorScheme.onSurfaceVariant,
+                            verseNumberColor: colorScheme.onSurfaceVariant,
+                          ),
                 ),
-                child:
-                    isParallelEnglish
-                        ? _TappableVerseText(
-                          key: ValueKey(
-                            'parallel-${parallelVerse!.translationCode}-${parallelVerse!.verseNumber}',
-                          ),
-                          text: parallelVerse!.text,
-                          fontSize: fontSize,
-                          lineSpacing: lineSpacing,
-                          color: colorScheme.onSurfaceVariant,
-                          verseNumberColor: colorScheme.onSurfaceVariant,
-                          onWordTap:
-                              (word) => readerNotifier.onWordTap(
-                                word,
-                                source: parallelVerse,
-                              ),
-                        )
-                        : _PlainVerseText(
-                          key: ValueKey(
-                            'parallel-${parallelVerse!.translationCode}-${parallelVerse!.verseNumber}',
-                          ),
-                          text: parallelVerse!.text,
-                          fontSize: fontSize,
-                          lineSpacing: lineSpacing,
-                          color: colorScheme.onSurfaceVariant,
-                          verseNumberColor: colorScheme.onSurfaceVariant,
-                        ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

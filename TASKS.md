@@ -24,3 +24,10 @@
 - [x] Offline device pronunciation
 - [x] Static analysis and automated tests
 - [x] Signed GitHub Actions APK deployment
+
+## Phase 6
+- [x] Biblical Korean meanings and localized inflection labels
+- [x] Pull-to-change chapter navigation
+- [x] Per-tab exact reading-position restore
+- [x] Multi-verse selection, copy, bookmark, and share
+- [x] Compact reader overflow navigation

@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'src/bible_korean_supplement.dart';
 import 'src/dictionary_korean_backfill.dart';
+import 'src/parallel_bible_korean_enricher.dart';
 import 'src/stardict_reader.dart';
 
 const _bookNames = <String>[
@@ -160,13 +161,28 @@ Usage: dart run scripts/build_offline_dictionary.dart \\
     pronunciations: pronunciations,
   );
   applyBibleKoreanSupplements(entries);
-  final backfill = backfillKoreanMeanings(
+  removeGeneratedKoreanClassifications(entries);
+  final inheritedBackfill = backfillKoreanMeanings(
+    entries,
+    curatedMeanings: curatedMeanings,
+    classifyMissing: false,
+  );
+  final parallelBackfill = enrichFromParallelBible(
+    entries: entries,
+    kjvPath: kjvPath,
+    koreanPath: 'frontend/assets/data/korean_rv_full.json',
+  );
+  final finalBackfill = backfillKoreanMeanings(
     entries,
     curatedMeanings: curatedMeanings,
   );
   stdout.writeln(
-    '    한국어 뜻 보강 ${backfill.total}개 '
-    '(뜻 승계 ${backfill.inherited}, 문맥 분류 ${backfill.classified})',
+    '    한국어 뜻 보강 '
+    '${inheritedBackfill.inherited + parallelBackfill.total + finalBackfill.total}개 '
+    '(사전·원형 ${inheritedBackfill.inherited}, '
+    '성경 이름 ${parallelBackfill.properNames}, '
+    '병렬 문맥 ${parallelBackfill.contextMeanings}, '
+    '최종 분류 ${finalBackfill.classified})',
   );
 
   final output = File(outputPath);

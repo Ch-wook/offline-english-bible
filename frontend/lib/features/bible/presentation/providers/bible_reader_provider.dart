@@ -20,7 +20,10 @@ final class BibleReaderState {
     this.isParallelView = false,
     this.parallelTranslationCode = 'KOREAN_RV',
     this.autoScrollEnabled = false,
-    this.selectedVerseNumber,
+    this.scrollVerse = 1,
+    this.scrollFraction = 0,
+    this.scrollOffset = 0,
+    this.selectedVerseNumbers = const {},
     this.tappedWord,
     this.tappedBookId,
     this.tappedChapter,
@@ -34,9 +37,14 @@ final class BibleReaderState {
   final bool isParallelView;
   final String parallelTranslationCode;
   final bool autoScrollEnabled;
+  final int scrollVerse;
+  final double scrollFraction;
+  final double scrollOffset;
 
-  /// 길게 눌린 절 번호 (형광펜/북마크 메뉴 표시용).
-  final int? selectedVerseNumber;
+  /// 길게 누른 뒤 선택된 절 번호들.
+  final Set<int> selectedVerseNumbers;
+
+  bool get isVerseSelectionActive => selectedVerseNumbers.isNotEmpty;
 
   /// 탭된 단어 (사전 바텀시트 트리거).
   final String? tappedWord;
@@ -59,12 +67,17 @@ final class BibleReaderState {
     bool? isParallelView,
     String? parallelTranslationCode,
     bool? autoScrollEnabled,
-    int? selectedVerseNumber,
+    int? scrollVerse,
+    double? scrollFraction,
+    double? scrollOffset,
+    Set<int>? selectedVerseNumbers,
+    bool clearVerseSelection = false,
     String? tappedWord,
     int? tappedBookId,
     int? tappedChapter,
     int? tappedVerse,
     String? tappedTranslationCode,
+    bool clearTappedWord = false,
   }) => BibleReaderState(
     bookId: bookId ?? this.bookId,
     chapter: chapter ?? this.chapter,
@@ -73,12 +86,21 @@ final class BibleReaderState {
     parallelTranslationCode:
         parallelTranslationCode ?? this.parallelTranslationCode,
     autoScrollEnabled: autoScrollEnabled ?? this.autoScrollEnabled,
-    selectedVerseNumber: selectedVerseNumber,
-    tappedWord: tappedWord,
-    tappedBookId: tappedBookId,
-    tappedChapter: tappedChapter,
-    tappedVerse: tappedVerse,
-    tappedTranslationCode: tappedTranslationCode,
+    scrollVerse: scrollVerse ?? this.scrollVerse,
+    scrollFraction: scrollFraction ?? this.scrollFraction,
+    scrollOffset: scrollOffset ?? this.scrollOffset,
+    selectedVerseNumbers:
+        clearVerseSelection
+            ? const {}
+            : selectedVerseNumbers ?? this.selectedVerseNumbers,
+    tappedWord: clearTappedWord ? null : tappedWord ?? this.tappedWord,
+    tappedBookId: clearTappedWord ? null : tappedBookId ?? this.tappedBookId,
+    tappedChapter: clearTappedWord ? null : tappedChapter ?? this.tappedChapter,
+    tappedVerse: clearTappedWord ? null : tappedVerse ?? this.tappedVerse,
+    tappedTranslationCode:
+        clearTappedWord
+            ? null
+            : tappedTranslationCode ?? this.tappedTranslationCode,
   );
 
   @override
@@ -91,7 +113,10 @@ final class BibleReaderState {
           isParallelView == other.isParallelView &&
           parallelTranslationCode == other.parallelTranslationCode &&
           autoScrollEnabled == other.autoScrollEnabled &&
-          selectedVerseNumber == other.selectedVerseNumber &&
+          scrollVerse == other.scrollVerse &&
+          scrollFraction == other.scrollFraction &&
+          scrollOffset == other.scrollOffset &&
+          _setsEqual(selectedVerseNumbers, other.selectedVerseNumbers) &&
           tappedWord == other.tappedWord &&
           tappedBookId == other.tappedBookId &&
           tappedChapter == other.tappedChapter &&
@@ -106,13 +131,19 @@ final class BibleReaderState {
     isParallelView,
     parallelTranslationCode,
     autoScrollEnabled,
-    selectedVerseNumber,
+    scrollVerse,
+    scrollFraction,
+    scrollOffset,
+    Object.hashAllUnordered(selectedVerseNumbers),
     tappedWord,
     tappedBookId,
     tappedChapter,
     tappedVerse,
     tappedTranslationCode,
   );
+
+  static bool _setsEqual(Set<int> left, Set<int> right) =>
+      left.length == right.length && left.containsAll(right);
 }
 
 // ── Notifier ──────────────────────────────────────────────────────────
@@ -138,7 +169,15 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
   // ── Navigation ────────────────────────────────────────────────────
 
   void navigateTo({required int bookId, required int chapter}) {
-    state = state.copyWith(bookId: bookId, chapter: chapter);
+    state = state.copyWith(
+      bookId: bookId,
+      chapter: chapter,
+      scrollVerse: 1,
+      scrollFraction: 0,
+      scrollOffset: 0,
+      clearVerseSelection: true,
+      clearTappedWord: true,
+    );
     _syncToChapterParams();
   }
 
@@ -149,20 +188,37 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
       translationCode: tab.translationCode,
       isParallelView: tab.isParallelView,
       parallelTranslationCode: tab.parallelTranslationCode,
+      scrollVerse: tab.scrollVerse,
+      scrollFraction: tab.scrollFraction,
+      scrollOffset: tab.scrollOffset,
     );
     _syncToChapterParams();
   }
 
   void goToNextChapter(int maxChapter) {
     if (state.chapter < maxChapter) {
-      state = state.copyWith(chapter: state.chapter + 1);
+      state = state.copyWith(
+        chapter: state.chapter + 1,
+        scrollVerse: 1,
+        scrollFraction: 0,
+        scrollOffset: 0,
+        clearVerseSelection: true,
+        clearTappedWord: true,
+      );
       _syncToChapterParams();
     }
   }
 
   void goToPreviousChapter() {
     if (state.chapter > 1) {
-      state = state.copyWith(chapter: state.chapter - 1);
+      state = state.copyWith(
+        chapter: state.chapter - 1,
+        scrollVerse: 1,
+        scrollFraction: 0,
+        scrollOffset: 0,
+        clearVerseSelection: true,
+        clearTappedWord: true,
+      );
       _syncToChapterParams();
     }
   }
@@ -181,6 +237,8 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
     state = state.copyWith(
       translationCode: code,
       parallelTranslationCode: newParallel,
+      clearVerseSelection: true,
+      clearTappedWord: true,
     );
     _syncToChapterParams();
   }
@@ -211,15 +269,44 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
   }
 
   void clearWordTap() {
-    state = state.copyWith();
+    state = state.copyWith(clearTappedWord: true);
   }
 
   void selectVerse(int verseNumber) {
-    state = state.copyWith(selectedVerseNumber: verseNumber);
+    state = state.copyWith(selectedVerseNumbers: {verseNumber});
+  }
+
+  void toggleVerseSelection(int verseNumber) {
+    final selected = {...state.selectedVerseNumbers};
+    if (!selected.add(verseNumber)) selected.remove(verseNumber);
+    state = state.copyWith(
+      selectedVerseNumbers: selected,
+      clearVerseSelection: selected.isEmpty,
+    );
   }
 
   void clearVerseSelection() {
-    state = state.copyWith();
+    state = state.copyWith(clearVerseSelection: true);
+  }
+
+  void updateReadingPosition({
+    required int verse,
+    required double fraction,
+    required double offset,
+  }) {
+    final safeVerse = verse < 1 ? 1 : verse;
+    final safeFraction = fraction.clamp(0.0, 1.0);
+    final safeOffset = offset < 0 ? 0.0 : offset;
+    if (state.scrollVerse == safeVerse &&
+        (state.scrollFraction - safeFraction).abs() < 0.001 &&
+        (state.scrollOffset - safeOffset).abs() < 0.5) {
+      return;
+    }
+    state = state.copyWith(
+      scrollVerse: safeVerse,
+      scrollFraction: safeFraction,
+      scrollOffset: safeOffset,
+    );
   }
 
   // ── Auto Scroll ───────────────────────────────────────────────────

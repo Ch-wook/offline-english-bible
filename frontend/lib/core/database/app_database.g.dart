@@ -11539,6 +11539,42 @@ class $ReadingTabsTable extends ReadingTabs
         requiredDuringInsert: false,
         defaultValue: const Constant('KOREAN_RV'),
       );
+  static const VerificationMeta _scrollVerseMeta = const VerificationMeta(
+    'scrollVerse',
+  );
+  @override
+  late final GeneratedColumn<int> scrollVerse = GeneratedColumn<int>(
+    'scroll_verse',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _scrollFractionMeta = const VerificationMeta(
+    'scrollFraction',
+  );
+  @override
+  late final GeneratedColumn<double> scrollFraction = GeneratedColumn<double>(
+    'scroll_fraction',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _scrollOffsetMeta = const VerificationMeta(
+    'scrollOffset',
+  );
+  @override
+  late final GeneratedColumn<double> scrollOffset = GeneratedColumn<double>(
+    'scroll_offset',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
     'sortOrder',
   );
@@ -11585,6 +11621,9 @@ class $ReadingTabsTable extends ReadingTabs
     translationCode,
     isParallelView,
     parallelTranslationCode,
+    scrollVerse,
+    scrollFraction,
+    scrollOffset,
     sortOrder,
     isActive,
     updatedAt,
@@ -11640,6 +11679,33 @@ class $ReadingTabsTable extends ReadingTabs
         parallelTranslationCode.isAcceptableOrUnknown(
           data['parallel_translation_code']!,
           _parallelTranslationCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scroll_verse')) {
+      context.handle(
+        _scrollVerseMeta,
+        scrollVerse.isAcceptableOrUnknown(
+          data['scroll_verse']!,
+          _scrollVerseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scroll_fraction')) {
+      context.handle(
+        _scrollFractionMeta,
+        scrollFraction.isAcceptableOrUnknown(
+          data['scroll_fraction']!,
+          _scrollFractionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scroll_offset')) {
+      context.handle(
+        _scrollOffsetMeta,
+        scrollOffset.isAcceptableOrUnknown(
+          data['scroll_offset']!,
+          _scrollOffsetMeta,
         ),
       );
     }
@@ -11702,6 +11768,21 @@ class $ReadingTabsTable extends ReadingTabs
             DriftSqlType.string,
             data['${effectivePrefix}parallel_translation_code'],
           )!,
+      scrollVerse:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}scroll_verse'],
+          )!,
+      scrollFraction:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}scroll_fraction'],
+          )!,
+      scrollOffset:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}scroll_offset'],
+          )!,
       sortOrder:
           attachedDatabase.typeMapping.read(
             DriftSqlType.int,
@@ -11733,6 +11814,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
   final String translationCode;
   final bool isParallelView;
   final String parallelTranslationCode;
+  final int scrollVerse;
+  final double scrollFraction;
+  final double scrollOffset;
   final int sortOrder;
   final bool isActive;
   final DateTime updatedAt;
@@ -11743,6 +11827,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
     required this.translationCode,
     required this.isParallelView,
     required this.parallelTranslationCode,
+    required this.scrollVerse,
+    required this.scrollFraction,
+    required this.scrollOffset,
     required this.sortOrder,
     required this.isActive,
     required this.updatedAt,
@@ -11758,6 +11845,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
     map['parallel_translation_code'] = Variable<String>(
       parallelTranslationCode,
     );
+    map['scroll_verse'] = Variable<int>(scrollVerse);
+    map['scroll_fraction'] = Variable<double>(scrollFraction);
+    map['scroll_offset'] = Variable<double>(scrollOffset);
     map['sort_order'] = Variable<int>(sortOrder);
     map['is_active'] = Variable<bool>(isActive);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -11772,6 +11862,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
       translationCode: Value(translationCode),
       isParallelView: Value(isParallelView),
       parallelTranslationCode: Value(parallelTranslationCode),
+      scrollVerse: Value(scrollVerse),
+      scrollFraction: Value(scrollFraction),
+      scrollOffset: Value(scrollOffset),
       sortOrder: Value(sortOrder),
       isActive: Value(isActive),
       updatedAt: Value(updatedAt),
@@ -11792,6 +11885,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
       parallelTranslationCode: serializer.fromJson<String>(
         json['parallelTranslationCode'],
       ),
+      scrollVerse: serializer.fromJson<int>(json['scrollVerse']),
+      scrollFraction: serializer.fromJson<double>(json['scrollFraction']),
+      scrollOffset: serializer.fromJson<double>(json['scrollOffset']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -11809,6 +11905,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
       'parallelTranslationCode': serializer.toJson<String>(
         parallelTranslationCode,
       ),
+      'scrollVerse': serializer.toJson<int>(scrollVerse),
+      'scrollFraction': serializer.toJson<double>(scrollFraction),
+      'scrollOffset': serializer.toJson<double>(scrollOffset),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'isActive': serializer.toJson<bool>(isActive),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -11822,6 +11921,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
     String? translationCode,
     bool? isParallelView,
     String? parallelTranslationCode,
+    int? scrollVerse,
+    double? scrollFraction,
+    double? scrollOffset,
     int? sortOrder,
     bool? isActive,
     DateTime? updatedAt,
@@ -11833,6 +11935,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
     isParallelView: isParallelView ?? this.isParallelView,
     parallelTranslationCode:
         parallelTranslationCode ?? this.parallelTranslationCode,
+    scrollVerse: scrollVerse ?? this.scrollVerse,
+    scrollFraction: scrollFraction ?? this.scrollFraction,
+    scrollOffset: scrollOffset ?? this.scrollOffset,
     sortOrder: sortOrder ?? this.sortOrder,
     isActive: isActive ?? this.isActive,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -11854,6 +11959,16 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
           data.parallelTranslationCode.present
               ? data.parallelTranslationCode.value
               : this.parallelTranslationCode,
+      scrollVerse:
+          data.scrollVerse.present ? data.scrollVerse.value : this.scrollVerse,
+      scrollFraction:
+          data.scrollFraction.present
+              ? data.scrollFraction.value
+              : this.scrollFraction,
+      scrollOffset:
+          data.scrollOffset.present
+              ? data.scrollOffset.value
+              : this.scrollOffset,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -11869,6 +11984,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
           ..write('translationCode: $translationCode, ')
           ..write('isParallelView: $isParallelView, ')
           ..write('parallelTranslationCode: $parallelTranslationCode, ')
+          ..write('scrollVerse: $scrollVerse, ')
+          ..write('scrollFraction: $scrollFraction, ')
+          ..write('scrollOffset: $scrollOffset, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('isActive: $isActive, ')
           ..write('updatedAt: $updatedAt')
@@ -11884,6 +12002,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
     translationCode,
     isParallelView,
     parallelTranslationCode,
+    scrollVerse,
+    scrollFraction,
+    scrollOffset,
     sortOrder,
     isActive,
     updatedAt,
@@ -11898,6 +12019,9 @@ class ReadingTabData extends DataClass implements Insertable<ReadingTabData> {
           other.translationCode == this.translationCode &&
           other.isParallelView == this.isParallelView &&
           other.parallelTranslationCode == this.parallelTranslationCode &&
+          other.scrollVerse == this.scrollVerse &&
+          other.scrollFraction == this.scrollFraction &&
+          other.scrollOffset == this.scrollOffset &&
           other.sortOrder == this.sortOrder &&
           other.isActive == this.isActive &&
           other.updatedAt == this.updatedAt);
@@ -11910,6 +12034,9 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
   final Value<String> translationCode;
   final Value<bool> isParallelView;
   final Value<String> parallelTranslationCode;
+  final Value<int> scrollVerse;
+  final Value<double> scrollFraction;
+  final Value<double> scrollOffset;
   final Value<int> sortOrder;
   final Value<bool> isActive;
   final Value<DateTime> updatedAt;
@@ -11920,6 +12047,9 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
     this.translationCode = const Value.absent(),
     this.isParallelView = const Value.absent(),
     this.parallelTranslationCode = const Value.absent(),
+    this.scrollVerse = const Value.absent(),
+    this.scrollFraction = const Value.absent(),
+    this.scrollOffset = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.isActive = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -11931,6 +12061,9 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
     this.translationCode = const Value.absent(),
     this.isParallelView = const Value.absent(),
     this.parallelTranslationCode = const Value.absent(),
+    this.scrollVerse = const Value.absent(),
+    this.scrollFraction = const Value.absent(),
+    this.scrollOffset = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.isActive = const Value.absent(),
     required DateTime updatedAt,
@@ -11942,6 +12075,9 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
     Expression<String>? translationCode,
     Expression<bool>? isParallelView,
     Expression<String>? parallelTranslationCode,
+    Expression<int>? scrollVerse,
+    Expression<double>? scrollFraction,
+    Expression<double>? scrollOffset,
     Expression<int>? sortOrder,
     Expression<bool>? isActive,
     Expression<DateTime>? updatedAt,
@@ -11954,6 +12090,9 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
       if (isParallelView != null) 'is_parallel_view': isParallelView,
       if (parallelTranslationCode != null)
         'parallel_translation_code': parallelTranslationCode,
+      if (scrollVerse != null) 'scroll_verse': scrollVerse,
+      if (scrollFraction != null) 'scroll_fraction': scrollFraction,
+      if (scrollOffset != null) 'scroll_offset': scrollOffset,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (isActive != null) 'is_active': isActive,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -11967,6 +12106,9 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
     Value<String>? translationCode,
     Value<bool>? isParallelView,
     Value<String>? parallelTranslationCode,
+    Value<int>? scrollVerse,
+    Value<double>? scrollFraction,
+    Value<double>? scrollOffset,
     Value<int>? sortOrder,
     Value<bool>? isActive,
     Value<DateTime>? updatedAt,
@@ -11979,6 +12121,9 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
       isParallelView: isParallelView ?? this.isParallelView,
       parallelTranslationCode:
           parallelTranslationCode ?? this.parallelTranslationCode,
+      scrollVerse: scrollVerse ?? this.scrollVerse,
+      scrollFraction: scrollFraction ?? this.scrollFraction,
+      scrollOffset: scrollOffset ?? this.scrollOffset,
       sortOrder: sortOrder ?? this.sortOrder,
       isActive: isActive ?? this.isActive,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -12008,6 +12153,15 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
         parallelTranslationCode.value,
       );
     }
+    if (scrollVerse.present) {
+      map['scroll_verse'] = Variable<int>(scrollVerse.value);
+    }
+    if (scrollFraction.present) {
+      map['scroll_fraction'] = Variable<double>(scrollFraction.value);
+    }
+    if (scrollOffset.present) {
+      map['scroll_offset'] = Variable<double>(scrollOffset.value);
+    }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
@@ -12029,6 +12183,9 @@ class ReadingTabsCompanion extends UpdateCompanion<ReadingTabData> {
           ..write('translationCode: $translationCode, ')
           ..write('isParallelView: $isParallelView, ')
           ..write('parallelTranslationCode: $parallelTranslationCode, ')
+          ..write('scrollVerse: $scrollVerse, ')
+          ..write('scrollFraction: $scrollFraction, ')
+          ..write('scrollOffset: $scrollOffset, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('isActive: $isActive, ')
           ..write('updatedAt: $updatedAt')
@@ -20234,6 +20391,9 @@ typedef $$ReadingTabsTableCreateCompanionBuilder =
       Value<String> translationCode,
       Value<bool> isParallelView,
       Value<String> parallelTranslationCode,
+      Value<int> scrollVerse,
+      Value<double> scrollFraction,
+      Value<double> scrollOffset,
       Value<int> sortOrder,
       Value<bool> isActive,
       required DateTime updatedAt,
@@ -20246,6 +20406,9 @@ typedef $$ReadingTabsTableUpdateCompanionBuilder =
       Value<String> translationCode,
       Value<bool> isParallelView,
       Value<String> parallelTranslationCode,
+      Value<int> scrollVerse,
+      Value<double> scrollFraction,
+      Value<double> scrollOffset,
       Value<int> sortOrder,
       Value<bool> isActive,
       Value<DateTime> updatedAt,
@@ -20287,6 +20450,21 @@ class $$ReadingTabsTableFilterComposer
 
   ColumnFilters<String> get parallelTranslationCode => $composableBuilder(
     column: $table.parallelTranslationCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get scrollVerse => $composableBuilder(
+    column: $table.scrollVerse,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get scrollFraction => $composableBuilder(
+    column: $table.scrollFraction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get scrollOffset => $composableBuilder(
+    column: $table.scrollOffset,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -20345,6 +20523,21 @@ class $$ReadingTabsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get scrollVerse => $composableBuilder(
+    column: $table.scrollVerse,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get scrollFraction => $composableBuilder(
+    column: $table.scrollFraction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get scrollOffset => $composableBuilder(
+    column: $table.scrollOffset,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
@@ -20391,6 +20584,21 @@ class $$ReadingTabsTableAnnotationComposer
 
   GeneratedColumn<String> get parallelTranslationCode => $composableBuilder(
     column: $table.parallelTranslationCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get scrollVerse => $composableBuilder(
+    column: $table.scrollVerse,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get scrollFraction => $composableBuilder(
+    column: $table.scrollFraction,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get scrollOffset => $composableBuilder(
+    column: $table.scrollOffset,
     builder: (column) => column,
   );
 
@@ -20442,6 +20650,9 @@ class $$ReadingTabsTableTableManager
                 Value<String> translationCode = const Value.absent(),
                 Value<bool> isParallelView = const Value.absent(),
                 Value<String> parallelTranslationCode = const Value.absent(),
+                Value<int> scrollVerse = const Value.absent(),
+                Value<double> scrollFraction = const Value.absent(),
+                Value<double> scrollOffset = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -20452,6 +20663,9 @@ class $$ReadingTabsTableTableManager
                 translationCode: translationCode,
                 isParallelView: isParallelView,
                 parallelTranslationCode: parallelTranslationCode,
+                scrollVerse: scrollVerse,
+                scrollFraction: scrollFraction,
+                scrollOffset: scrollOffset,
                 sortOrder: sortOrder,
                 isActive: isActive,
                 updatedAt: updatedAt,
@@ -20464,6 +20678,9 @@ class $$ReadingTabsTableTableManager
                 Value<String> translationCode = const Value.absent(),
                 Value<bool> isParallelView = const Value.absent(),
                 Value<String> parallelTranslationCode = const Value.absent(),
+                Value<int> scrollVerse = const Value.absent(),
+                Value<double> scrollFraction = const Value.absent(),
+                Value<double> scrollOffset = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 required DateTime updatedAt,
@@ -20474,6 +20691,9 @@ class $$ReadingTabsTableTableManager
                 translationCode: translationCode,
                 isParallelView: isParallelView,
                 parallelTranslationCode: parallelTranslationCode,
+                scrollVerse: scrollVerse,
+                scrollFraction: scrollFraction,
+                scrollOffset: scrollOffset,
                 sortOrder: sortOrder,
                 isActive: isActive,
                 updatedAt: updatedAt,

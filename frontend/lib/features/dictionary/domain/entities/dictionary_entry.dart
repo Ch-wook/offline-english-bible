@@ -179,11 +179,15 @@ final class InflectedForm {
   /// 활용 형태.
   final String form;
 
-  String get formTypeLabel => _labels[formType] ?? formType;
+  String get formTypeLabel => _labels[formType] ?? '활용형';
 
   static const _labels = {
+    'inflected_form': '활용형',
+    'archaic_form': '고어 활용형',
+    'plural_or_third_person': '복수형·3인칭 단수',
     'past_tense': '과거형',
     'past_participle': '과거분사',
+    'past_tense_or_participle': '과거형·과거분사',
     'present_participle': '현재분사',
     'plural': '복수형',
     'third_person_singular': '3인칭 단수',

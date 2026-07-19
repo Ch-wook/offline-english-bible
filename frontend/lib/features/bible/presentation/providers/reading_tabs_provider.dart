@@ -58,6 +58,9 @@ final class ReadingTabsNotifier
           translationCode: reader.translationCode,
           isParallelView: reader.isParallelView,
           parallelTranslationCode: reader.parallelTranslationCode,
+          scrollVerse: reader.scrollVerse,
+          scrollFraction: reader.scrollFraction,
+          scrollOffset: reader.scrollOffset,
           sortOrder: 0,
         );
         tabs = [created];
@@ -91,16 +94,21 @@ final class ReadingTabsNotifier
     _isMutating = true;
     try {
       final reader = _ref.read(bibleReaderProvider);
+      await syncActiveLocation(reader);
+      final syncedCurrent = state.valueOrNull ?? current;
       final created = await _repository.createTab(
         bookId: reader.bookId,
         chapter: reader.chapter,
         translationCode: reader.translationCode,
         isParallelView: reader.isParallelView,
         parallelTranslationCode: reader.parallelTranslationCode,
-        sortOrder: current.tabs.length,
+        scrollVerse: reader.scrollVerse,
+        scrollFraction: reader.scrollFraction,
+        scrollOffset: reader.scrollOffset,
+        sortOrder: syncedCurrent.tabs.length,
       );
       final tabs = [
-        for (final tab in current.tabs) tab.copyWith(isActive: false),
+        for (final tab in syncedCurrent.tabs) tab.copyWith(isActive: false),
         created,
       ];
       state = AsyncData(ReadingTabsState(tabs: tabs, activeTabId: created.id));
@@ -121,9 +129,12 @@ final class ReadingTabsNotifier
 
     _isMutating = true;
     try {
+      await syncActiveLocation(_ref.read(bibleReaderProvider));
+      final syncedCurrent = state.valueOrNull ?? current;
       await _repository.setActiveTab(id);
       final tabs = [
-        for (final tab in current.tabs) tab.copyWith(isActive: tab.id == id),
+        for (final tab in syncedCurrent.tabs)
+          tab.copyWith(isActive: tab.id == id),
       ];
       final active = tabs.firstWhere((tab) => tab.id == id);
       state = AsyncData(ReadingTabsState(tabs: tabs, activeTabId: id));
@@ -145,7 +156,12 @@ final class ReadingTabsNotifier
     if (closingIndex < 0) return false;
     _isMutating = true;
     try {
-      final remaining = current.tabs.where((tab) => tab.id != id).toList();
+      if (id == current.activeTabId) {
+        await syncActiveLocation(_ref.read(bibleReaderProvider));
+      }
+      final syncedCurrent = state.valueOrNull ?? current;
+      final remaining =
+          syncedCurrent.tabs.where((tab) => tab.id != id).toList();
       var activeId = current.activeTabId;
 
       if (id == current.activeTabId) {
@@ -188,7 +204,10 @@ final class ReadingTabsNotifier
         active.chapter == reader.chapter &&
         active.translationCode == reader.translationCode &&
         active.isParallelView == reader.isParallelView &&
-        active.parallelTranslationCode == reader.parallelTranslationCode) {
+        active.parallelTranslationCode == reader.parallelTranslationCode &&
+        active.scrollVerse == reader.scrollVerse &&
+        (active.scrollFraction - reader.scrollFraction).abs() < 0.001 &&
+        (active.scrollOffset - reader.scrollOffset).abs() < 0.5) {
       return;
     }
 
@@ -198,6 +217,9 @@ final class ReadingTabsNotifier
       translationCode: reader.translationCode,
       isParallelView: reader.isParallelView,
       parallelTranslationCode: reader.parallelTranslationCode,
+      scrollVerse: reader.scrollVerse,
+      scrollFraction: reader.scrollFraction,
+      scrollOffset: reader.scrollOffset,
       updatedAt: DateTime.now(),
     );
     final tabs = [
@@ -229,7 +251,10 @@ final readingTabsAutoSaveProvider = Provider<void>((ref) {
         previous.chapter != next.chapter ||
         previous.translationCode != next.translationCode ||
         previous.isParallelView != next.isParallelView ||
-        previous.parallelTranslationCode != next.parallelTranslationCode) {
+        previous.parallelTranslationCode != next.parallelTranslationCode ||
+        previous.scrollVerse != next.scrollVerse ||
+        (previous.scrollFraction - next.scrollFraction).abs() >= 0.001 ||
+        (previous.scrollOffset - next.scrollOffset).abs() >= 0.5) {
       ref.read(readingTabsProvider.notifier).syncActiveLocation(next);
     }
   });

@@ -18,6 +18,11 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    lint {
+        // Flutter rewrites this ignored Windows-only file during every build.
+        disable += "PropertyEscape"
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

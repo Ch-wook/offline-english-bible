@@ -4,7 +4,7 @@
 abstract final class RoutePaths {
   RoutePaths._();
 
-  // ── Shell (Bottom Nav) ────────────────────────────────────────────
+  // ── Primary destinations (opened from the reader overflow menu) ──
   static const String bible = '/bible';
   static const String vocabulary = '/vocabulary';
   static const String search = '/search';

@@ -34,6 +34,11 @@ void main() {
       (value) => value.activeTab.bookId == 43 && value.activeTab.chapter == 3,
     );
     await _waitForPersistedChapter(db, firstId, 3);
+    container
+        .read(bibleReaderProvider.notifier)
+        .updateReadingPosition(verse: 16, fraction: 0.3, offset: 720);
+    await _waitForTabs(container, (value) => value.activeTab.scrollVerse == 16);
+    await _waitForPersistedPosition(db, firstId, verse: 16, offset: 720);
 
     expect(await container.read(readingTabsProvider.notifier).addTab(), isTrue);
     state = container.read(readingTabsProvider).requireValue;
@@ -46,10 +51,17 @@ void main() {
       (value) => value.activeTab.bookId == 19 && value.activeTab.chapter == 23,
     );
     await _waitForPersistedChapter(db, secondId, 23);
+    container
+        .read(bibleReaderProvider.notifier)
+        .updateReadingPosition(verse: 4, fraction: 0.6, offset: 240);
+    await _waitForPersistedPosition(db, secondId, verse: 4, offset: 240);
 
     await container.read(readingTabsProvider.notifier).selectTab(firstId);
     expect(container.read(bibleReaderProvider).bookId, 43);
     expect(container.read(bibleReaderProvider).chapter, 3);
+    expect(container.read(bibleReaderProvider).scrollVerse, 16);
+    expect(container.read(bibleReaderProvider).scrollFraction, 0.3);
+    expect(container.read(bibleReaderProvider).scrollOffset, 720);
     autoSaveSubscription.close();
     container.dispose();
 
@@ -59,6 +71,8 @@ void main() {
     expect(state.activeTabId, firstId);
     expect(container.read(bibleReaderProvider).bookId, 43);
     expect(container.read(bibleReaderProvider).chapter, 3);
+    expect(container.read(bibleReaderProvider).scrollVerse, 16);
+    expect(container.read(bibleReaderProvider).scrollOffset, 720);
 
     await container.read(readingTabsProvider.notifier).selectTab(secondId);
     expect(container.read(bibleReaderProvider).bookId, 19);
@@ -141,4 +155,20 @@ Future<void> _waitForPersistedChapter(
     await Future<void>.delayed(const Duration(milliseconds: 5));
   }
   fail('Timed out waiting for tab $id to persist chapter $chapter');
+}
+
+Future<void> _waitForPersistedPosition(
+  AppDatabase db,
+  int id, {
+  required int verse,
+  required double offset,
+}) async {
+  for (var attempt = 0; attempt < 1000; attempt++) {
+    final row =
+        await (db.select(db.readingTabs)
+          ..where((tab) => tab.id.equals(id))).getSingleOrNull();
+    if (row?.scrollVerse == verse && row?.scrollOffset == offset) return;
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+  }
+  fail('Timed out waiting for tab $id to persist verse $verse at $offset');
 }

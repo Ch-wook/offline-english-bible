@@ -6,6 +6,9 @@ final class BibleReadingTab {
     required this.translationCode,
     required this.isParallelView,
     required this.parallelTranslationCode,
+    required this.scrollVerse,
+    required this.scrollFraction,
+    required this.scrollOffset,
     required this.sortOrder,
     required this.isActive,
     required this.updatedAt,
@@ -17,6 +20,9 @@ final class BibleReadingTab {
   final String translationCode;
   final bool isParallelView;
   final String parallelTranslationCode;
+  final int scrollVerse;
+  final double scrollFraction;
+  final double scrollOffset;
   final int sortOrder;
   final bool isActive;
   final DateTime updatedAt;
@@ -28,6 +34,9 @@ final class BibleReadingTab {
     String? translationCode,
     bool? isParallelView,
     String? parallelTranslationCode,
+    int? scrollVerse,
+    double? scrollFraction,
+    double? scrollOffset,
     int? sortOrder,
     bool? isActive,
     DateTime? updatedAt,
@@ -39,6 +48,9 @@ final class BibleReadingTab {
     isParallelView: isParallelView ?? this.isParallelView,
     parallelTranslationCode:
         parallelTranslationCode ?? this.parallelTranslationCode,
+    scrollVerse: scrollVerse ?? this.scrollVerse,
+    scrollFraction: scrollFraction ?? this.scrollFraction,
+    scrollOffset: scrollOffset ?? this.scrollOffset,
     sortOrder: sortOrder ?? this.sortOrder,
     isActive: isActive ?? this.isActive,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -54,6 +66,9 @@ final class BibleReadingTab {
           translationCode == other.translationCode &&
           isParallelView == other.isParallelView &&
           parallelTranslationCode == other.parallelTranslationCode &&
+          scrollVerse == other.scrollVerse &&
+          scrollFraction == other.scrollFraction &&
+          scrollOffset == other.scrollOffset &&
           sortOrder == other.sortOrder &&
           isActive == other.isActive;
 
@@ -65,6 +80,9 @@ final class BibleReadingTab {
     translationCode,
     isParallelView,
     parallelTranslationCode,
+    scrollVerse,
+    scrollFraction,
+    scrollOffset,
     sortOrder,
     isActive,
   );

@@ -14,13 +14,12 @@ class Bookmarks extends Table {
   DateTimeColumn get createdAt => dateTime()();
   // 서버 동기화 지원
   TextColumn get serverId => text().nullable()();
-  BoolColumn get syncPending =>
-      boolean().withDefault(const Constant(true))();
+  BoolColumn get syncPending => boolean().withDefault(const Constant(true))();
 
   @override
   List<Set<Column>> get uniqueKeys => [
-        {translationCode, bookId, chapter, verse},
-      ];
+    {translationCode, bookId, chapter, verse},
+  ];
 }
 
 /// 메모 (절 단위).
@@ -33,8 +32,7 @@ class Memos extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   TextColumn get serverId => text().nullable()();
-  BoolColumn get syncPending =>
-      boolean().withDefault(const Constant(true))();
+  BoolColumn get syncPending => boolean().withDefault(const Constant(true))();
 }
 
 /// 형광펜 (단어/구 단위).
@@ -59,8 +57,7 @@ class VocabularyItems extends Table {
   TextColumn get word => text().withLength(min: 1, max: 100)();
   TextColumn get wordNormalized =>
       text().withLength(min: 1, max: 100)(); // 소문자, 원형
-  TextColumn get partOfSpeech =>
-      text().withLength(min: 1, max: 30)();
+  TextColumn get partOfSpeech => text().withLength(min: 1, max: 30)();
   TextColumn get definition => text()(); // 기본 뜻
   TextColumn get bibleDefinition => text().withDefault(const Constant(''))();
   TextColumn get ipa => text().withDefault(const Constant(''))();
@@ -75,25 +72,22 @@ class VocabularyItems extends Table {
   // 학습 상태 (SuperMemo-2 기반)
   IntColumn get masteryLevel =>
       integer().withDefault(const Constant(0))(); // 0~5
-  IntColumn get reviewCount =>
-      integer().withDefault(const Constant(0))();
-  IntColumn get correctCount =>
-      integer().withDefault(const Constant(0))();
+  IntColumn get reviewCount => integer().withDefault(const Constant(0))();
+  IntColumn get correctCount => integer().withDefault(const Constant(0))();
   IntColumn get repetitions => integer().withDefault(const Constant(0))();
   RealColumn get easeFactor => real().withDefault(const Constant(2.5))();
   IntColumn get intervalDays => integer().withDefault(const Constant(1))();
-  
+
   DateTimeColumn get addedAt => dateTime()();
   DateTimeColumn get nextReviewAt => dateTime().nullable()();
   DateTimeColumn get lastReviewedAt => dateTime().nullable()();
   BoolColumn get isLearned => boolean().withDefault(const Constant(false))();
-  BoolColumn get isFavorite =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
 
   @override
   List<Set<Column>> get uniqueKeys => [
-        {word, partOfSpeech},
-      ];
+    {word, partOfSpeech},
+  ];
 }
 
 /// 복습 세션 기록.
@@ -102,19 +96,19 @@ class ReviewSessions extends Table {
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get completedAt => dateTime().nullable()();
   IntColumn get totalCount => integer()();
-  IntColumn get correctCount =>
-      integer().withDefault(const Constant(0))();
+  IntColumn get correctCount => integer().withDefault(const Constant(0))();
   TextColumn get sessionType =>
-      text().withLength(min: 1, max: 20)(); // 'multiple_choice' | 'spelling' | 'flashcard'
+      text().withLength(
+        min: 1,
+        max: 20,
+      )(); // 'multiple_choice' | 'spelling' | 'flashcard'
 }
 
 /// 복습 세션 개별 답변.
 class ReviewAnswers extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get sessionId =>
-      integer().references(ReviewSessions, #id)();
-  IntColumn get vocabularyId =>
-      integer().references(VocabularyItems, #id)();
+  IntColumn get sessionId => integer().references(ReviewSessions, #id)();
+  IntColumn get vocabularyId => integer().references(VocabularyItems, #id)();
   BoolColumn get isCorrect => boolean()();
   IntColumn get responseTimeMs => integer()(); // 응답 시간 (밀리초)
   DateTimeColumn get answeredAt => dateTime()();
@@ -127,10 +121,8 @@ class ReadingHistory extends Table {
   IntColumn get chapter => integer()();
   TextColumn get translationCode => text().withLength(min: 1, max: 20)();
   DateTimeColumn get accessedAt => dateTime()();
-  IntColumn get durationSeconds =>
-      integer().withDefault(const Constant(0))();
-  IntColumn get lastVerseRead =>
-      integer().withDefault(const Constant(1))();
+  IntColumn get durationSeconds => integer().withDefault(const Constant(0))();
+  IntColumn get lastVerseRead => integer().withDefault(const Constant(1))();
 }
 
 /// 여러 성경 읽기 위치를 독립적으로 보존하는 탭.
@@ -144,6 +136,9 @@ class ReadingTabs extends Table {
       boolean().withDefault(const Constant(false))();
   TextColumn get parallelTranslationCode =>
       text().withDefault(const Constant('KOREAN_RV'))();
+  IntColumn get scrollVerse => integer().withDefault(const Constant(1))();
+  RealColumn get scrollFraction => real().withDefault(const Constant(0))();
+  RealColumn get scrollOffset => real().withDefault(const Constant(0))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   BoolColumn get isActive => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime()();
@@ -153,13 +148,10 @@ class ReadingTabs extends Table {
 class ReadingPlans extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 1, max: 100)();
-  TextColumn get description =>
-      text().withDefault(const Constant(''))();
+  TextColumn get description => text().withDefault(const Constant(''))();
   DateTimeColumn get startDate => dateTime()();
   DateTimeColumn get targetEndDate => dateTime()();
-  BoolColumn get isActive =>
-      boolean().withDefault(const Constant(true))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get totalDays => integer()();
-  IntColumn get completedDays =>
-      integer().withDefault(const Constant(0))();
+  IntColumn get completedDays => integer().withDefault(const Constant(0))();
 }
