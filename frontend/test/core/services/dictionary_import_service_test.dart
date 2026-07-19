@@ -43,6 +43,13 @@ void main() {
       final loveth = await db.lookupWord('loveth');
       expect(loveth, isNotNull);
       expect(loveth!.wordNormalized, 'love');
+
+      final covenantbreakers = await db.lookupWord('covenantbreakers');
+      expect(covenantbreakers, isNotNull);
+      expect(
+        covenantbreakers!.koreanMeaning,
+        '언약을 깨뜨리는 자들, 신의를 저버리는 자들',
+      );
     },
     timeout: const Timeout(Duration(minutes: 2)),
   );

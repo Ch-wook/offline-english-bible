@@ -44,6 +44,7 @@ void main() {
   Future<({AppDatabase db, ProviderContainer container})> pumpList(
     WidgetTester tester, {
     required int chapter,
+    int targetVerse = 1,
   }) async {
     tester.view.physicalSize = const Size(360, 560);
     tester.view.devicePixelRatio = 1;
@@ -54,7 +55,7 @@ void main() {
     final container = createTestContainer(db: db);
     container
         .read(bibleReaderProvider.notifier)
-        .navigateTo(bookId: 1, chapter: chapter);
+        .navigateTo(bookId: 1, chapter: chapter, verse: targetVerse);
     addTearDown(() async {
       container.dispose();
       await closeTestDatabase(db);
@@ -112,6 +113,15 @@ void main() {
     expect(reader.scrollOffset, greaterThan(0));
     expect(reader.scrollVerse, greaterThan(1));
     expect(reader.scrollFraction, inInclusiveRange(0, 1));
+  });
+
+  testWidgets('exact navigation restores the requested verse', (tester) async {
+    final context = await pumpList(tester, chapter: 1, targetVerse: 15);
+
+    final target = tester.getRect(find.byType(VerseItem).at(14));
+    expect(target.top, lessThanOrEqualTo(1));
+    expect(target.bottom, greaterThan(0));
+    expect(context.container.read(bibleReaderProvider).scrollVerse, 15);
   });
 
   testWidgets('parallel view rebuild restores the same visible verse', (

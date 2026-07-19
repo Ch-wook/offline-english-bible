@@ -17,7 +17,11 @@ void removeGeneratedKoreanClassifications(List<DictionaryJson> entries) {
   };
   for (final entry in entries) {
     final current = entry['korean_meaning']?.toString() ?? '';
-    if (!generated.contains(current)) continue;
+    final isGenerated =
+        generated.contains(current) ||
+        current.startsWith('개역한글 문맥:') ||
+        current.endsWith('(개역한글 문맥)');
+    if (!isGenerated) continue;
     entry['korean_meaning'] = '';
     for (final rawSense in entry['senses'] as List<dynamic>? ?? const []) {
       final sense = rawSense as Map<String, dynamic>;

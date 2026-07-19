@@ -1,6 +1,8 @@
 // lib/features/search/presentation/pages/search_page.dart
 // [MODIFY] 전문 검색 화면 — FTS5 기반 완전 구현
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +23,7 @@ class SearchPage extends ConsumerStatefulWidget {
 class _SearchPageState extends ConsumerState<SearchPage> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -49,14 +53,11 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         title: TextField(
           controller: _controller,
           focusNode: _focusNode,
-          onChanged: (v) {
-            if (v.length >= 2) {
-              notifier.search(v);
-            } else if (v.isEmpty) {
-              notifier.clear();
-            }
+          onChanged: (value) => _queueSearch(value, notifier),
+          onSubmitted: (value) {
+            _searchDebounce?.cancel();
+            notifier.search(value);
           },
-          onSubmitted: (v) => notifier.search(v),
           decoration: InputDecoration(
             hintText: '성경 전문 검색… (KJV/한국어)',
             border: InputBorder.none,
@@ -77,6 +78,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             IconButton(
               icon: const Icon(Icons.clear_rounded),
               onPressed: () {
+                _searchDebounce?.cancel();
                 _controller.clear();
                 notifier.clear();
                 _focusNode.requestFocus();
@@ -103,6 +105,18 @@ class _SearchPageState extends ConsumerState<SearchPage> {
           ),
         ],
       ),
+    );
+  }
+
+  void _queueSearch(String value, SearchNotifier notifier) {
+    _searchDebounce?.cancel();
+    if (value.trim().length < 2) {
+      notifier.clear();
+      return;
+    }
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 300),
+      () => notifier.search(value),
     );
   }
 }
@@ -139,7 +153,7 @@ class _FilterBar extends ConsumerWidget {
             label: '구약',
             icon: Icons.book_rounded,
             isSelected: state.testament == 'OT',
-            onTap: () => notifier.setBookFilter(null),
+            onTap: () => notifier.setTestamentFilter('OT'),
           ),
           const SizedBox(width: AppSpacing.sm),
 
@@ -147,7 +161,7 @@ class _FilterBar extends ConsumerWidget {
             label: '신약',
             icon: Icons.book_outlined,
             isSelected: state.testament == 'NT',
-            onTap: () => notifier.setBookFilter(null),
+            onTap: () => notifier.setTestamentFilter('NT'),
           ),
 
           // 필터 초기화
@@ -180,10 +194,7 @@ class _FilterBar extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(height: AppSpacing.lg),
-                RadioListTile<String>(
-                  title: Text('KJV (영어)'),
-                  value: 'KJV',
-                ),
+                RadioListTile<String>(title: Text('KJV (영어)'), value: 'KJV'),
                 RadioListTile<String>(
                   title: Text('개역한글 (한국어)'),
                   value: 'KOREAN_RV',

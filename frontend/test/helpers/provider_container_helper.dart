@@ -1,6 +1,7 @@
 // test/helpers/provider_container_helper.dart
 // [NEW] Riverpod ProviderContainer 헬퍼 (테스트용)
 
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:offline_english_bible/core/database/app_database.dart';
@@ -15,6 +16,9 @@ ProviderContainer createTestContainer({
   bool closeDatabaseOnDispose = true,
   List<Override> additionalOverrides = const [],
 }) {
+  // Each test gets a separate in-memory executor, so concurrent test files can
+  // safely own independent AppDatabase instances.
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   final testDb = db ?? AppDatabase(createInMemoryConnection());
   final testBox = settingsBox ?? _createEmptyBox();
   final databaseOverride =

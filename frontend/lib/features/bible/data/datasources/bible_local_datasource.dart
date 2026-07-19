@@ -1,7 +1,6 @@
 // lib/features/bible/data/datasources/bible_local_datasource.dart
 // [NEW] 성경 로컬 데이터소스 추상 인터페이스
 
-
 import '../../../../core/database/app_database.dart';
 
 /// SQLite AppDatabase 에 직접 접근하는 데이터소스 인터페이스.
@@ -34,6 +33,7 @@ abstract interface class BibleLocalDataSource {
     required String query,
     required String translationCode,
     int? bookId,
+    String? testament,
     int limit = 50,
   });
 

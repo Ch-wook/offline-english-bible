@@ -76,6 +76,22 @@ void main() {
       expect(params.chapter, 23);
     });
 
+    test('navigateTo can target an exact verse', () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(bibleReaderProvider.notifier)
+          .navigateTo(bookId: 45, chapter: 1, verse: 31);
+
+      final state = container.read(bibleReaderProvider);
+      expect(state.bookId, 45);
+      expect(state.chapter, 1);
+      expect(state.scrollVerse, 31);
+      expect(state.scrollFraction, 0);
+      expect(state.scrollOffset, 0);
+    });
+
     test('goToNextChapter increments chapter', () {
       final container = createContainer();
       addTearDown(container.dispose);

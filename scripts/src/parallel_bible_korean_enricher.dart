@@ -20,8 +20,9 @@ final class ParallelBibleMeaningReport {
 /// Fills dictionary gaps from the bundled KJV/Korean parallel corpus.
 ///
 /// Proper names are matched to their Korean spelling by verse co-occurrence,
-/// corpus rarity, and Hangul romanization similarity. Remaining rare KJV
-/// forms receive the exact Korean parallel verse instead of a generic label.
+/// corpus rarity, and Hangul romanization similarity. General vocabulary is
+/// never inferred from verse-level alignment because that cannot establish a
+/// reliable word-level translation.
 ParallelBibleMeaningReport enrichFromParallelBible({
   required List<DictionaryJson> entries,
   required String kjvPath,
@@ -106,13 +107,7 @@ ParallelBibleMeaningReport enrichFromParallelBible({
       continue;
     }
 
-    // A parallel verse is more informative and honest than a fabricated
-    // one-word translation for an otherwise unresolved, usually rare form.
-    final contextual = candidate == null
-        ? '개역한글 문맥: $firstVerse'
-        : '$candidate (개역한글 문맥)';
-    _setMeaning(entry, contextual, firstVerse);
-    contextMeanings++;
+    unresolved++;
   }
 
   return ParallelBibleMeaningReport(

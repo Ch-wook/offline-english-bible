@@ -27,8 +27,7 @@ final class SearchResult {
       '$bookNameKorean ${verse.chapter}:${verse.verseNumber}';
 
   @override
-  String toString() =>
-      'SearchResult(${verse.translationCode} $reference)';
+  String toString() => 'SearchResult(${verse.translationCode} $reference)';
 }
 
 /// 검색 파라미터.
@@ -55,18 +54,20 @@ final class SearchParams {
   bool get hasBookFilter => bookId != null;
   bool get hasTestamentFilter => testament != null;
 
+  static const Object _unset = Object();
+
   SearchParams copyWith({
     String? query,
     String? translationCode,
-    int? bookId,
-    String? testament,
+    Object? bookId = _unset,
+    Object? testament = _unset,
     int? limit,
-  }) =>
-      SearchParams(
-        query: query ?? this.query,
-        translationCode: translationCode ?? this.translationCode,
-        bookId: bookId ?? this.bookId,
-        testament: testament ?? this.testament,
-        limit: limit ?? this.limit,
-      );
+  }) => SearchParams(
+    query: query ?? this.query,
+    translationCode: translationCode ?? this.translationCode,
+    bookId: identical(bookId, _unset) ? this.bookId : bookId as int?,
+    testament:
+        identical(testament, _unset) ? this.testament : testament as String?,
+    limit: limit ?? this.limit,
+  );
 }

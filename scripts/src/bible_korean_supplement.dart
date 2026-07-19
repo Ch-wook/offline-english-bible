@@ -1,4 +1,7 @@
+import 'kjv_contextual_korean_corrections.dart';
+
 const bibleKoreanSupplement = <String, String>{
+  ...kjvContextualKoreanCorrections,
   'alway': '항상, 언제나',
   'armourbearer': '병기를 든 자, 무기를 맡은 부하',
   'arrogancy': '오만, 교만',

@@ -71,9 +71,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('grace'), findsOneWidget);
-    expect(find.text('은혜, 은총'), findsOneWidget);
+    expect(find.text('은혜'), findsOneWidget);
+    expect(find.text('성경 문맥 뜻'), findsOneWidget);
     expect(find.text('/ɡreɪs/'), findsOneWidget);
-    expect(find.text('unmerited divine favor'), findsOneWidget);
+    expect(find.text('unmerited divine favor'), findsNothing);
     final synonymChip = tester.widget<ActionChip>(
       find.widgetWithText(ActionChip, 'favor'),
     );
@@ -209,6 +210,245 @@ void main() {
       expect(find.text(genericDefinition), findsNothing);
     },
   );
+
+  testWidgets('shows localized parts of speech and hides English-only senses', (
+    tester,
+  ) async {
+    const entry = DictionaryEntry(
+      id: 4,
+      word: 'alas',
+      wordNormalized: 'alas',
+      koreanMeaning: '슬프도다, 아아',
+      senses: [
+        WordSense(
+          id: 4,
+          partOfSpeech: 'intj',
+          senseOrder: 1,
+          definition: 'an exclamation of grief',
+          definitionKo: '슬픔을 나타내는 감탄사',
+        ),
+        WordSense(
+          id: 5,
+          partOfSpeech: 'noun',
+          senseOrder: 2,
+          definition: 'an unrelated English-only sense',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          wordLookupProvider.overrideWith((ref, word) async => entry),
+          pronunciationServiceProvider.overrideWithValue(
+            _FakePronunciationService(),
+          ),
+          isWordSavedProvider.overrideWith((ref, word) async => false),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder:
+                  (context) => TextButton(
+                    onPressed:
+                        () => DictionaryBottomSheet.show(context, 'alas'),
+                    child: const Text('open'),
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('감탄사'), findsOneWidget);
+    expect(find.text('intj'), findsNothing);
+    expect(find.text('슬픔을 나타내는 감탄사'), findsOneWidget);
+    expect(find.text('an unrelated English-only sense'), findsNothing);
+  });
+
+  testWidgets(
+    'removes a mismatched imported first sense and saves the Korean POS',
+    (tester) async {
+      String? savedPartOfSpeech;
+      const entry = DictionaryEntry(
+        id: 7,
+        word: 'a',
+        wordNormalized: 'a',
+        koreanMeaning: '하나의 (부정관사); (부정관사) 어떤, 한',
+        synonyms: ['angstrom'],
+        senses: [
+          WordSense(
+            id: 7,
+            partOfSpeech: 'noun',
+            senseOrder: 1,
+            definition: 'a metric unit of length',
+            definitionKo: '하나의 (부정관사)',
+          ),
+          WordSense(
+            id: 8,
+            partOfSpeech: 'article',
+            senseOrder: 2,
+            definition: '',
+            definitionKo: '(부정관사) 어떤, 한',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            wordLookupProvider.overrideWith((ref, word) async => entry),
+            pronunciationServiceProvider.overrideWithValue(
+              _FakePronunciationService(),
+            ),
+            isWordSavedProvider.overrideWith((ref, word) async => false),
+            addVocabWordProvider.overrideWithValue(({
+              required word,
+              required bookId,
+              required chapter,
+              required verse,
+              required translationCode,
+              required definition,
+              required partOfSpeech,
+              required ipa,
+              required bibleDefinition,
+            }) async {
+              savedPartOfSpeech = partOfSpeech;
+            }),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder:
+                    (context) => TextButton(
+                      onPressed: () => DictionaryBottomSheet.show(context, 'a'),
+                      child: const Text('open'),
+                    ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('하나의 (부정관사)'), findsOneWidget);
+      expect(find.text('성경 문맥 뜻'), findsOneWidget);
+      expect(find.text('다른 한국어 뜻'), findsOneWidget);
+      expect(find.text('관사'), findsOneWidget);
+      expect(find.text('명사'), findsNothing);
+      expect(find.text('a metric unit of length'), findsNothing);
+      expect(find.text('angstrom'), findsNothing);
+
+      await tester.tap(find.byTooltip('단어장에 저장'));
+      await tester.pumpAndSettle();
+      expect(savedPartOfSpeech, 'article');
+    },
+  );
+
+  testWidgets('removes imported source noise and compacts long meanings', (
+    tester,
+  ) async {
+    final longMeaning = List.generate(
+      60,
+      (index) => '한국어 의미 ${index + 1}',
+    ).join(', ');
+    final entry = DictionaryEntry(
+      id: 5,
+      word: 'example',
+      wordNormalized: 'example',
+      koreanMeaning: '$longMeaning; Learning English (public domain); 음성 듣기 미국',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          wordLookupProvider.overrideWith((ref, word) async => entry),
+          pronunciationServiceProvider.overrideWithValue(
+            _FakePronunciationService(),
+          ),
+          isWordSavedProvider.overrideWith((ref, word) async => false),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder:
+                  (context) => TextButton(
+                    onPressed:
+                        () => DictionaryBottomSheet.show(context, 'example'),
+                    child: const Text('open'),
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('한국어 의미 1, 한국어 의미 2'), findsOneWidget);
+    expect(find.textContaining('Learning English'), findsNothing);
+    expect(find.textContaining('음성 듣기'), findsNothing);
+  });
+
+  testWidgets('keeps the longest bundled headwords on one line on a phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const entry = DictionaryEntry(
+      id: 6,
+      word: 'covenantbreakers',
+      wordNormalized: 'covenantbreakers',
+      koreanMeaning: '언약을 깨뜨리는 사람들',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          wordLookupProvider.overrideWith((ref, word) async => entry),
+          pronunciationServiceProvider.overrideWithValue(
+            _FakePronunciationService(),
+          ),
+          isWordSavedProvider.overrideWith((ref, word) async => false),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder:
+                  (context) => TextButton(
+                    onPressed:
+                        () => DictionaryBottomSheet.show(
+                          context,
+                          'covenantbreakers',
+                        ),
+                    child: const Text('open'),
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final title = tester.widget<Text>(find.text('covenantbreakers'));
+    final fittedTitle = tester.getSize(
+      find.byKey(const ValueKey('dictionary-word-title')),
+    );
+    expect(title.maxLines, 1);
+    expect(fittedTitle.width, greaterThan(0));
+    expect(tester.takeException(), isNull);
+  });
 }
 
 final class _FakePronunciationService implements PronunciationService {

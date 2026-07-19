@@ -29,46 +29,56 @@ void main() {
     );
 
     await db.batch(
-      (b) => b.insertAllOnConflictUpdate(
-        db.verseTranslations,
-        [
-          const VerseTranslationsCompanion(
-            translationCode: Value('KJV'),
-            bookId: Value(1),
-            chapter: Value(1),
-            verse: Value(1),
-            textContent: Value('In the beginning God created the heaven and the earth.'),
+      (b) => b.insertAllOnConflictUpdate(db.verseTranslations, [
+        const VerseTranslationsCompanion(
+          translationCode: Value('KJV'),
+          bookId: Value(1),
+          chapter: Value(1),
+          verse: Value(1),
+          textContent: Value(
+            'In the beginning God created the heaven and the earth.',
           ),
-          const VerseTranslationsCompanion(
-            translationCode: Value('KJV'),
-            bookId: Value(1),
-            chapter: Value(1),
-            verse: Value(2),
-            textContent: Value('And the earth was without form, and void;'),
+        ),
+        const VerseTranslationsCompanion(
+          translationCode: Value('KJV'),
+          bookId: Value(1),
+          chapter: Value(1),
+          verse: Value(2),
+          textContent: Value('And the earth was without form, and void;'),
+        ),
+        const VerseTranslationsCompanion(
+          translationCode: Value('KJV'),
+          bookId: Value(1),
+          chapter: Value(1),
+          verse: Value(3),
+          textContent: Value(
+            'And God said, Let there be light: and there was light.',
           ),
-          const VerseTranslationsCompanion(
-            translationCode: Value('KJV'),
-            bookId: Value(1),
-            chapter: Value(1),
-            verse: Value(3),
-            textContent: Value('And God said, Let there be light: and there was light.'),
+        ),
+        const VerseTranslationsCompanion(
+          translationCode: Value('KJV'),
+          bookId: Value(45),
+          chapter: Value(1),
+          verse: Value(31),
+          textContent: Value(
+            'Without understanding, covenantbreakers, without natural affection.',
           ),
-          const VerseTranslationsCompanion(
-            translationCode: Value('KOREAN_RV'),
-            bookId: Value(1),
-            chapter: Value(1),
-            verse: Value(1),
-            textContent: Value('태초에 하나님이 천지를 창조하시니라'),
-          ),
-          const VerseTranslationsCompanion(
-            translationCode: Value('KOREAN_RV'),
-            bookId: Value(1),
-            chapter: Value(1),
-            verse: Value(2),
-            textContent: Value('땅이 혼돈하고 공허하며'),
-          ),
-        ],
-      ),
+        ),
+        const VerseTranslationsCompanion(
+          translationCode: Value('KOREAN_RV'),
+          bookId: Value(1),
+          chapter: Value(1),
+          verse: Value(1),
+          textContent: Value('태초에 하나님이 천지를 창조하시니라'),
+        ),
+        const VerseTranslationsCompanion(
+          translationCode: Value('KOREAN_RV'),
+          bookId: Value(1),
+          chapter: Value(1),
+          verse: Value(2),
+          textContent: Value('땅이 혼돈하고 공허하며'),
+        ),
+      ]),
     );
   });
 
@@ -88,10 +98,7 @@ void main() {
 
     test('returns 66 books after full seed', () async {
       await db.batch(
-        (b) => b.insertAllOnConflictUpdate(
-          db.bibleBooks,
-          bibleBooksSeed(),
-        ),
+        (b) => b.insertAllOnConflictUpdate(db.bibleBooks, bibleBooksSeed()),
       );
       final result = await repository.getAllBooks();
       expect(result.valueOrNull?.length, 66);
@@ -155,10 +162,7 @@ void main() {
       final content = result.valueOrNull!;
       expect(content.hasParallelVerses, isTrue);
       expect(content.parallelVerses!.length, 2);
-      expect(
-        content.parallelVerseAt(1)?.text,
-        '태초에 하나님이 천지를 창조하시니라',
-      );
+      expect(content.parallelVerseAt(1)?.text, '태초에 하나님이 천지를 창조하시니라');
     });
 
     test('returns failure for nonexistent chapter', () async {
@@ -180,8 +184,7 @@ void main() {
     });
 
     test('returns false for unloaded translation', () async {
-      final result =
-          await repository.isTranslationLoaded('NONEXISTENT');
+      final result = await repository.isTranslationLoaded('NONEXISTENT');
       expect(result.valueOrNull, isFalse);
     });
   });
@@ -205,7 +208,32 @@ void main() {
       expect(result.valueOrNull, isEmpty);
     });
 
-    // FTS5 는 최소 1개의 절이 인덱싱된 후에 작동
-    // 실제 FTS5 검색 테스트는 통합 테스트로 처리
+    test('finds a rare long KJV word through the FTS index', () async {
+      final result = await repository.searchVerses(
+        query: 'covenantbreakers',
+        translationCode: 'KJV',
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(result.valueOrNull, hasLength(1));
+      expect(result.valueOrNull!.single.bookId, 45);
+      expect(result.valueOrNull!.single.verseNumber, 31);
+    });
+
+    test('applies old and new testament filters to FTS results', () async {
+      final oldTestament = await repository.searchVerses(
+        query: 'covenantbreakers',
+        translationCode: 'KJV',
+        testament: 'OT',
+      );
+      final newTestament = await repository.searchVerses(
+        query: 'covenantbreakers',
+        translationCode: 'KJV',
+        testament: 'NT',
+      );
+
+      expect(oldTestament.valueOrNull, isEmpty);
+      expect(newTestament.valueOrNull, hasLength(1));
+    });
   });
 }

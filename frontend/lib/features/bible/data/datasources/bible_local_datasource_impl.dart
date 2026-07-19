@@ -19,8 +19,7 @@ final class BibleLocalDataSourceImpl implements BibleLocalDataSource {
   @override
   Future<BibleBook?> getBook(int bookId) =>
       (_db.select(_db.bibleBooks)
-            ..where((b) => b.id.equals(bookId)))
-          .getSingleOrNull();
+        ..where((b) => b.id.equals(bookId))).getSingleOrNull();
 
   // ── Verses ────────────────────────────────────────────────────────
 
@@ -29,12 +28,11 @@ final class BibleLocalDataSourceImpl implements BibleLocalDataSource {
     required String translationCode,
     required int bookId,
     required int chapter,
-  }) =>
-      _db.getChapterVerses(
-        translationCode: translationCode,
-        bookId: bookId,
-        chapter: chapter,
-      );
+  }) => _db.getChapterVerses(
+    translationCode: translationCode,
+    bookId: bookId,
+    chapter: chapter,
+  );
 
   @override
   Future<VerseTranslation?> getVerse({
@@ -43,35 +41,35 @@ final class BibleLocalDataSourceImpl implements BibleLocalDataSource {
     required int chapter,
     required int verseNumber,
   }) =>
-      (_db.select(_db.verseTranslations)
-            ..where(
-              (v) =>
-                  v.translationCode.equals(translationCode) &
-                  v.bookId.equals(bookId) &
-                  v.chapter.equals(chapter) &
-                  v.verse.equals(verseNumber),
-            ))
-          .getSingleOrNull();
+      (_db.select(_db.verseTranslations)..where(
+        (v) =>
+            v.translationCode.equals(translationCode) &
+            v.bookId.equals(bookId) &
+            v.chapter.equals(chapter) &
+            v.verse.equals(verseNumber),
+      )).getSingleOrNull();
 
   // ── Translation Status ────────────────────────────────────────────
 
   @override
   Future<bool> isTranslationLoaded(String translationCode) async {
-    final count = await (_db.select(_db.verseTranslations)
-          ..where((v) => v.translationCode.equals(translationCode))
-          ..limit(1))
-        .getSingleOrNull();
+    final count =
+        await (_db.select(_db.verseTranslations)
+              ..where((v) => v.translationCode.equals(translationCode))
+              ..limit(1))
+            .getSingleOrNull();
     return count != null;
   }
 
   @override
   Future<List<String>> getLoadedTranslationCodes() async {
-    final result = await _db.customSelect(
-      'SELECT DISTINCT translation_code FROM verse_translations',
-    ).get();
-    return result
-        .map((r) => r.read<String>('translation_code'))
-        .toList();
+    final result =
+        await _db
+            .customSelect(
+              'SELECT DISTINCT translation_code FROM verse_translations',
+            )
+            .get();
+    return result.map((r) => r.read<String>('translation_code')).toList();
   }
 
   // ── FTS5 Search ───────────────────────────────────────────────────
@@ -81,25 +79,34 @@ final class BibleLocalDataSourceImpl implements BibleLocalDataSource {
     required String query,
     required String translationCode,
     int? bookId,
+    String? testament,
     int limit = 50,
   }) async {
     final sanitized = query.replaceAll('"', '""');
-    final bookFilter =
-        bookId != null ? 'AND vt.book_id = $bookId' : '';
+    final bookFilter = bookId != null ? 'AND vt.book_id = $bookId' : '';
+    final testamentFilter = switch (testament) {
+      'OT' => 'AND vt.book_id BETWEEN 1 AND 39',
+      'NT' => 'AND vt.book_id BETWEEN 40 AND 66',
+      _ => '',
+    };
 
-    final rows = await _db.customSelect(
-      '''
+    final rows =
+        await _db
+            .customSelect(
+              '''
       SELECT vt.*
       FROM verse_translations vt
       JOIN verses_fts fts ON fts.rowid = vt.id
       WHERE verses_fts MATCH '"$sanitized"'
         AND vt.translation_code = ?
         $bookFilter
+        $testamentFilter
       ORDER BY rank
       LIMIT $limit
       ''',
-      variables: [Variable.withString(translationCode)],
-    ).get();
+              variables: [Variable.withString(translationCode)],
+            )
+            .get();
 
     return rows
         .map(
@@ -144,8 +151,6 @@ final class BibleLocalDataSourceImpl implements BibleLocalDataSource {
   }
 
   @override
-  Future<void> upsertTranslationMeta(
-    BibleTranslationsCompanion meta,
-  ) =>
+  Future<void> upsertTranslationMeta(BibleTranslationsCompanion meta) =>
       _db.into(_db.bibleTranslations).insertOnConflictUpdate(meta);
 }

@@ -149,9 +149,7 @@ final class BibleRepositoryImpl implements BibleRepository {
     String translationCode,
   ) async {
     try {
-      return Success(
-        await _dataSource.isTranslationLoaded(translationCode),
-      );
+      return Success(await _dataSource.isTranslationLoaded(translationCode));
     } catch (e) {
       return FailureResult(DatabaseFailure(e.toString()));
     }
@@ -173,6 +171,7 @@ final class BibleRepositoryImpl implements BibleRepository {
     required String query,
     required String translationCode,
     int? bookId,
+    String? testament,
     int limit = 50,
   }) async {
     if (query.trim().isEmpty) return const Success([]);
@@ -181,6 +180,7 @@ final class BibleRepositoryImpl implements BibleRepository {
         query: query.trim(),
         translationCode: translationCode,
         bookId: bookId,
+        testament: testament,
         limit: limit,
       );
       return Success(rows.toDomain());

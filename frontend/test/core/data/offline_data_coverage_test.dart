@@ -66,6 +66,11 @@ void main() {
         isNot(matches(RegExp(r'킹제임스 성경.*(고어|고유 표현|영어 표현)'))),
         reason: '${entry['word']} must not expose a generic KJV placeholder',
       );
+      expect(
+        meaning,
+        isNot(contains('개역한글 문맥')),
+        reason: '${entry['word']} must not expose a verse-token guess',
+      );
     }
 
     final missing = words.difference({...entryWords, ...forms});
@@ -80,6 +85,8 @@ void main() {
       'peleth': '벨렛',
       'urias': '우리아',
       'vulture': '독수리류, 솔개',
+      'covenantbreakers': '언약을 깨뜨리는 자들, 신의를 저버리는 자들',
+      'trucebreakers': '화해하지 않는 자들, 약속을 깨뜨리는 자들',
     };
     for (final expected in expectedBibleMeanings.entries) {
       expect(entriesByWord[expected.key]?['korean_meaning'], expected.value);

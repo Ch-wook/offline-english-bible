@@ -31,3 +31,10 @@
 - [x] Per-tab exact reading-position restore
 - [x] Multi-verse selection, copy, bookmark, and share
 - [x] Compact reader overflow navigation
+
+## Phase 7
+- [x] Korean-first dictionary presentation with cleaned meanings
+- [x] Reviewed Korean definitions for all 635 unresolved KJV terms
+- [x] Race-free full-text search with Old/New Testament filters
+- [x] Exact verse navigation from search results
+- [x] Narrow-screen dictionary and reader regression coverage

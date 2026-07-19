@@ -42,9 +42,7 @@ abstract interface class BibleRepository {
   // ── Translation ───────────────────────────────────────────────────
 
   /// 특정 번역본의 데이터가 DB에 로드되어 있는지 확인.
-  Future<Result<bool, Failure>> isTranslationLoaded(
-    String translationCode,
-  );
+  Future<Result<bool, Failure>> isTranslationLoaded(String translationCode);
 
   /// 로드된 번역본 코드 목록.
   Future<Result<List<String>, Failure>> getLoadedTranslations();
@@ -56,6 +54,7 @@ abstract interface class BibleRepository {
     required String query,
     required String translationCode,
     int? bookId,
+    String? testament,
     int limit = 50,
   });
 }

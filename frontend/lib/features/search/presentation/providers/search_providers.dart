@@ -33,24 +33,26 @@ final class SearchState {
   bool get hasResults => results.isNotEmpty;
   bool get isEmpty => hasSearched && !isSearching && results.isEmpty;
 
+  static const Object _unset = Object();
+
   SearchState copyWith({
     String? query,
     String? translationCode,
-    int? bookId,
-    String? testament,
+    Object? bookId = _unset,
+    Object? testament = _unset,
     List<SearchResult>? results,
     bool? isSearching,
     bool? hasSearched,
-  }) =>
-      SearchState(
-        query: query ?? this.query,
-        translationCode: translationCode ?? this.translationCode,
-        bookId: bookId,
-        testament: testament,
-        results: results ?? this.results,
-        isSearching: isSearching ?? this.isSearching,
-        hasSearched: hasSearched ?? this.hasSearched,
-      );
+  }) => SearchState(
+    query: query ?? this.query,
+    translationCode: translationCode ?? this.translationCode,
+    bookId: identical(bookId, _unset) ? this.bookId : bookId as int?,
+    testament:
+        identical(testament, _unset) ? this.testament : testament as String?,
+    results: results ?? this.results,
+    isSearching: isSearching ?? this.isSearching,
+    hasSearched: hasSearched ?? this.hasSearched,
+  );
 }
 
 // ── Notifier ──────────────────────────────────────────────────────────
@@ -59,43 +61,49 @@ class SearchNotifier extends StateNotifier<SearchState> {
   SearchNotifier(this._repository) : super(const SearchState());
 
   final BibleRepository _repository;
+  int _latestRequestId = 0;
 
   Future<void> search(String query, {String? translationCode}) async {
-    if (query.trim().isEmpty) {
-      state = state.copyWith(query: '', results: [], hasSearched: false);
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) {
+      clear();
       return;
     }
 
+    final requestId = ++_latestRequestId;
+    final targetTranslation = translationCode ?? state.translationCode;
+    final targetBookId = state.bookId;
+    final targetTestament = state.testament;
     state = state.copyWith(
-      query: query,
-      translationCode: translationCode ?? state.translationCode,
+      query: normalizedQuery,
+      translationCode: targetTranslation,
       isSearching: true,
       hasSearched: true,
     );
 
     final result = await _repository.searchVerses(
-      query: query.trim(),
-      translationCode: translationCode ?? state.translationCode,
-      bookId: state.bookId,
+      query: normalizedQuery,
+      translationCode: targetTranslation,
+      bookId: targetBookId,
+      testament: targetTestament,
     );
+    if (requestId != _latestRequestId) return;
 
     result.when(
       success: (verses) {
-        final searchResults = verses.map((v) {
-          final bookInfo = bookNameMap[v.bookId];
-          final highlighted = _highlightQuery(v.text, query);
-          return SearchResult(
-            verse: v,
-            bookName: bookInfo?.en ?? '',
-            bookNameKorean: bookInfo?.ko ?? '',
-            highlightedText: highlighted,
-          );
-        }).toList();
+        final searchResults =
+            verses.map((v) {
+              final bookInfo = bookNameMap[v.bookId];
+              final highlighted = _highlightQuery(v.text, normalizedQuery);
+              return SearchResult(
+                verse: v,
+                bookName: bookInfo?.en ?? '',
+                bookNameKorean: bookInfo?.ko ?? '',
+                highlightedText: highlighted,
+              );
+            }).toList();
 
-        state = state.copyWith(
-          results: searchResults,
-          isSearching: false,
-        );
+        state = state.copyWith(results: searchResults, isSearching: false);
       },
       failure: (_) {
         state = state.copyWith(results: [], isSearching: false);
@@ -111,23 +119,37 @@ class SearchNotifier extends StateNotifier<SearchState> {
   }
 
   void setBookFilter(int? bookId) {
-    state = state.copyWith(bookId: bookId);
+    state = state.copyWith(bookId: bookId, testament: null);
+    if (state.query.isNotEmpty) search(state.query);
+  }
+
+  void setTestamentFilter(String testament) {
+    final next = state.testament == testament ? null : testament;
+    state = state.copyWith(bookId: null, testament: next);
     if (state.query.isNotEmpty) search(state.query);
   }
 
   void clearFilters() {
-    state = state.copyWith();
+    state = state.copyWith(bookId: null, testament: null);
     if (state.query.isNotEmpty) search(state.query);
   }
 
   void clear() {
-    state = const SearchState();
+    _latestRequestId++;
+    state = state.copyWith(
+      query: '',
+      results: const [],
+      isSearching: false,
+      hasSearched: false,
+    );
   }
 
   /// 검색어를 **굵게** 마크업 (간단한 case-insensitive replace).
   String _highlightQuery(String text, String query) {
-    final escaped =
-        query.toLowerCase().replaceAll(RegExp(r'[.*+?^${}()|[\]\\]'), r'\$&');
+    final escaped = query.toLowerCase().replaceAll(
+      RegExp(r'[.*+?^${}()|[\]\\]'),
+      r'\$&',
+    );
     return text.replaceAllMapped(
       RegExp(escaped, caseSensitive: false),
       (m) => '**${m.group(0)}**',
@@ -139,16 +161,18 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
 final searchNotifierProvider =
     StateNotifierProvider<SearchNotifier, SearchState>((ref) {
-  return SearchNotifier(ref.watch(bibleRepositoryProvider));
-});
+      return SearchNotifier(ref.watch(bibleRepositoryProvider));
+    });
 
 /// 현재 성경 읽기 위치에서 검색으로 이동.
-final navigateToVerseProvider =
-    Provider<void Function(SearchResult)>((ref) {
+final navigateToVerseProvider = Provider<void Function(SearchResult)>((ref) {
   return (result) {
-    ref.read(bibleReaderProvider.notifier).navigateTo(
+    ref
+        .read(bibleReaderProvider.notifier)
+        .navigateTo(
           bookId: result.verse.bookId,
           chapter: result.verse.chapter,
+          verse: result.verse.verseNumber,
         );
   };
 });

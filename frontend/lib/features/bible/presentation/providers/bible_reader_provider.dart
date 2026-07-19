@@ -168,11 +168,11 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
 
   // ── Navigation ────────────────────────────────────────────────────
 
-  void navigateTo({required int bookId, required int chapter}) {
+  void navigateTo({required int bookId, required int chapter, int verse = 1}) {
     state = state.copyWith(
       bookId: bookId,
       chapter: chapter,
-      scrollVerse: 1,
+      scrollVerse: verse < 1 ? 1 : verse,
       scrollFraction: 0,
       scrollOffset: 0,
       clearVerseSelection: true,

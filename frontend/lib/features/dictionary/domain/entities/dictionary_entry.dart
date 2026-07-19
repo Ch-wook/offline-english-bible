@@ -1,6 +1,8 @@
 // lib/features/dictionary/domain/entities/dictionary_entry.dart
 // [NEW] 사전 엔티티 (Wiktionary 기반)
 
+import '../services/dictionary_meaning_formatter.dart';
+
 /// 단어 사전 항목 도메인 엔티티.
 /// Wiktionary → 뜻, IPA, 품사, 활용형
 /// WordNet → 동의어/반의어/관련 단어
@@ -65,6 +67,8 @@ final class DictionaryEntry {
 
   bool get hasIpa => ipaUs.isNotEmpty || ipaUk.isNotEmpty;
   String get displayIpa => ipaUs.isNotEmpty ? ipaUs : ipaUk;
+  String get displayKoreanMeaning =>
+      DictionaryMeaningFormatter.format(koreanMeaning);
 
   bool get hasSynonyms => synonyms.isNotEmpty;
   bool get hasAntonyms => antonyms.isNotEmpty;
@@ -129,9 +133,21 @@ final class WordSense {
   /// 예문 목록.
   final List<WordExample> examples;
 
-  String get posLabel => _posLabels[partOfSpeech] ?? partOfSpeech;
+  String get displayDefinitionKo =>
+      DictionaryMeaningFormatter.format(definitionKo);
+
+  String get displayBibleDefinition =>
+      DictionaryMeaningFormatter.format(bibleDefinition);
+
+  bool get hasKoreanDefinition => displayDefinitionKo.isNotEmpty;
+
+  bool get hasKoreanBibleDefinition => displayBibleDefinition.isNotEmpty;
+
+  String get posLabel => _posLabels[partOfSpeech] ?? '단어';
 
   static const _posLabels = {
+    'abbrev': '약어',
+    'abbreviation': '약어',
     'noun': '명사',
     'verb': '동사',
     'adjective': '형용사',
@@ -140,6 +156,7 @@ final class WordSense {
     'conjunction': '접속사',
     'article': '관사',
     'pronoun': '대명사',
+    'intj': '감탄사',
     'interjection': '감탄사',
     'proper_noun': '고유명사',
     'numeral': '수사',

@@ -17,7 +17,7 @@ final class DictionaryImportService {
   final AppDatabase _db;
 
   static const assetPath = 'assets/data/dictionary_full.json';
-  static const dataVersion = 4;
+  static const dataVersion = 5;
 
   /// 번들된 전체 오프라인 사전을 현재 데이터로 교체한다.
   /// Stream<(progress, message)> 반환.

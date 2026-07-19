@@ -3,11 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/data/bible_word_korean_dict.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../theme/app_spacing.dart';
 import '../../../../theme/app_typography.dart';
 import '../../../vocabulary/presentation/providers/vocabulary_providers.dart';
 import '../../domain/entities/dictionary_entry.dart';
+import '../../domain/services/dictionary_meaning_formatter.dart';
 import '../providers/dictionary_providers.dart';
 
 class DictionaryBottomSheet extends ConsumerWidget {
@@ -103,6 +105,11 @@ class _EntryContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final koreanMeaning = _koreanMeaning(entry);
+    final biblicalMeaning = _biblicalKoreanMeaning(entry);
+    final visibleSenses = _visibleKoreanSenses(entry);
+    final showWordRelations = !_hasMismatchedImportedFirstSense(entry);
+
     return SingleChildScrollView(
       controller: scrollController,
       padding: const EdgeInsets.fromLTRB(
@@ -122,20 +129,21 @@ class _EntryContent extends StatelessWidget {
             verse: verse,
             translationCode: translationCode,
           ),
-          if (_koreanMeaning(entry).isNotEmpty) ...[
+          if (koreanMeaning.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.lg),
-            _KoreanMeaningPanel(text: _koreanMeaning(entry)),
-          ],
-          if (entry.senses.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.xl),
-            const _SectionTitle(icon: Icons.menu_book_outlined, label: '뜻'),
-            const SizedBox(height: AppSpacing.sm),
-            ...entry.senses.map(
-              (sense) => _SenseBlock(
-                sense: sense,
-                suppressEnglishDefinition: entry.id == -1,
-              ),
+            _KoreanMeaningPanel(
+              text: koreanMeaning,
+              label: biblicalMeaning.isNotEmpty ? '성경 문맥 뜻' : '한국어 뜻',
             ),
+          ],
+          if (visibleSenses.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xl),
+            _SectionTitle(
+              icon: Icons.menu_book_outlined,
+              label: biblicalMeaning.isNotEmpty ? '다른 한국어 뜻' : '뜻',
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ...visibleSenses.map((sense) => _SenseBlock(sense: sense)),
           ],
           if (entry.etymology.trim().isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xl),
@@ -149,7 +157,7 @@ class _EntryContent extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             _InflectionWrap(forms: entry.inflectedForms),
           ],
-          if (entry.synonyms.isNotEmpty) ...[
+          if (showWordRelations && entry.synonyms.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xl),
             _WordChipSection(
               icon: Icons.swap_horiz_rounded,
@@ -161,7 +169,7 @@ class _EntryContent extends StatelessWidget {
               translationCode: translationCode,
             ),
           ],
-          if (entry.antonyms.isNotEmpty) ...[
+          if (showWordRelations && entry.antonyms.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xl),
             _WordChipSection(
               icon: Icons.compare_arrows_rounded,
@@ -173,7 +181,7 @@ class _EntryContent extends StatelessWidget {
               translationCode: translationCode,
             ),
           ],
-          if (entry.relatedWords.isNotEmpty) ...[
+          if (showWordRelations && entry.relatedWords.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xl),
             _WordChipSection(
               icon: Icons.link_rounded,
@@ -246,11 +254,20 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                entry.word,
-                style: AppTypography.headlineMedium.copyWith(
-                  color: colorScheme.onSurface,
-                  fontFamily: 'NotoSerif',
+              SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  key: const ValueKey('dictionary-word-title'),
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    entry.word,
+                    maxLines: 1,
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: colorScheme.onSurface,
+                      fontFamily: 'NotoSerif',
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -332,10 +349,10 @@ class _SaveVocabularyButton extends ConsumerWidget {
                         _koreanMeaning(entry).isNotEmpty
                             ? _koreanMeaning(entry)
                             : entry.primaryDefinition,
-                    partOfSpeech: entry.primaryPartOfSpeech,
+                    partOfSpeech: _preferredPartOfSpeech(entry),
                     ipa: entry.displayIpa,
-                    bibleDefinition: entry.senses
-                        .map((sense) => sense.bibleDefinition)
+                    bibleDefinition: _visibleKoreanSenses(entry)
+                        .map((sense) => sense.displayBibleDefinition)
                         .firstWhere(
                           (definition) => definition.trim().isNotEmpty,
                           orElse: () => '',
@@ -412,9 +429,10 @@ class _PronunciationButtonState extends ConsumerState<_PronunciationButton> {
 }
 
 class _KoreanMeaningPanel extends StatelessWidget {
-  const _KoreanMeaningPanel({required this.text});
+  const _KoreanMeaningPanel({required this.text, required this.label});
 
   final String text;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -432,7 +450,7 @@ class _KoreanMeaningPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '한국어 뜻',
+            label,
             style: AppTypography.labelMedium.copyWith(
               color: colorScheme.primary,
               fontWeight: FontWeight.w700,
@@ -453,21 +471,13 @@ class _KoreanMeaningPanel extends StatelessWidget {
 }
 
 class _SenseBlock extends StatelessWidget {
-  const _SenseBlock({
-    required this.sense,
-    required this.suppressEnglishDefinition,
-  });
+  const _SenseBlock({required this.sense});
 
   final WordSense sense;
-  final bool suppressEnglishDefinition;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final showEnglish =
-        !suppressEnglishDefinition &&
-        sense.definition.trim().isNotEmpty &&
-        !_isGenericKjvDefinition(sense.definition);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.lg),
@@ -475,21 +485,17 @@ class _SenseBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _PartOfSpeechChip(label: _posLabel(sense)),
-          if (sense.definitionKo.trim().isNotEmpty) ...[
+          if (sense.hasKoreanDefinition) ...[
             const SizedBox(height: AppSpacing.sm),
             _BodyText(
-              sense.definitionKo,
+              sense.displayDefinitionKo,
               color: colorScheme.primary,
               fontWeight: FontWeight.w700,
             ),
           ],
-          if (showEnglish) ...[
+          if (sense.hasKoreanBibleDefinition) ...[
             const SizedBox(height: AppSpacing.sm),
-            _BodyText(sense.definition),
-          ],
-          if (sense.bibleDefinition.trim().isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.sm),
-            _BibleMeaning(text: sense.bibleDefinition),
+            _BibleMeaning(text: sense.displayBibleDefinition),
           ],
           if (sense.isArchaic) ...[
             const SizedBox(height: AppSpacing.sm),
@@ -911,22 +917,75 @@ class _LabelValueChip extends StatelessWidget {
 }
 
 String _koreanMeaning(DictionaryEntry entry) {
-  if (entry.koreanMeaning.trim().isNotEmpty) return entry.koreanMeaning.trim();
+  final biblicalMeaning = _biblicalKoreanMeaning(entry);
+  if (biblicalMeaning.isNotEmpty) return biblicalMeaning;
+
+  if (entry.displayKoreanMeaning.isNotEmpty) {
+    return entry.displayKoreanMeaning;
+  }
 
   for (final sense in entry.senses) {
-    if (sense.definitionKo.trim().isNotEmpty) {
-      return sense.definitionKo.trim();
+    if (sense.hasKoreanDefinition) {
+      return sense.displayDefinitionKo;
     }
   }
 
   return '';
 }
 
-bool _isGenericKjvDefinition(String definition) {
-  final normalized = definition.trim().toLowerCase();
-  return normalized == 'a proper name used in the king james version.' ||
-      normalized ==
-          'an archaic or specialized word form used in the king james version.';
+List<WordSense> _visibleKoreanSenses(DictionaryEntry entry) {
+  final senses = entry.senses
+      .where(
+        (sense) => sense.hasKoreanDefinition || sense.hasKoreanBibleDefinition,
+      )
+      .toList(growable: true);
+  if (_hasInjectedBiblicalFirstSense(entry) ||
+      _hasMismatchedImportedFirstSense(entry, koreanSenses: senses)) {
+    senses.removeAt(0);
+  }
+  return senses;
+}
+
+String _biblicalKoreanMeaning(DictionaryEntry entry) {
+  final meaning = bibleWordKoreanDict[entry.wordNormalized];
+  return DictionaryMeaningFormatter.format(meaning ?? '');
+}
+
+bool _hasInjectedBiblicalFirstSense(DictionaryEntry entry) {
+  if (entry.senses.isEmpty) return false;
+  final biblicalMeaning = _biblicalKoreanMeaning(entry);
+  if (biblicalMeaning.isEmpty) return false;
+
+  final first = entry.senses.first;
+  return first.definition.trim().isNotEmpty &&
+      first.displayDefinitionKo == biblicalMeaning;
+}
+
+bool _hasMismatchedImportedFirstSense(
+  DictionaryEntry entry, {
+  List<WordSense>? koreanSenses,
+}) {
+  if (entry.senses.isEmpty) return false;
+  final senses =
+      koreanSenses ??
+      entry.senses
+          .where(
+            (sense) =>
+                sense.hasKoreanDefinition || sense.hasKoreanBibleDefinition,
+          )
+          .toList(growable: false);
+  if (senses.length < 2 || !identical(senses.first, entry.senses.first)) {
+    return false;
+  }
+
+  return entry.senses.first.definition.trim().isNotEmpty &&
+      senses.skip(1).any((sense) => sense.hasKoreanDefinition);
+}
+
+String _preferredPartOfSpeech(DictionaryEntry entry) {
+  final visibleSenses = _visibleKoreanSenses(entry);
+  if (visibleSenses.isNotEmpty) return visibleSenses.first.partOfSpeech;
+  return entry.primaryPartOfSpeech;
 }
 
 String _posLabel(WordSense sense) {
