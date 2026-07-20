@@ -41,3 +41,5 @@
 - [x] Full Korean book titles in the compact reader header
 - [x] Horizontal swipe and edge-pull chapter navigation
 - [x] Frame-synced auto-scroll and isolated verse rendering
+- [x] System-navigation-safe reading tabs
+- [x] Finger-tracked chapter slide transitions without title flicker

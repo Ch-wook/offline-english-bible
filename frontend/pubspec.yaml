@@ -1,7 +1,7 @@
 name: offline_english_bible
 description: Offline English Bible learning platform - read, study, and grow in English through the Bible.
 publish_to: 'none'
-version: 2.2.2+7
+version: 2.2.3+8
 
 environment:
   sdk: ">=3.7.0 <4.0.0"

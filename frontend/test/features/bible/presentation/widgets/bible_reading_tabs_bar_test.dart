@@ -45,4 +45,43 @@ void main() {
     expect(find.byTooltip('읽기 탭은 최대 6개까지 사용할 수 있습니다'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('reading tabs stay above the system navigation area', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final db = createTestDatabase();
+    final container = createTestContainer(db: db);
+    addTearDown(() async {
+      container.dispose();
+      await closeTestDatabase(db);
+    });
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(
+              padding: EdgeInsets.only(bottom: 28),
+              viewPadding: EdgeInsets.only(bottom: 28),
+            ),
+            child: Scaffold(bottomNavigationBar: BibleReadingTabsBar()),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final tabsRect = tester.getRect(
+      find.byKey(const ValueKey('reading-tabs-content')),
+    );
+    expect(tabsRect.height, 50);
+    expect(tabsRect.bottom, 640 - 28);
+    expect(tester.takeException(), isNull);
+  });
 }

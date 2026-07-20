@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,10 +56,12 @@ void main() {
         currentChapterProvider.overrideWith((ref) async => readerContent),
       ],
     );
-    container.read(bibleReaderProvider.notifier).navigateTo(
-      bookId: readerContent.book.id,
-      chapter: readerContent.chapterNumber,
-    );
+    container
+        .read(bibleReaderProvider.notifier)
+        .navigateTo(
+          bookId: readerContent.book.id,
+          chapter: readerContent.chapterNumber,
+        );
     addTearDown(() async {
       container.dispose();
       await closeTestDatabase(db);
@@ -236,6 +240,100 @@ void main() {
     expect(title.softWrap, isFalse);
     expect(title.overflow, isNot(TextOverflow.ellipsis));
     expect(fittedTitle.fit, BoxFit.scaleDown);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps the full target title and old body while loading', (
+    tester,
+  ) async {
+    const samuel = Book(
+      id: 10,
+      name: '2 Samuel',
+      nameKorean: '사무엘하',
+      abbreviation: '2Sam',
+      abbreviationKorean: '삼하',
+      testament: 'OT',
+      orderIndex: 10,
+      chapterCount: 24,
+    );
+    const chapter16 = ChapterContent(
+      book: samuel,
+      chapterNumber: 16,
+      verses: [
+        Verse(
+          bookId: 10,
+          chapter: 16,
+          verseNumber: 1,
+          text: 'Chapter sixteen remains visible during loading.',
+        ),
+      ],
+      translationCode: 'KJV',
+    );
+    const chapter17 = ChapterContent(
+      book: samuel,
+      chapterNumber: 17,
+      verses: [
+        Verse(
+          bookId: 10,
+          chapter: 17,
+          verseNumber: 1,
+          text: 'Chapter seventeen is ready.',
+        ),
+      ],
+      translationCode: 'KJV',
+    );
+    final nextChapter = Completer<ChapterContent>();
+    final db = createTestDatabase();
+    final container = createTestContainer(
+      db: db,
+      additionalOverrides: [
+        currentChapterProvider.overrideWith((ref) {
+          final params = ref.watch(currentChapterParamsProvider);
+          if (params.bookId == 10 && params.chapter == 17) {
+            return nextChapter.future;
+          }
+          return Future.value(chapter16);
+        }),
+      ],
+    );
+    container
+        .read(bibleReaderProvider.notifier)
+        .navigateTo(bookId: 10, chapter: 16);
+    addTearDown(() async {
+      container.dispose();
+      await closeTestDatabase(db);
+    });
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: BibleReaderPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    container.read(bibleReaderProvider.notifier).goToNextChapter(24);
+    await tester.pump();
+
+    expect(find.text('사무엘하 17장'), findsOneWidget);
+    expect(find.textContaining('사무...'), findsNothing);
+    expect(
+      find.textContaining(
+        'Chapter sixteen remains visible',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+    nextChapter.complete(chapter17);
+    await tester.pumpAndSettle();
+
+    expect(find.text('사무엘하 17장'), findsOneWidget);
+    expect(
+      find.textContaining('Chapter seventeen is ready', findRichText: true),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }

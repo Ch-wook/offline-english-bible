@@ -52,11 +52,7 @@ class BibleReaderPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const _BibleAppBar(),
-      body: chapterAsync.when(
-        loading: () => const _LoadingBody(),
-        error: (error, _) => _ErrorBody(message: error.toString()),
-        data: (content) => _ReaderBody(content: content),
-      ),
+      body: _ChapterContentHost(chapterAsync: chapterAsync),
       bottomNavigationBar: const BibleReadingTabsBar(),
       floatingActionButton: chapterAsync.whenOrNull(
         data: (content) => _AutoScrollFAB(content: content),
@@ -79,23 +75,30 @@ class _BibleAppBar extends ConsumerStatefulWidget
 }
 
 class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
+  int? _lastBookId;
+  String _lastBookName = '';
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final chapterAsync = ref.watch(currentChapterProvider);
     final notifier = ref.read(bibleReaderProvider.notifier);
     final readerState = ref.watch(
       bibleReaderProvider.select(
         (state) => (
+          bookId: state.bookId,
           chapter: state.chapter,
           translationCode: state.translationCode,
           isParallelView: state.isParallelView,
         ),
       ),
     );
-
-    final bookName =
-        chapterAsync.whenOrNull(data: (c) => c.book.nameKorean) ?? '';
+    final books = ref.watch(allBooksProvider).valueOrNull ?? const [];
+    final matchingBook = books.where((book) => book.id == readerState.bookId);
+    if (matchingBook.isNotEmpty) {
+      _lastBookId = readerState.bookId;
+      _lastBookName = matchingBook.first.nameKorean;
+    }
+    final bookName = _lastBookId == readerState.bookId ? _lastBookName : '성경';
     final chapter = readerState.chapter;
 
     return AppBar(
@@ -116,7 +119,7 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
               ),
               const SizedBox(width: AppSpacing.sm),
               Text(
-                bookName.isNotEmpty ? '$bookName $chapter장' : '성경 읽기',
+                '$bookName $chapter장',
                 style: AppTypography.titleLarge.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -425,10 +428,78 @@ class _ReadingSettingsSheet extends ConsumerWidget {
 
 // ── Body ──────────────────────────────────────────────────────────────
 
+class _ChapterContentHost extends ConsumerStatefulWidget {
+  const _ChapterContentHost({required this.chapterAsync});
+
+  final AsyncValue<ChapterContent> chapterAsync;
+
+  @override
+  ConsumerState<_ChapterContentHost> createState() =>
+      _ChapterContentHostState();
+}
+
+class _ChapterContentHostState extends ConsumerState<_ChapterContentHost> {
+  ChapterContent? _lastContent;
+
+  @override
+  Widget build(BuildContext context) {
+    final loadedContent = widget.chapterAsync.whenOrNull(
+      data: (content) => content,
+    );
+    if (loadedContent != null) _lastContent = loadedContent;
+
+    final content = loadedContent ?? _lastContent;
+    if (content == null) {
+      return widget.chapterAsync.when(
+        loading: () => const _LoadingBody(),
+        error: (error, _) => _ErrorBody(message: error.toString()),
+        data: (value) => _ReaderBody(content: value),
+      );
+    }
+
+    final isLoading = widget.chapterAsync is AsyncLoading<ChapterContent>;
+    final hasError = widget.chapterAsync is AsyncError<ChapterContent>;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _ReaderBody(content: content, navigationFailed: hasError),
+        if (isLoading)
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
+        if (hasError)
+          Positioned(
+            top: AppSpacing.sm,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            child: Material(
+              color: Theme.of(context).colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              child: ListTile(
+                dense: true,
+                leading: const Icon(Icons.error_outline_rounded),
+                title: const Text('장을 불러오지 못했습니다'),
+                trailing: IconButton(
+                  tooltip: '다시 시도',
+                  onPressed: () => ref.invalidate(currentChapterProvider),
+                  icon: const Icon(Icons.refresh_rounded),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _ReaderBody extends ConsumerWidget {
-  const _ReaderBody({required this.content});
+  const _ReaderBody({required this.content, this.navigationFailed = false});
 
   final ChapterContent content;
+  final bool navigationFailed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -443,7 +514,7 @@ class _ReaderBody extends ConsumerWidget {
     // 절 선택 시 바텀 액션 바 표시
     return Stack(
       children: [
-        VerseListView(content: content),
+        VerseListView(content: content, navigationFailed: navigationFailed),
 
         // 절 선택 액션 바
         if (selectedVerses.isNotEmpty)

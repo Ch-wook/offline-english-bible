@@ -20,92 +20,96 @@ class BibleReadingTabsBar extends ConsumerWidget {
 
     return Material(
       color: colorScheme.surface,
-      child: Container(
-        height: 50,
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: colorScheme.outlineVariant.withAlpha(110)),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          key: const ValueKey('reading-tabs-content'),
+          height: 50,
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: colorScheme.outlineVariant.withAlpha(110)),
+            ),
           ),
-        ),
-        child: tabsAsync.when(
-          loading:
-              () => const Center(
-                child: SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+          child: tabsAsync.when(
+            loading:
+                () => const Center(
+                  child: SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
-              ),
-          error:
-              (_, __) => Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '읽기 탭을 불러오지 못했습니다',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: colorScheme.error,
+            error:
+                (_, __) => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '읽기 탭을 불러오지 못했습니다',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: colorScheme.error,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: '다시 시도',
-                    onPressed: ref.read(readingTabsProvider.notifier).reload,
-                    icon: const Icon(Icons.refresh_rounded, size: 20),
-                  ),
-                ],
-              ),
-          data:
-              (state) => Row(
-                children: [
-                  Expanded(
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.only(left: AppSpacing.xs),
-                      itemCount: state.tabs.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 2),
-                      itemBuilder: (context, index) {
-                        final tab = state.tabs[index];
-                        final book = bookById[tab.bookId];
-                        final label =
-                            '${book?.abbreviationKorean ?? '성경'} ${tab.chapter}';
-                        return _ReadingTabButton(
-                          label: label,
-                          translationLabel:
-                              tab.isParallelView
-                                  ? '한영'
-                                  : tab.translationCode == 'KJV'
-                                  ? '영어'
-                                  : '한글',
-                          selected: tab.id == state.activeTabId,
-                          canClose: state.tabs.length > 1,
-                          onTap:
-                              () => ref
-                                  .read(readingTabsProvider.notifier)
-                                  .selectTab(tab.id),
-                          onClose:
-                              () => ref
-                                  .read(readingTabsProvider.notifier)
-                                  .closeTab(tab.id),
-                        );
-                      },
+                    IconButton(
+                      tooltip: '다시 시도',
+                      onPressed: ref.read(readingTabsProvider.notifier).reload,
+                      icon: const Icon(Icons.refresh_rounded, size: 20),
                     ),
-                  ),
-                  VerticalDivider(
-                    width: 1,
-                    thickness: 1,
-                    color: colorScheme.outlineVariant.withAlpha(110),
-                  ),
-                  IconButton(
-                    tooltip:
-                        state.tabs.length >= maxBibleReadingTabs
-                            ? '읽기 탭은 최대 $maxBibleReadingTabs개까지 사용할 수 있습니다'
-                            : '읽기 탭 추가',
-                    onPressed:
-                        state.tabs.length >= maxBibleReadingTabs
-                            ? null
-                            : () => _addTab(context, ref),
-                    icon: const Icon(Icons.add_rounded),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+            data:
+                (state) => Row(
+                  children: [
+                    Expanded(
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.only(left: AppSpacing.xs),
+                        itemCount: state.tabs.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 2),
+                        itemBuilder: (context, index) {
+                          final tab = state.tabs[index];
+                          final book = bookById[tab.bookId];
+                          final label =
+                              '${book?.abbreviationKorean ?? '성경'} ${tab.chapter}';
+                          return _ReadingTabButton(
+                            label: label,
+                            translationLabel:
+                                tab.isParallelView
+                                    ? '한영'
+                                    : tab.translationCode == 'KJV'
+                                    ? '영어'
+                                    : '한글',
+                            selected: tab.id == state.activeTabId,
+                            canClose: state.tabs.length > 1,
+                            onTap:
+                                () => ref
+                                    .read(readingTabsProvider.notifier)
+                                    .selectTab(tab.id),
+                            onClose:
+                                () => ref
+                                    .read(readingTabsProvider.notifier)
+                                    .closeTab(tab.id),
+                          );
+                        },
+                      ),
+                    ),
+                    VerticalDivider(
+                      width: 1,
+                      thickness: 1,
+                      color: colorScheme.outlineVariant.withAlpha(110),
+                    ),
+                    IconButton(
+                      tooltip:
+                          state.tabs.length >= maxBibleReadingTabs
+                              ? '읽기 탭은 최대 $maxBibleReadingTabs개까지 사용할 수 있습니다'
+                              : '읽기 탭 추가',
+                      onPressed:
+                          state.tabs.length >= maxBibleReadingTabs
+                              ? null
+                              : () => _addTab(context, ref),
+                      icon: const Icon(Icons.add_rounded),
+                    ),
+                  ],
+                ),
+          ),
         ),
       ),
     );

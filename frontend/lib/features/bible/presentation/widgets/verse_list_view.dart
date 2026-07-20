@@ -19,18 +19,24 @@ import 'verse_item.dart';
 /// 장 전체를 스크롤 가능한 리스트 뷰로 표시.
 /// 자동 스크롤, 다음/이전 장 네비게이션 포함.
 class VerseListView extends ConsumerStatefulWidget {
-  const VerseListView({required this.content, super.key});
+  const VerseListView({
+    required this.content,
+    this.navigationFailed = false,
+    super.key,
+  });
 
   final ChapterContent content;
+  final bool navigationFailed;
 
   @override
   ConsumerState<VerseListView> createState() => _VerseListViewState();
 }
 
 class _VerseListViewState extends ConsumerState<VerseListView>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   late final ScrollController _scrollController;
   late final Ticker _autoScrollTicker;
+  late final AnimationController _chapterSlideController;
   Timer? _positionSaveTimer;
   final _viewportKey = GlobalKey();
   final _verseKeys = <int, GlobalKey>{};
@@ -39,7 +45,8 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   double _autoScrollPixelsPerSecond = 0;
   double _topOverscroll = 0;
   double _bottomOverscroll = 0;
-  double _horizontalDragDistance = 0;
+  double _lastViewportWidth = 1;
+  _ChapterSlideDirection? _pendingChapterDirection;
   bool _restoringPosition = false;
   bool _edgeNavigating = false;
 
@@ -47,6 +54,9 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   static const _horizontalNavigationThreshold = 72.0;
   static const _horizontalFlingVelocity = 650.0;
   static const _positionSaveDelay = Duration(milliseconds: 500);
+  static const _chapterExitDuration = Duration(milliseconds: 220);
+  static const _chapterEnterDuration = Duration(milliseconds: 280);
+  static const _chapterSettleDuration = Duration(milliseconds: 180);
 
   @override
   void initState() {
@@ -54,6 +64,7 @@ class _VerseListViewState extends ConsumerState<VerseListView>
     WidgetsBinding.instance.addObserver(this);
     _scrollController = ScrollController();
     _autoScrollTicker = createTicker(_handleAutoScrollTick);
+    _chapterSlideController = AnimationController.unbounded(vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _restorePosition());
   }
 
@@ -62,6 +73,7 @@ class _VerseListViewState extends ConsumerState<VerseListView>
     _savePosition();
     WidgetsBinding.instance.removeObserver(this);
     _autoScrollTicker.dispose();
+    _chapterSlideController.dispose();
     _positionSaveTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
@@ -70,14 +82,35 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   @override
   void didUpdateWidget(VerseListView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.content.chapterNumber != widget.content.chapterNumber ||
-        oldWidget.content.book.id != widget.content.book.id ||
+    if (widget.navigationFailed && !oldWidget.navigationFailed) {
+      _restoreAfterNavigationFailure();
+    }
+
+    final chapterChanged =
+        oldWidget.content.chapterNumber != widget.content.chapterNumber ||
+        oldWidget.content.book.id != widget.content.book.id;
+    final presentationChanged =
         oldWidget.content.translationCode != widget.content.translationCode ||
         oldWidget.content.parallelTranslationCode !=
-            widget.content.parallelTranslationCode) {
+            widget.content.parallelTranslationCode;
+    if (chapterChanged || presentationChanged) {
+      final incomingDirection =
+          chapterChanged ? _pendingChapterDirection : null;
+      _pendingChapterDirection = null;
       _verseKeys.clear();
-      _edgeNavigating = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _restorePosition());
+      _chapterSlideController.stop();
+      _chapterSlideController.value = switch (incomingDirection) {
+        _ChapterSlideDirection.next => _viewportWidth,
+        _ChapterSlideDirection.previous => -_viewportWidth,
+        null => 0,
+      };
+      if (incomingDirection == null) _edgeNavigating = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _restorePosition();
+        if (incomingDirection != null) {
+          unawaited(_animateChapterIn());
+        }
+      });
     }
   }
 
@@ -259,7 +292,6 @@ class _VerseListViewState extends ConsumerState<VerseListView>
       _topOverscroll = 0;
       _bottomOverscroll = 0;
       if (navigate != null) {
-        _edgeNavigating = true;
         navigate();
       }
     } else if (notification is ScrollUpdateNotification) {
@@ -285,11 +317,17 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   }
 
   void _handleHorizontalDragStart(DragStartDetails _) {
-    _horizontalDragDistance = 0;
+    if (_edgeNavigating) return;
+    _chapterSlideController.stop();
   }
 
   void _handleHorizontalDragUpdate(DragUpdateDetails details) {
-    _horizontalDragDistance += details.primaryDelta ?? 0;
+    if (_edgeNavigating) return;
+    final width = _viewportWidth;
+    _chapterSlideController.value =
+        (_chapterSlideController.value + (details.primaryDelta ?? 0))
+            .clamp(-width, width)
+            .toDouble();
   }
 
   void _handleHorizontalDragEnd(
@@ -299,26 +337,95 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   }) {
     if (_edgeNavigating) return;
     final velocity = details.primaryVelocity ?? 0;
+    final dragDistance = _chapterSlideController.value;
     final isCommitted =
-        _horizontalDragDistance.abs() >= _horizontalNavigationThreshold ||
+        dragDistance.abs() >= _horizontalNavigationThreshold ||
         velocity.abs() >= _horizontalFlingVelocity;
     if (!isCommitted) {
-      _horizontalDragDistance = 0;
+      unawaited(_settleChapterSlide());
       return;
     }
 
-    final navigate =
-        _horizontalDragDistance < 0 || velocity < -_horizontalFlingVelocity
-            ? onNext
-            : onPrevious;
-    _horizontalDragDistance = 0;
-    if (navigate == null) return;
-    _edgeNavigating = true;
+    final isNext =
+        velocity.abs() >= _horizontalFlingVelocity
+            ? velocity < 0
+            : dragDistance < 0;
+    final navigate = isNext ? onNext : onPrevious;
+    if (navigate == null) {
+      unawaited(_settleChapterSlide());
+      return;
+    }
     navigate();
+  }
+
+  double get _viewportWidth => _lastViewportWidth;
+
+  void _beginChapterTransition(
+    _ChapterSlideDirection direction,
+    VoidCallback navigate,
+  ) {
+    if (_edgeNavigating) return;
+    _edgeNavigating = true;
+    _pendingChapterDirection = direction;
+    unawaited(_animateChapterOut(direction, navigate));
+  }
+
+  Future<void> _animateChapterOut(
+    _ChapterSlideDirection direction,
+    VoidCallback navigate,
+  ) async {
+    final width = _viewportWidth;
+    final target = direction == _ChapterSlideDirection.next ? -width : width;
+    final remaining = ((target - _chapterSlideController.value).abs() / width)
+        .clamp(0.0, 1.0);
+    final duration = Duration(
+      milliseconds: (_chapterExitDuration.inMilliseconds * remaining)
+          .round()
+          .clamp(90, _chapterExitDuration.inMilliseconds),
+    );
+    await _chapterSlideController.animateTo(
+      target,
+      duration: duration,
+      curve: Curves.easeOutCubic,
+    );
+    if (mounted) navigate();
+  }
+
+  Future<void> _animateChapterIn() async {
+    await _chapterSlideController.animateTo(
+      0,
+      duration: _chapterEnterDuration,
+      curve: Curves.easeOutCubic,
+    );
+    if (mounted) _edgeNavigating = false;
+  }
+
+  Future<void> _settleChapterSlide() async {
+    await _chapterSlideController.animateTo(
+      0,
+      duration: _chapterSettleDuration,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _restoreAfterNavigationFailure() {
+    _pendingChapterDirection = null;
+    unawaited(
+      _chapterSlideController
+          .animateTo(
+            0,
+            duration: _chapterSettleDuration,
+            curve: Curves.easeOutCubic,
+          )
+          .whenComplete(() {
+            if (mounted) _edgeNavigating = false;
+          }),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    _lastViewportWidth = MediaQuery.sizeOf(context).width;
     final readerState = ref.watch(
       bibleReaderProvider.select(
         (state) => (
@@ -399,68 +506,91 @@ class _VerseListViewState extends ConsumerState<VerseListView>
             : nextBook == null
             ? null
             : () => readerNotifier.navigateTo(bookId: nextBook.id, chapter: 1);
+    final transitionToPrevious =
+        onPrevious == null
+            ? null
+            : () => _beginChapterTransition(
+              _ChapterSlideDirection.previous,
+              onPrevious,
+            );
+    final transitionToNext =
+        onNext == null
+            ? null
+            : () =>
+                _beginChapterTransition(_ChapterSlideDirection.next, onNext);
 
     return GestureDetector(
       key: const ValueKey('chapter-swipe-detector'),
       behavior: HitTestBehavior.translucent,
       onHorizontalDragStart: _handleHorizontalDragStart,
       onHorizontalDragUpdate: _handleHorizontalDragUpdate,
-      onHorizontalDragCancel: () => _horizontalDragDistance = 0,
+      onHorizontalDragCancel: () => unawaited(_settleChapterSlide()),
       onHorizontalDragEnd:
           (details) => _handleHorizontalDragEnd(
             details,
-            onPrevious: onPrevious,
-            onNext: onNext,
+            onPrevious: transitionToPrevious,
+            onNext: transitionToNext,
           ),
-      child: NotificationListener<ScrollNotification>(
-        onNotification:
-            (notification) => _handleScrollNotification(
-              notification,
-              onPrevious: onPrevious,
-              onNext: onNext,
-              autoScrollEnabled: readerState.autoScrollEnabled,
-              readerNotifier: readerNotifier,
+      child: AnimatedBuilder(
+        animation: _chapterSlideController,
+        builder:
+            (context, child) => Transform.translate(
+              key: const ValueKey('chapter-slide-transform'),
+              offset: Offset(_chapterSlideController.value, 0),
+              child: child,
             ),
-        child: SingleChildScrollView(
-          key: _viewportKey,
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          child: Column(
-            children: [
-              for (final verse in content.verses)
-                RepaintBoundary(
-                  key: _keyForVerse(verse.verseNumber),
-                  child: VerseItem(
-                    verse: verse,
-                    parallelVerse:
-                        parallelView
-                            ? content.parallelVerseAt(verse.verseNumber)
-                            : null,
-                    highlightColorCode: highlightColors[verse.verseNumber],
-                    isSelected: readerState.selectedVerseNumbers.contains(
-                      verse.verseNumber,
-                    ),
-                    isSelectionMode:
-                        readerState.selectedVerseNumbers.isNotEmpty,
-                  ),
-                ),
-              _ChapterNavigation(
-                content: content,
-                previousLabel: previousLabel,
-                nextLabel: nextLabel,
-                onPrevious: onPrevious,
-                onNext: onNext,
+        child: NotificationListener<ScrollNotification>(
+          onNotification:
+              (notification) => _handleScrollNotification(
+                notification,
+                onPrevious: transitionToPrevious,
+                onNext: transitionToNext,
+                autoScrollEnabled: readerState.autoScrollEnabled,
+                readerNotifier: readerNotifier,
               ),
-              const SizedBox(height: AppSpacing.xxxxl),
-            ],
+          child: SingleChildScrollView(
+            key: _viewportKey,
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            child: Column(
+              children: [
+                for (final verse in content.verses)
+                  RepaintBoundary(
+                    key: _keyForVerse(verse.verseNumber),
+                    child: VerseItem(
+                      verse: verse,
+                      parallelVerse:
+                          parallelView
+                              ? content.parallelVerseAt(verse.verseNumber)
+                              : null,
+                      highlightColorCode: highlightColors[verse.verseNumber],
+                      isSelected: readerState.selectedVerseNumbers.contains(
+                        verse.verseNumber,
+                      ),
+                      isSelectionMode:
+                          readerState.selectedVerseNumbers.isNotEmpty,
+                    ),
+                  ),
+                _ChapterNavigation(
+                  content: content,
+                  previousLabel: previousLabel,
+                  nextLabel: nextLabel,
+                  onPrevious: transitionToPrevious,
+                  onNext: transitionToNext,
+                ),
+                const SizedBox(height: AppSpacing.xxxxl),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+enum _ChapterSlideDirection { previous, next }
 
 // ── Chapter Navigation ─────────────────────────────────────────────────
 
