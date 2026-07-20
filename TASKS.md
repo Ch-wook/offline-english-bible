@@ -38,3 +38,4 @@
 - [x] Race-free full-text search with Old/New Testament filters
 - [x] Exact verse navigation from search results
 - [x] Narrow-screen dictionary and reader regression coverage
+- [x] Full Korean book titles in the compact reader header

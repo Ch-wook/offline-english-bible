@@ -99,31 +99,35 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
       titleSpacing: AppSpacing.md,
       title: GestureDetector(
         onTap: () => BookSelectorSheet.show(context),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.menu_book_rounded,
-              color: colorScheme.primary,
-              size: AppSpacing.iconMd,
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Flexible(
-              child: Text(
+        child: FittedBox(
+          key: const ValueKey('bible-reader-title'),
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.menu_book_rounded,
+                color: colorScheme.primary,
+                size: AppSpacing.iconMd,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
                 bookName.isNotEmpty ? '$bookName $chapter장' : '성경 읽기',
                 style: AppTypography.titleLarge.copyWith(
                   color: colorScheme.onSurface,
                 ),
-                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                softWrap: false,
               ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Icon(
-              Icons.expand_more_rounded,
-              size: 18,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ],
+              const SizedBox(width: AppSpacing.xs),
+              Icon(
+                Icons.expand_more_rounded,
+                size: 18,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

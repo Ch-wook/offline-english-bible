@@ -54,6 +54,10 @@ void main() {
         currentChapterProvider.overrideWith((ref) async => readerContent),
       ],
     );
+    container.read(bibleReaderProvider.notifier).navigateTo(
+      bookId: readerContent.book.id,
+      chapter: readerContent.chapterNumber,
+    );
     addTearDown(() async {
       container.dispose();
       await closeTestDatabase(db);
@@ -194,5 +198,44 @@ void main() {
     expect(find.text('단어장'), findsOneWidget);
     expect(find.text('검색'), findsOneWidget);
     expect(find.text('설정'), findsOneWidget);
+  });
+
+  testWidgets('shows a long Korean book title without truncation', (
+    tester,
+  ) async {
+    const samuelContent = ChapterContent(
+      book: Book(
+        id: 9,
+        name: '1 Samuel',
+        nameKorean: '사무엘상',
+        abbreviation: '1Sam',
+        abbreviationKorean: '삼상',
+        testament: 'OT',
+        orderIndex: 9,
+        chapterCount: 31,
+      ),
+      chapterNumber: 2,
+      verses: [
+        Verse(
+          bookId: 9,
+          chapter: 2,
+          verseNumber: 1,
+          text: 'And Hannah prayed, and said.',
+        ),
+      ],
+      translationCode: 'KJV',
+    );
+
+    await pumpReader(tester, readerContent: samuelContent);
+
+    final title = tester.widget<Text>(find.text('사무엘상 2장'));
+    final fittedTitle = tester.widget<FittedBox>(
+      find.byKey(const ValueKey('bible-reader-title')),
+    );
+    expect(title.maxLines, 1);
+    expect(title.softWrap, isFalse);
+    expect(title.overflow, isNot(TextOverflow.ellipsis));
+    expect(fittedTitle.fit, BoxFit.scaleDown);
+    expect(tester.takeException(), isNull);
   });
 }
