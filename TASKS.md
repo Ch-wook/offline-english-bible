@@ -39,3 +39,5 @@
 - [x] Exact verse navigation from search results
 - [x] Narrow-screen dictionary and reader regression coverage
 - [x] Full Korean book titles in the compact reader header
+- [x] Horizontal swipe and edge-pull chapter navigation
+- [x] Frame-synced auto-scroll and isolated verse rendering

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:offline_english_bible/features/bible/domain/entities/verse.dart';
+import 'package:offline_english_bible/features/bible/presentation/providers/bible_reader_provider.dart';
 import 'package:offline_english_bible/features/bible/presentation/widgets/verse_item.dart';
 import 'package:offline_english_bible/features/settings/presentation/providers/settings_provider.dart';
 
@@ -97,10 +98,12 @@ void main() {
     final primarySpans = (primary.text as TextSpan).children!.cast<TextSpan>();
     final parallelSpans =
         (parallel.text as TextSpan).children!.cast<TextSpan>();
-    final primaryBody = primarySpans.firstWhere((span) => span.text == 'In');
+    final primaryBody = primarySpans.last;
     final parallelBody = parallelSpans.single;
 
     expect(primarySpans.first.text, '1  ');
+    expect(primarySpans, hasLength(2));
+    expect(primaryBody.text, 'In the beginning God created.');
     expect(primaryBody.style!.fontSize, 17);
     expect(parallelBody.style!.fontSize, primaryBody.style!.fontSize);
     expect(parallelBody.style!.height, primaryBody.style!.height);
@@ -115,6 +118,48 @@ void main() {
     );
     final hiddenSpans =
         (hiddenNumberText.text as TextSpan).children!.cast<TextSpan>();
-    expect(hiddenSpans.first.text, 'In');
+    expect(hiddenSpans, hasLength(1));
+    expect(hiddenSpans.single.text, 'In the beginning God created.');
+  });
+
+  testWidgets('resolves a tapped word with one recognizer per verse', (
+    tester,
+  ) async {
+    final db = createTestDatabase();
+    final container = createTestContainer(db: db);
+    addTearDown(() async {
+      container.dispose();
+      await closeTestDatabase(db);
+    });
+    await container.read(settingsProvider.notifier).toggleShowVerseNumbers();
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: VerseItem(
+              verse: Verse(
+                bookId: 45,
+                chapter: 5,
+                verseNumber: 20,
+                text: 'Grace abounds.',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final text = find.descendant(
+      of: find.byKey(const ValueKey('primary-KJV-20')),
+      matching: find.byType(RichText),
+    );
+    final bounds = tester.getRect(text);
+    await tester.tapAt(Offset(bounds.left + 12, bounds.center.dy));
+    await tester.pump();
+
+    expect(container.read(bibleReaderProvider).tappedWord, 'grace');
   });
 }

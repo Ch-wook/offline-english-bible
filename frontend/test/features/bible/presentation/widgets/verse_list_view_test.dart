@@ -100,6 +100,30 @@ void main() {
     expect(context.container.read(bibleReaderProvider).chapter, 1);
   });
 
+  testWidgets('swiping left opens the next chapter', (tester) async {
+    final context = await pumpList(tester, chapter: 1);
+
+    await tester.drag(
+      find.byKey(const ValueKey('chapter-swipe-detector')),
+      const Offset(-180, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(context.container.read(bibleReaderProvider).chapter, 2);
+  });
+
+  testWidgets('swiping right opens the previous chapter', (tester) async {
+    final context = await pumpList(tester, chapter: 2);
+
+    await tester.drag(
+      find.byKey(const ValueKey('chapter-swipe-detector')),
+      const Offset(180, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(context.container.read(bibleReaderProvider).chapter, 1);
+  });
+
   testWidgets('scrolling records the visible verse and offset', (tester) async {
     final context = await pumpList(tester, chapter: 1);
 
@@ -107,12 +131,56 @@ void main() {
       find.byType(SingleChildScrollView),
       const Offset(0, -420),
     );
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 1100));
 
     final reader = context.container.read(bibleReaderProvider);
     expect(reader.scrollOffset, greaterThan(0));
     expect(reader.scrollVerse, greaterThan(1));
     expect(reader.scrollFraction, inInclusiveRange(0, 1));
+  });
+
+  testWidgets('saving position does not rebuild verse paragraphs', (
+    tester,
+  ) async {
+    final context = await pumpList(tester, chapter: 1);
+    final firstParagraph = find.descendant(
+      of: find.byType(VerseItem).first,
+      matching: find.byType(RichText),
+    );
+    final before = tester.widget<RichText>(firstParagraph);
+
+    context.container
+        .read(bibleReaderProvider.notifier)
+        .updateReadingPosition(verse: 2, fraction: 0.2, offset: 80);
+    await tester.pump();
+
+    final after = tester.widget<RichText>(firstParagraph);
+    expect(identical(after, before), isTrue);
+  });
+
+  testWidgets('auto scroll advances on frame ticks and stops cleanly', (
+    tester,
+  ) async {
+    final context = await pumpList(tester, chapter: 1);
+    final scrollView = tester.widget<SingleChildScrollView>(
+      find.byType(SingleChildScrollView),
+    );
+    final controller = scrollView.controller!;
+
+    context.container.read(bibleReaderProvider.notifier).toggleAutoScroll();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+    final before = controller.offset;
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(controller.offset, greaterThan(before));
+
+    context.container.read(bibleReaderProvider.notifier).toggleAutoScroll();
+    await tester.pump();
+    final stoppedAt = controller.offset;
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(controller.offset, closeTo(stoppedAt, 0.01));
   });
 
   testWidgets('exact navigation restores the requested verse', (tester) async {
@@ -132,7 +200,7 @@ void main() {
       find.byType(SingleChildScrollView),
       const Offset(0, -520),
     );
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 1100));
     final before = context.container.read(bibleReaderProvider);
     expect(before.scrollVerse, greaterThan(1));
 

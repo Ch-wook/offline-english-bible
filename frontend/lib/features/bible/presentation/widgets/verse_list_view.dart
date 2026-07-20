@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
+import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../theme/app_spacing.dart';
@@ -27,24 +28,32 @@ class VerseListView extends ConsumerStatefulWidget {
 }
 
 class _VerseListViewState extends ConsumerState<VerseListView>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late final ScrollController _scrollController;
-  Timer? _autoScrollTimer;
+  late final Ticker _autoScrollTicker;
   Timer? _positionSaveTimer;
   final _viewportKey = GlobalKey();
   final _verseKeys = <int, GlobalKey>{};
+  int _positionSaveGeneration = 0;
+  Duration? _lastAutoScrollElapsed;
+  double _autoScrollPixelsPerSecond = 0;
   double _topOverscroll = 0;
   double _bottomOverscroll = 0;
+  double _horizontalDragDistance = 0;
   bool _restoringPosition = false;
   bool _edgeNavigating = false;
 
   static const _edgeNavigationThreshold = 44.0;
+  static const _horizontalNavigationThreshold = 72.0;
+  static const _horizontalFlingVelocity = 650.0;
+  static const _positionSaveDelay = Duration(milliseconds: 500);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _scrollController = ScrollController();
+    _autoScrollTicker = createTicker(_handleAutoScrollTick);
     WidgetsBinding.instance.addPostFrameCallback((_) => _restorePosition());
   }
 
@@ -52,7 +61,7 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   void dispose() {
     _savePosition();
     WidgetsBinding.instance.removeObserver(this);
-    _autoScrollTimer?.cancel();
+    _autoScrollTicker.dispose();
     _positionSaveTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
@@ -82,22 +91,37 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   }
 
   void _startAutoScroll(double pixelsPerSecond) {
-    _autoScrollTimer?.cancel();
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-      if (!_scrollController.hasClients) return;
-      final current = _scrollController.offset;
-      final max = _scrollController.position.maxScrollExtent;
-      if (current >= max) {
-        _autoScrollTimer?.cancel();
-        return;
-      }
-      _scrollController.jumpTo((current + pixelsPerSecond / 20).clamp(0, max));
-    });
+    _autoScrollPixelsPerSecond = pixelsPerSecond;
+    _lastAutoScrollElapsed = null;
+    if (!_autoScrollTicker.isActive) _autoScrollTicker.start();
   }
 
   void _stopAutoScroll() {
-    _autoScrollTimer?.cancel();
-    _autoScrollTimer = null;
+    if (_autoScrollTicker.isActive) _autoScrollTicker.stop();
+    _lastAutoScrollElapsed = null;
+  }
+
+  void _handleAutoScrollTick(Duration elapsed) {
+    if (!_scrollController.hasClients) {
+      _lastAutoScrollElapsed = elapsed;
+      return;
+    }
+    final previous = _lastAutoScrollElapsed;
+    _lastAutoScrollElapsed = elapsed;
+    if (previous == null) return;
+
+    final seconds =
+        (elapsed - previous).inMicroseconds.clamp(0, 50000) /
+        Duration.microsecondsPerSecond;
+    final current = _scrollController.offset;
+    final max = _scrollController.position.maxScrollExtent;
+    if (current >= max) {
+      _stopAutoScroll();
+      return;
+    }
+    _scrollController.jumpTo(
+      (current + _autoScrollPixelsPerSecond * seconds).clamp(0.0, max),
+    );
   }
 
   GlobalKey _keyForVerse(int verse) =>
@@ -143,15 +167,32 @@ class _VerseListViewState extends ConsumerState<VerseListView>
 
   void _schedulePositionSave() {
     if (_restoringPosition || _edgeNavigating) return;
-    _positionSaveTimer?.cancel();
-    _positionSaveTimer = Timer(
-      const Duration(milliseconds: 220),
-      _savePosition,
-    );
+    _positionSaveGeneration++;
+    if (_positionSaveTimer == null) {
+      final scheduledGeneration = _positionSaveGeneration;
+      _positionSaveTimer = Timer(
+        _positionSaveDelay,
+        () => _savePositionWhenIdle(scheduledGeneration),
+      );
+    }
+  }
+
+  void _savePositionWhenIdle(int scheduledGeneration) {
+    _positionSaveTimer = null;
+    if (scheduledGeneration != _positionSaveGeneration) {
+      final latestGeneration = _positionSaveGeneration;
+      _positionSaveTimer = Timer(
+        _positionSaveDelay,
+        () => _savePositionWhenIdle(latestGeneration),
+      );
+      return;
+    }
+    _savePosition();
   }
 
   void _savePosition() {
     _positionSaveTimer?.cancel();
+    _positionSaveTimer = null;
     if (!mounted || !_scrollController.hasClients || _restoringPosition) {
       return;
     }
@@ -193,7 +234,7 @@ class _VerseListViewState extends ConsumerState<VerseListView>
     ScrollNotification notification, {
     required VoidCallback? onPrevious,
     required VoidCallback? onNext,
-    required BibleReaderState readerState,
+    required bool autoScrollEnabled,
     required BibleReaderNotifier readerNotifier,
   }) {
     if (notification is ScrollStartNotification) {
@@ -237,19 +278,63 @@ class _VerseListViewState extends ConsumerState<VerseListView>
 
     if (notification is UserScrollNotification &&
         notification.direction != ScrollDirection.idle &&
-        readerState.autoScrollEnabled) {
+        autoScrollEnabled) {
       readerNotifier.toggleAutoScroll();
     }
     return false;
   }
 
+  void _handleHorizontalDragStart(DragStartDetails _) {
+    _horizontalDragDistance = 0;
+  }
+
+  void _handleHorizontalDragUpdate(DragUpdateDetails details) {
+    _horizontalDragDistance += details.primaryDelta ?? 0;
+  }
+
+  void _handleHorizontalDragEnd(
+    DragEndDetails details, {
+    required VoidCallback? onPrevious,
+    required VoidCallback? onNext,
+  }) {
+    if (_edgeNavigating) return;
+    final velocity = details.primaryVelocity ?? 0;
+    final isCommitted =
+        _horizontalDragDistance.abs() >= _horizontalNavigationThreshold ||
+        velocity.abs() >= _horizontalFlingVelocity;
+    if (!isCommitted) {
+      _horizontalDragDistance = 0;
+      return;
+    }
+
+    final navigate =
+        _horizontalDragDistance < 0 || velocity < -_horizontalFlingVelocity
+            ? onNext
+            : onPrevious;
+    _horizontalDragDistance = 0;
+    if (navigate == null) return;
+    _edgeNavigating = true;
+    navigate();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final readerState = ref.watch(bibleReaderProvider);
+    final readerState = ref.watch(
+      bibleReaderProvider.select(
+        (state) => (
+          isParallelView: state.isParallelView,
+          translationCode: state.translationCode,
+          parallelTranslationCode: state.parallelTranslationCode,
+          selectedVerseNumbers: state.selectedVerseNumbers,
+          autoScrollEnabled: state.autoScrollEnabled,
+        ),
+      ),
+    );
     final readerNotifier = ref.read(bibleReaderProvider.notifier);
     final autoScrollSpeed = ref.watch(
       settingsProvider.select((s) => s.autoScrollSpeed),
     );
+    _autoScrollPixelsPerSecond = autoScrollSpeed;
 
     // 자동 스크롤 상태 변경 감지
     ref.listen<BibleReaderState>(bibleReaderProvider, (prev, next) {
@@ -315,47 +400,62 @@ class _VerseListViewState extends ConsumerState<VerseListView>
             ? null
             : () => readerNotifier.navigateTo(bookId: nextBook.id, chapter: 1);
 
-    return NotificationListener<ScrollNotification>(
-      onNotification:
-          (notification) => _handleScrollNotification(
-            notification,
+    return GestureDetector(
+      key: const ValueKey('chapter-swipe-detector'),
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: _handleHorizontalDragStart,
+      onHorizontalDragUpdate: _handleHorizontalDragUpdate,
+      onHorizontalDragCancel: () => _horizontalDragDistance = 0,
+      onHorizontalDragEnd:
+          (details) => _handleHorizontalDragEnd(
+            details,
             onPrevious: onPrevious,
             onNext: onNext,
-            readerState: readerState,
-            readerNotifier: readerNotifier,
           ),
-      child: SingleChildScrollView(
-        key: _viewportKey,
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
-        ),
-        child: Column(
-          children: [
-            for (final verse in content.verses)
-              KeyedSubtree(
-                key: _keyForVerse(verse.verseNumber),
-                child: VerseItem(
-                  verse: verse,
-                  parallelVerse:
-                      parallelView
-                          ? content.parallelVerseAt(verse.verseNumber)
-                          : null,
-                  highlightColorCode: highlightColors[verse.verseNumber],
-                  isSelected: readerState.selectedVerseNumbers.contains(
-                    verse.verseNumber,
-                  ),
-                ),
-              ),
-            _ChapterNavigation(
-              content: content,
-              previousLabel: previousLabel,
-              nextLabel: nextLabel,
+      child: NotificationListener<ScrollNotification>(
+        onNotification:
+            (notification) => _handleScrollNotification(
+              notification,
               onPrevious: onPrevious,
               onNext: onNext,
+              autoScrollEnabled: readerState.autoScrollEnabled,
+              readerNotifier: readerNotifier,
             ),
-            const SizedBox(height: AppSpacing.xxxxl),
-          ],
+        child: SingleChildScrollView(
+          key: _viewportKey,
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          child: Column(
+            children: [
+              for (final verse in content.verses)
+                RepaintBoundary(
+                  key: _keyForVerse(verse.verseNumber),
+                  child: VerseItem(
+                    verse: verse,
+                    parallelVerse:
+                        parallelView
+                            ? content.parallelVerseAt(verse.verseNumber)
+                            : null,
+                    highlightColorCode: highlightColors[verse.verseNumber],
+                    isSelected: readerState.selectedVerseNumbers.contains(
+                      verse.verseNumber,
+                    ),
+                    isSelectionMode:
+                        readerState.selectedVerseNumbers.isNotEmpty,
+                  ),
+                ),
+              _ChapterNavigation(
+                content: content,
+                previousLabel: previousLabel,
+                nextLabel: nextLabel,
+                onPrevious: onPrevious,
+                onNext: onNext,
+              ),
+              const SizedBox(height: AppSpacing.xxxxl),
+            ],
+          ),
         ),
       ),
     );

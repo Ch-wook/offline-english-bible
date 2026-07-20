@@ -15,7 +15,6 @@ import '../../../dictionary/presentation/widgets/dictionary_bottom_sheet.dart';
 import '../../../highlights/presentation/pages/bookmarks_page.dart';
 import '../../../highlights/presentation/providers/highlights_providers.dart';
 import '../../../highlights/presentation/widgets/highlight_color_picker.dart';
-import '../../../settings/domain/entities/app_settings.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../domain/entities/chapter_content.dart';
 import '../../domain/entities/verse.dart';
@@ -33,9 +32,7 @@ class BibleReaderPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(readingTabsAutoSaveProvider);
-    final readerState = ref.watch(bibleReaderProvider);
     final chapterAsync = ref.watch(currentChapterProvider);
-    final settings = ref.watch(settingsProvider);
 
     // 단어 탭 → 바텀시트 트리거
     ref.listen<BibleReaderState>(bibleReaderProvider, (_, next) {
@@ -54,7 +51,7 @@ class BibleReaderPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: _BibleAppBar(readerState: readerState, settings: settings),
+      appBar: const _BibleAppBar(),
       body: chapterAsync.when(
         loading: () => const _LoadingBody(),
         error: (error, _) => _ErrorBody(message: error.toString()),
@@ -72,10 +69,7 @@ class BibleReaderPage extends ConsumerWidget {
 
 class _BibleAppBar extends ConsumerStatefulWidget
     implements PreferredSizeWidget {
-  const _BibleAppBar({required this.readerState, required this.settings});
-
-  final BibleReaderState readerState;
-  final AppSettings settings;
+  const _BibleAppBar();
 
   @override
   Size get preferredSize => const Size.fromHeight(AppSpacing.appBarHeight);
@@ -90,10 +84,19 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
     final colorScheme = Theme.of(context).colorScheme;
     final chapterAsync = ref.watch(currentChapterProvider);
     final notifier = ref.read(bibleReaderProvider.notifier);
+    final readerState = ref.watch(
+      bibleReaderProvider.select(
+        (state) => (
+          chapter: state.chapter,
+          translationCode: state.translationCode,
+          isParallelView: state.isParallelView,
+        ),
+      ),
+    );
 
     final bookName =
         chapterAsync.whenOrNull(data: (c) => c.book.nameKorean) ?? '';
-    final chapter = widget.readerState.chapter;
+    final chapter = readerState.chapter;
 
     return AppBar(
       titleSpacing: AppSpacing.md,
@@ -145,7 +148,7 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             ),
             child: Text(
-              widget.readerState.translationCode,
+              readerState.translationCode,
               style: AppTypography.labelMedium.copyWith(
                 color: colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.w700,
@@ -157,11 +160,10 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
         // 대역 보기 토글
         IconButton(
           icon: Icon(
-            widget.readerState.isParallelView
+            readerState.isParallelView
                 ? Icons.view_agenda_rounded
                 : Icons.view_column_rounded,
-            color:
-                widget.readerState.isParallelView ? colorScheme.primary : null,
+            color: readerState.isParallelView ? colorScheme.primary : null,
           ),
           onPressed: () => notifier.toggleParallelView(),
           tooltip: '대역 보기',
@@ -251,11 +253,12 @@ class _BibleAppBarState extends ConsumerState<_BibleAppBar> {
 
   void _showTranslationMenu() {
     final notifier = ref.read(bibleReaderProvider.notifier);
+    final current = ref.read(bibleReaderProvider).translationCode;
     showModalBottomSheet<void>(
       context: context,
       builder:
           (_) => _TranslationPicker(
-            current: widget.readerState.translationCode,
+            current: current,
             onSelect: notifier.setTranslation,
           ),
     );
@@ -319,7 +322,9 @@ class _ReadingSettingsSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final settingsNotifier = ref.read(settingsProvider.notifier);
-    final reader = ref.watch(bibleReaderProvider);
+    final parallelView = ref.watch(
+      bibleReaderProvider.select((state) => state.isParallelView),
+    );
     final readerNotifier = ref.read(bibleReaderProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -409,7 +414,7 @@ class _ReadingSettingsSheet extends ConsumerWidget {
             contentPadding: EdgeInsets.zero,
             secondary: const Icon(Icons.view_agenda_rounded),
             title: const Text('대역 보기'),
-            value: reader.isParallelView,
+            value: parallelView,
             onChanged: (_) => readerNotifier.toggleParallelView(),
           ),
         ],
@@ -427,9 +432,11 @@ class _ReaderBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final readerState = ref.watch(bibleReaderProvider);
+    final selectedVerseNumbers = ref.watch(
+      bibleReaderProvider.select((state) => state.selectedVerseNumbers),
+    );
     final selectedVerses = [
-      for (final number in readerState.selectedVerseNumbers)
+      for (final number in selectedVerseNumbers)
         if (content.verseAt(number) case final verse?) verse,
     ]..sort((left, right) => left.verseNumber.compareTo(right.verseNumber));
 

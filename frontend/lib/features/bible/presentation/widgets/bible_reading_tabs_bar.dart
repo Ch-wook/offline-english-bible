@@ -13,7 +13,8 @@ class BibleReadingTabsBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final tabsAsync = ref.watch(readingTabsProvider);
+    ref.watch(readingTabsProvider.select(_presentationKey));
+    final tabsAsync = ref.read(readingTabsProvider);
     final books = ref.watch(allBooksProvider).valueOrNull ?? const [];
     final bookById = {for (final book in books) book.id: book};
 
@@ -124,6 +125,23 @@ class BibleReadingTabsBar extends ConsumerWidget {
     await BookSelectorSheet.show(context);
   }
 }
+
+String _presentationKey(AsyncValue<ReadingTabsState> value) => value.when(
+  loading: () => 'loading',
+  error: (error, _) => 'error:${error.runtimeType}:$error',
+  data:
+      (state) => [
+        state.activeTabId,
+        for (final tab in state.tabs) ...[
+          tab.id,
+          tab.bookId,
+          tab.chapter,
+          tab.translationCode,
+          tab.isParallelView,
+          tab.parallelTranslationCode,
+        ],
+      ].join('|'),
+);
 
 class _ReadingTabButton extends StatelessWidget {
   const _ReadingTabButton({

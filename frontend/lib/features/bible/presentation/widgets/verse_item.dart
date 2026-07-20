@@ -1,8 +1,8 @@
 // lib/features/bible/presentation/widgets/verse_item.dart
 // [NEW] 성경 절(Verse) 위젯 — 단어 탭 지원
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../theme/app_colors.dart';
@@ -20,6 +20,7 @@ class VerseItem extends ConsumerWidget {
     required this.verse,
     this.parallelVerse,
     this.isSelected = false,
+    this.isSelectionMode = false,
     this.highlightColorCode,
     super.key,
   });
@@ -27,6 +28,7 @@ class VerseItem extends ConsumerWidget {
   final Verse verse;
   final Verse? parallelVerse;
   final bool isSelected;
+  final bool isSelectionMode;
   final String? highlightColorCode;
 
   @override
@@ -38,12 +40,10 @@ class VerseItem extends ConsumerWidget {
     final showVerseNumbers = ref.watch(
       settingsProvider.select((settings) => settings.showVerseNumbers),
     );
-    final readerState = ref.watch(bibleReaderProvider);
     final readerNotifier = ref.read(bibleReaderProvider.notifier);
 
-    final isPrimaryEnglish = readerState.translationCode != 'KOREAN_RV';
-    final isParallelEnglish =
-        readerState.parallelTranslationCode != 'KOREAN_RV';
+    final isPrimaryEnglish = verse.isEnglish;
+    final isParallelEnglish = parallelVerse?.isEnglish ?? false;
 
     final selectedColor =
         isDark
@@ -63,12 +63,12 @@ class VerseItem extends ConsumerWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap:
-          readerState.isVerseSelectionActive
+          isSelectionMode
               ? () => readerNotifier.toggleVerseSelection(verse.verseNumber)
               : null,
       onLongPress:
           () =>
-              readerState.isVerseSelectionActive
+              isSelectionMode
                   ? readerNotifier.toggleVerseSelection(verse.verseNumber)
                   : readerNotifier.selectVerse(verse.verseNumber),
       child: AnimatedContainer(
@@ -83,7 +83,7 @@ class VerseItem extends ConsumerWidget {
           vertical: 6,
         ),
         child: IgnorePointer(
-          ignoring: readerState.isVerseSelectionActive,
+          ignoring: isSelectionMode,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -198,26 +198,10 @@ class _TappableVerseText extends StatefulWidget {
 }
 
 class _TappableVerseTextState extends State<_TappableVerseText> {
-  final List<TapGestureRecognizer> _recognizers = [];
-
-  @override
-  void dispose() {
-    for (final r in _recognizers) {
-      r.dispose();
-    }
-    super.dispose();
-  }
+  final _paragraphKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    // 이전 recognizer 정리
-    for (final r in _recognizers) {
-      r.dispose();
-    }
-    _recognizers.clear();
-
-    final tokens = _tokenize(widget.text);
-
     final spans = <InlineSpan>[
       if (widget.verseNumber != null)
         TextSpan(
@@ -228,52 +212,64 @@ class _TappableVerseTextState extends State<_TappableVerseText> {
             color: widget.verseNumberColor,
           ),
         ),
-      ...tokens.map((token) {
-        if (token.isWord) {
-          final recognizer =
-              TapGestureRecognizer()
-                ..onTap = () => widget.onWordTap(token.text);
-          _recognizers.add(recognizer);
-
-          return TextSpan(
-            text: token.text,
-            recognizer: recognizer,
-            style: TextStyle(
-              fontSize: widget.fontSize,
-              height: widget.lineSpacing,
-              color: widget.color,
-              fontFamily: 'NotoSerif',
-            ),
-          );
-        } else {
-          // 공백, 구두점 — 탭 불가
-          return TextSpan(
-            text: token.text,
-            style: TextStyle(
-              fontSize: widget.fontSize,
-              height: widget.lineSpacing,
-              color: widget.color,
-              fontFamily: 'NotoSerif',
-            ),
-          );
-        }
-      }),
+      TextSpan(
+        text: widget.text,
+        style: TextStyle(
+          fontSize: widget.fontSize,
+          height: widget.lineSpacing,
+          color: widget.color,
+          fontFamily: 'NotoSerif',
+        ),
+      ),
     ];
 
-    return RichText(text: TextSpan(children: spans));
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapUp: _handleTapUp,
+      child: RichText(key: _paragraphKey, text: TextSpan(children: spans)),
+    );
   }
 
-  /// 텍스트를 단어/비단어 토큰으로 분리.
-  List<_Token> _tokenize(String text) {
-    final tokens = <_Token>[];
-    final regex = RegExp(r"[\w']+|[^\w']+");
-    final wordCheck = RegExp(r"[\w']");
-    for (final match in regex.allMatches(text)) {
-      final t = match.group(0)!;
-      tokens.add(_Token(t, isWord: wordCheck.hasMatch(t)));
-    }
-    return tokens;
+  void _handleTapUp(TapUpDetails details) {
+    final paragraph =
+        _paragraphKey.currentContext?.findRenderObject() as RenderParagraph?;
+    if (paragraph == null) return;
+
+    final prefixLength =
+        widget.verseNumber == null ? 0 : '${widget.verseNumber}  '.length;
+    final textOffset =
+        paragraph.getPositionForOffset(details.localPosition).offset -
+        prefixLength;
+    final word = _wordAtOffset(widget.text, textOffset);
+    if (word != null) widget.onWordTap(word);
   }
+}
+
+String? _wordAtOffset(String text, int rawOffset) {
+  if (text.isEmpty || rawOffset < 0) return null;
+  var offset = rawOffset.clamp(0, text.length - 1).toInt();
+  if (!_isWordCharacter(text[offset])) {
+    if (offset == 0 || !_isWordCharacter(text[offset - 1])) return null;
+    offset--;
+  }
+
+  var start = offset;
+  var end = offset + 1;
+  while (start > 0 && _isWordCharacter(text[start - 1])) {
+    start--;
+  }
+  while (end < text.length && _isWordCharacter(text[end])) {
+    end++;
+  }
+  return text.substring(start, end);
+}
+
+bool _isWordCharacter(String character) {
+  if (character == "'") return true;
+  final code = character.codeUnitAt(0);
+  return code >= 48 && code <= 57 ||
+      code >= 65 && code <= 90 ||
+      code >= 97 && code <= 122;
 }
 
 class _PlainVerseText extends StatelessWidget {
@@ -320,10 +316,4 @@ class _PlainVerseText extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Token {
-  const _Token(this.text, {required this.isWord});
-  final String text;
-  final bool isWord;
 }
