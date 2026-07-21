@@ -47,7 +47,7 @@ void main() {
       final positionTables =
           await database
               .customSelect(
-                "SELECT name FROM sqlite_master "
+                'SELECT name FROM sqlite_master '
                 "WHERE type = 'table' AND name = 'chapter_reading_positions'",
               )
               .get();
