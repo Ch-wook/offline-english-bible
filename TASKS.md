@@ -39,7 +39,13 @@
 - [x] Exact verse navigation from search results
 - [x] Narrow-screen dictionary and reader regression coverage
 - [x] Full Korean book titles in the compact reader header
-- [x] Horizontal swipe and edge-pull chapter navigation
+- [x] Horizontal swipe chapter navigation without accidental vertical changes
 - [x] Frame-synced auto-scroll and isolated verse rendering
 - [x] System-navigation-safe reading tabs
 - [x] Finger-tracked chapter slide transitions without title flicker
+
+## Phase 8
+- [x] Immediate chapter switching without blank transition pages
+- [x] Persistent per-chapter reading positions inside every reading tab
+- [x] Compact reading tabs with reduced empty space
+- [x] Vertical chapter-end scrolling that never changes chapters

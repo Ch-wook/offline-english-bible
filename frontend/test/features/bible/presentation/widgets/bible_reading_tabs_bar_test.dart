@@ -36,6 +36,7 @@ void main() {
     expect(find.text('창 1'), findsOneWidget);
     expect(find.byTooltip('읽기 탭 추가'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    expect(tester.getSize(find.byType(AnimatedContainer).first).width, 82);
 
     for (var i = 1; i < maxBibleReadingTabs; i++) {
       await container.read(readingTabsProvider.notifier).addTab();
@@ -80,7 +81,7 @@ void main() {
     final tabsRect = tester.getRect(
       find.byKey(const ValueKey('reading-tabs-content')),
     );
-    expect(tabsRect.height, 50);
+    expect(tabsRect.height, 44);
     expect(tabsRect.bottom, 640 - 28);
     expect(tester.takeException(), isNull);
   });

@@ -94,7 +94,7 @@ void main() {
     return transform.transform.getTranslation().x;
   }
 
-  testWidgets('pulling beyond the bottom opens the next chapter', (
+  testWidgets('reaching and pulling beyond the bottom keeps the chapter', (
     tester,
   ) async {
     final context = await pumpList(tester, chapter: 1);
@@ -108,18 +108,16 @@ void main() {
     await tester.drag(scrollView, const Offset(0, -120));
     await tester.pumpAndSettle();
 
-    expect(context.container.read(bibleReaderProvider).chapter, 2);
+    expect(context.container.read(bibleReaderProvider).chapter, 1);
   });
 
-  testWidgets('pulling beyond the top opens the previous chapter', (
-    tester,
-  ) async {
+  testWidgets('pulling beyond the top keeps the chapter', (tester) async {
     final context = await pumpList(tester, chapter: 2);
 
     await tester.drag(find.byType(SingleChildScrollView), const Offset(0, 120));
     await tester.pumpAndSettle();
 
-    expect(context.container.read(bibleReaderProvider).chapter, 1);
+    expect(context.container.read(bibleReaderProvider).chapter, 2);
   });
 
   testWidgets('swiping left opens the next chapter', (tester) async {
@@ -146,7 +144,7 @@ void main() {
     expect(context.container.read(bibleReaderProvider).chapter, 1);
   });
 
-  testWidgets('chapter follows the finger and the next chapter slides in', (
+  testWidgets('chapter follows the finger then switches without a blank page', (
     tester,
   ) async {
     final context = await pumpList(tester, chapter: 1);
@@ -157,21 +155,16 @@ void main() {
     await tester.pump();
     await gesture.moveBy(const Offset(-90, 0));
     await tester.pump();
-    expect(chapterSlideOffset(tester), closeTo(-90, 1));
+    expect(chapterSlideOffset(tester), inInclusiveRange(-24, -1));
 
     await gesture.up();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 240));
     expect(context.container.read(bibleReaderProvider).chapter, 2);
 
     await repumpList(tester, context.container, chapter: 2);
     await tester.pump();
-    expect(chapterSlideOffset(tester), greaterThan(300));
-
-    await tester.pump(const Duration(milliseconds: 140));
-    expect(chapterSlideOffset(tester), inOpenClosedRange(0, 300));
-    await tester.pump(const Duration(milliseconds: 180));
     expect(chapterSlideOffset(tester), closeTo(0, 0.01));
+    expect(find.byType(VerseItem), findsNWidgets(20));
   });
 
   testWidgets('a short chapter swipe settles back without navigating', (
@@ -185,12 +178,12 @@ void main() {
     await tester.pump();
     await gesture.moveBy(const Offset(-36, 0));
     await tester.pump();
-    expect(chapterSlideOffset(tester), closeTo(-36, 1));
+    expect(chapterSlideOffset(tester), inInclusiveRange(-24, -1));
 
     await gesture.up();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 90));
-    expect(chapterSlideOffset(tester).abs(), lessThan(36));
+    expect(chapterSlideOffset(tester).abs(), lessThan(24));
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(chapterSlideOffset(tester), closeTo(0, 0.01));

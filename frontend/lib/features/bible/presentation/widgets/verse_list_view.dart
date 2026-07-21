@@ -43,19 +43,15 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   int _positionSaveGeneration = 0;
   Duration? _lastAutoScrollElapsed;
   double _autoScrollPixelsPerSecond = 0;
-  double _topOverscroll = 0;
-  double _bottomOverscroll = 0;
   double _lastViewportWidth = 1;
-  _ChapterSlideDirection? _pendingChapterDirection;
+  double _horizontalDragDistance = 0;
   bool _restoringPosition = false;
   bool _edgeNavigating = false;
 
-  static const _edgeNavigationThreshold = 44.0;
   static const _horizontalNavigationThreshold = 72.0;
   static const _horizontalFlingVelocity = 650.0;
+  static const _horizontalFeedbackLimit = 24.0;
   static const _positionSaveDelay = Duration(milliseconds: 500);
-  static const _chapterExitDuration = Duration(milliseconds: 220);
-  static const _chapterEnterDuration = Duration(milliseconds: 280);
   static const _chapterSettleDuration = Duration(milliseconds: 180);
 
   @override
@@ -94,23 +90,11 @@ class _VerseListViewState extends ConsumerState<VerseListView>
         oldWidget.content.parallelTranslationCode !=
             widget.content.parallelTranslationCode;
     if (chapterChanged || presentationChanged) {
-      final incomingDirection =
-          chapterChanged ? _pendingChapterDirection : null;
-      _pendingChapterDirection = null;
       _verseKeys.clear();
       _chapterSlideController.stop();
-      _chapterSlideController.value = switch (incomingDirection) {
-        _ChapterSlideDirection.next => _viewportWidth,
-        _ChapterSlideDirection.previous => -_viewportWidth,
-        null => 0,
-      };
-      if (incomingDirection == null) _edgeNavigating = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _restorePosition();
-        if (incomingDirection != null) {
-          unawaited(_animateChapterIn());
-        }
-      });
+      _chapterSlideController.value = 0;
+      _edgeNavigating = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _restorePosition());
     }
   }
 
@@ -265,46 +249,12 @@ class _VerseListViewState extends ConsumerState<VerseListView>
 
   bool _handleScrollNotification(
     ScrollNotification notification, {
-    required VoidCallback? onPrevious,
-    required VoidCallback? onNext,
     required bool autoScrollEnabled,
     required BibleReaderNotifier readerNotifier,
   }) {
-    if (notification is ScrollStartNotification) {
-      _topOverscroll = 0;
-      _bottomOverscroll = 0;
-    } else if (notification is OverscrollNotification &&
-        notification.dragDetails != null) {
-      if (notification.overscroll < 0) {
-        _topOverscroll += -notification.overscroll;
-      } else {
-        _bottomOverscroll += notification.overscroll;
-      }
-    } else if (notification is ScrollEndNotification) {
+    if (notification is ScrollEndNotification) {
       _schedulePositionSave();
-      if (_edgeNavigating) return false;
-      final navigate =
-          _topOverscroll >= _edgeNavigationThreshold
-              ? onPrevious
-              : _bottomOverscroll >= _edgeNavigationThreshold
-              ? onNext
-              : null;
-      _topOverscroll = 0;
-      _bottomOverscroll = 0;
-      if (navigate != null) {
-        navigate();
-      }
     } else if (notification is ScrollUpdateNotification) {
-      if (notification.dragDetails != null) {
-        final topDistance =
-            notification.metrics.minScrollExtent - notification.metrics.pixels;
-        final bottomDistance =
-            notification.metrics.pixels - notification.metrics.maxScrollExtent;
-        if (topDistance > _topOverscroll) _topOverscroll = topDistance;
-        if (bottomDistance > _bottomOverscroll) {
-          _bottomOverscroll = bottomDistance;
-        }
-      }
       _schedulePositionSave();
     }
 
@@ -319,14 +269,18 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   void _handleHorizontalDragStart(DragStartDetails _) {
     if (_edgeNavigating) return;
     _chapterSlideController.stop();
+    _horizontalDragDistance = 0;
   }
 
   void _handleHorizontalDragUpdate(DragUpdateDetails details) {
     if (_edgeNavigating) return;
-    final width = _viewportWidth;
+    _horizontalDragDistance =
+        (_horizontalDragDistance + (details.primaryDelta ?? 0))
+            .clamp(-_viewportWidth, _viewportWidth)
+            .toDouble();
     _chapterSlideController.value =
-        (_chapterSlideController.value + (details.primaryDelta ?? 0))
-            .clamp(-width, width)
+        (_horizontalDragDistance * 0.2)
+            .clamp(-_horizontalFeedbackLimit, _horizontalFeedbackLimit)
             .toDouble();
   }
 
@@ -337,7 +291,7 @@ class _VerseListViewState extends ConsumerState<VerseListView>
   }) {
     if (_edgeNavigating) return;
     final velocity = details.primaryVelocity ?? 0;
-    final dragDistance = _chapterSlideController.value;
+    final dragDistance = _horizontalDragDistance;
     final isCommitted =
         dragDistance.abs() >= _horizontalNavigationThreshold ||
         velocity.abs() >= _horizontalFlingVelocity;
@@ -360,44 +314,12 @@ class _VerseListViewState extends ConsumerState<VerseListView>
 
   double get _viewportWidth => _lastViewportWidth;
 
-  void _beginChapterTransition(
-    _ChapterSlideDirection direction,
-    VoidCallback navigate,
-  ) {
+  void _beginChapterTransition(VoidCallback navigate) {
     if (_edgeNavigating) return;
+    _savePosition();
     _edgeNavigating = true;
-    _pendingChapterDirection = direction;
-    unawaited(_animateChapterOut(direction, navigate));
-  }
-
-  Future<void> _animateChapterOut(
-    _ChapterSlideDirection direction,
-    VoidCallback navigate,
-  ) async {
-    final width = _viewportWidth;
-    final target = direction == _ChapterSlideDirection.next ? -width : width;
-    final remaining = ((target - _chapterSlideController.value).abs() / width)
-        .clamp(0.0, 1.0);
-    final duration = Duration(
-      milliseconds: (_chapterExitDuration.inMilliseconds * remaining)
-          .round()
-          .clamp(90, _chapterExitDuration.inMilliseconds),
-    );
-    await _chapterSlideController.animateTo(
-      target,
-      duration: duration,
-      curve: Curves.easeOutCubic,
-    );
-    if (mounted) navigate();
-  }
-
-  Future<void> _animateChapterIn() async {
-    await _chapterSlideController.animateTo(
-      0,
-      duration: _chapterEnterDuration,
-      curve: Curves.easeOutCubic,
-    );
-    if (mounted) _edgeNavigating = false;
+    navigate();
+    unawaited(_settleChapterSlide());
   }
 
   Future<void> _settleChapterSlide() async {
@@ -406,10 +328,10 @@ class _VerseListViewState extends ConsumerState<VerseListView>
       duration: _chapterSettleDuration,
       curve: Curves.easeOutCubic,
     );
+    _horizontalDragDistance = 0;
   }
 
   void _restoreAfterNavigationFailure() {
-    _pendingChapterDirection = null;
     unawaited(
       _chapterSlideController
           .animateTo(
@@ -507,17 +429,9 @@ class _VerseListViewState extends ConsumerState<VerseListView>
             ? null
             : () => readerNotifier.navigateTo(bookId: nextBook.id, chapter: 1);
     final transitionToPrevious =
-        onPrevious == null
-            ? null
-            : () => _beginChapterTransition(
-              _ChapterSlideDirection.previous,
-              onPrevious,
-            );
+        onPrevious == null ? null : () => _beginChapterTransition(onPrevious);
     final transitionToNext =
-        onNext == null
-            ? null
-            : () =>
-                _beginChapterTransition(_ChapterSlideDirection.next, onNext);
+        onNext == null ? null : () => _beginChapterTransition(onNext);
 
     return GestureDetector(
       key: const ValueKey('chapter-swipe-detector'),
@@ -543,8 +457,6 @@ class _VerseListViewState extends ConsumerState<VerseListView>
           onNotification:
               (notification) => _handleScrollNotification(
                 notification,
-                onPrevious: transitionToPrevious,
-                onNext: transitionToNext,
                 autoScrollEnabled: readerState.autoScrollEnabled,
                 readerNotifier: readerNotifier,
               ),
@@ -589,8 +501,6 @@ class _VerseListViewState extends ConsumerState<VerseListView>
     );
   }
 }
-
-enum _ChapterSlideDirection { previous, next }
 
 // ── Chapter Navigation ─────────────────────────────────────────────────
 

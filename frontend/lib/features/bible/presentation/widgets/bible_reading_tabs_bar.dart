@@ -24,7 +24,7 @@ class BibleReadingTabsBar extends ConsumerWidget {
         top: false,
         child: Container(
           key: const ValueKey('reading-tabs-content'),
-          height: 50,
+          height: 44,
           decoration: BoxDecoration(
             border: Border(
               top: BorderSide(color: colorScheme.outlineVariant.withAlpha(110)),
@@ -175,9 +175,10 @@ class _ReadingTabButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: AnimatedContainer(
+          key: ValueKey('reading-tab-button-$label'),
           duration: const Duration(milliseconds: 160),
-          width: canClose ? 126 : 112,
-          padding: const EdgeInsets.only(left: AppSpacing.md),
+          width: canClose ? 96 : 82,
+          padding: const EdgeInsets.only(left: AppSpacing.sm),
           decoration: BoxDecoration(
             color:
                 selected
@@ -226,8 +227,8 @@ class _ReadingTabButton extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints.tightFor(
-                    width: 32,
-                    height: 44,
+                    width: 28,
+                    height: 40,
                   ),
                   icon: const Icon(Icons.close_rounded, size: 17),
                 ),

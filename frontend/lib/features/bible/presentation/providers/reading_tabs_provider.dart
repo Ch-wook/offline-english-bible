@@ -1,18 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/di/providers.dart';
-import '../../data/datasources/user_local_datasource_impl.dart';
-import '../../data/repositories/reading_tabs_repository_impl.dart';
+import '../../domain/entities/chapter_reading_position.dart';
 import '../../domain/entities/reading_tab.dart';
 import '../../domain/repositories/reading_tabs_repository.dart';
+import 'bible_providers.dart';
 import 'bible_reader_provider.dart';
 
 const maxBibleReadingTabs = 6;
-
-final readingTabsRepositoryProvider = Provider<ReadingTabsRepository>((ref) {
-  final dataSource = UserLocalDataSourceImpl(ref.watch(appDatabaseProvider));
-  return ReadingTabsRepositoryImpl(dataSource);
-});
 
 final class ReadingTabsState {
   const ReadingTabsState({required this.tabs, required this.activeTabId});
@@ -76,8 +70,8 @@ final class ReadingTabsNotifier
         active = tabs.firstWhere((tab) => tab.id == active!.id);
       }
 
+      await _ref.read(bibleReaderProvider.notifier).restoreReadingTab(active);
       state = AsyncData(ReadingTabsState(tabs: tabs, activeTabId: active.id));
-      _ref.read(bibleReaderProvider.notifier).restoreReadingTab(active);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
     }
@@ -112,7 +106,7 @@ final class ReadingTabsNotifier
         created,
       ];
       state = AsyncData(ReadingTabsState(tabs: tabs, activeTabId: created.id));
-      _ref.read(bibleReaderProvider.notifier).restoreReadingTab(created);
+      await _ref.read(bibleReaderProvider.notifier).restoreReadingTab(created);
       return true;
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
@@ -138,7 +132,7 @@ final class ReadingTabsNotifier
       ];
       final active = tabs.firstWhere((tab) => tab.id == id);
       state = AsyncData(ReadingTabsState(tabs: tabs, activeTabId: id));
-      _ref.read(bibleReaderProvider.notifier).restoreReadingTab(active);
+      await _ref.read(bibleReaderProvider.notifier).restoreReadingTab(active);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
     } finally {
@@ -185,7 +179,7 @@ final class ReadingTabsNotifier
       }
       if (id == current.activeTabId) {
         final active = tabs.firstWhere((tab) => tab.id == activeId);
-        _ref.read(bibleReaderProvider.notifier).restoreReadingTab(active);
+        await _ref.read(bibleReaderProvider.notifier).restoreReadingTab(active);
       }
       return true;
     } catch (error, stackTrace) {
@@ -211,6 +205,7 @@ final class ReadingTabsNotifier
       return;
     }
 
+    final now = DateTime.now();
     final updated = active.copyWith(
       bookId: reader.bookId,
       chapter: reader.chapter,
@@ -220,7 +215,16 @@ final class ReadingTabsNotifier
       scrollVerse: reader.scrollVerse,
       scrollFraction: reader.scrollFraction,
       scrollOffset: reader.scrollOffset,
-      updatedAt: DateTime.now(),
+      updatedAt: now,
+    );
+    final position = ChapterReadingPosition(
+      readingTabId: active.id,
+      bookId: reader.bookId,
+      chapter: reader.chapter,
+      scrollVerse: reader.scrollVerse,
+      scrollFraction: reader.scrollFraction,
+      scrollOffset: reader.scrollOffset,
+      updatedAt: now,
     );
     final tabs = [
       for (final tab in current.tabs)
@@ -228,7 +232,10 @@ final class ReadingTabsNotifier
     ];
     state = AsyncData(current.copyWith(tabs: tabs));
     _saveQueue = _saveQueue
-        .then((_) => _repository.updateTab(updated))
+        .then((_) async {
+          await _repository.saveChapterPosition(position);
+          await _repository.updateTab(updated);
+        })
         .catchError((Object error, StackTrace stackTrace) {
           state = AsyncError(error, stackTrace);
         });

@@ -37,6 +37,20 @@ abstract interface class UserLocalDataSource {
 
   Future<void> deleteReadingTab(int id);
 
+  Future<List<ChapterReadingPositionData>> getChapterReadingPositions(
+    int readingTabId,
+  );
+
+  Future<void> saveChapterReadingPosition({
+    required int readingTabId,
+    required int bookId,
+    required int chapter,
+    required int scrollVerse,
+    required double scrollFraction,
+    required double scrollOffset,
+    required DateTime updatedAt,
+  });
+
   // ── Bookmarks ──────────────────────────────────────────────────────
   Future<List<Bookmark>> getAllBookmarks();
 

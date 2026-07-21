@@ -12720,6 +12720,506 @@ class ReadingPlansCompanion extends UpdateCompanion<ReadingPlan> {
   }
 }
 
+class $ChapterReadingPositionsTable extends ChapterReadingPositions
+    with TableInfo<$ChapterReadingPositionsTable, ChapterReadingPositionData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChapterReadingPositionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _readingTabIdMeta = const VerificationMeta(
+    'readingTabId',
+  );
+  @override
+  late final GeneratedColumn<int> readingTabId = GeneratedColumn<int>(
+    'reading_tab_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES reading_tabs (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<int> bookId = GeneratedColumn<int>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _chapterMeta = const VerificationMeta(
+    'chapter',
+  );
+  @override
+  late final GeneratedColumn<int> chapter = GeneratedColumn<int>(
+    'chapter',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _scrollVerseMeta = const VerificationMeta(
+    'scrollVerse',
+  );
+  @override
+  late final GeneratedColumn<int> scrollVerse = GeneratedColumn<int>(
+    'scroll_verse',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _scrollFractionMeta = const VerificationMeta(
+    'scrollFraction',
+  );
+  @override
+  late final GeneratedColumn<double> scrollFraction = GeneratedColumn<double>(
+    'scroll_fraction',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _scrollOffsetMeta = const VerificationMeta(
+    'scrollOffset',
+  );
+  @override
+  late final GeneratedColumn<double> scrollOffset = GeneratedColumn<double>(
+    'scroll_offset',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    readingTabId,
+    bookId,
+    chapter,
+    scrollVerse,
+    scrollFraction,
+    scrollOffset,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chapter_reading_positions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChapterReadingPositionData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('reading_tab_id')) {
+      context.handle(
+        _readingTabIdMeta,
+        readingTabId.isAcceptableOrUnknown(
+          data['reading_tab_id']!,
+          _readingTabIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_readingTabIdMeta);
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookIdMeta);
+    }
+    if (data.containsKey('chapter')) {
+      context.handle(
+        _chapterMeta,
+        chapter.isAcceptableOrUnknown(data['chapter']!, _chapterMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_chapterMeta);
+    }
+    if (data.containsKey('scroll_verse')) {
+      context.handle(
+        _scrollVerseMeta,
+        scrollVerse.isAcceptableOrUnknown(
+          data['scroll_verse']!,
+          _scrollVerseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scroll_fraction')) {
+      context.handle(
+        _scrollFractionMeta,
+        scrollFraction.isAcceptableOrUnknown(
+          data['scroll_fraction']!,
+          _scrollFractionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scroll_offset')) {
+      context.handle(
+        _scrollOffsetMeta,
+        scrollOffset.isAcceptableOrUnknown(
+          data['scroll_offset']!,
+          _scrollOffsetMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {readingTabId, bookId, chapter};
+  @override
+  ChapterReadingPositionData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChapterReadingPositionData(
+      readingTabId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}reading_tab_id'],
+          )!,
+      bookId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}book_id'],
+          )!,
+      chapter:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}chapter'],
+          )!,
+      scrollVerse:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}scroll_verse'],
+          )!,
+      scrollFraction:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}scroll_fraction'],
+          )!,
+      scrollOffset:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}scroll_offset'],
+          )!,
+      updatedAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}updated_at'],
+          )!,
+    );
+  }
+
+  @override
+  $ChapterReadingPositionsTable createAlias(String alias) {
+    return $ChapterReadingPositionsTable(attachedDatabase, alias);
+  }
+}
+
+class ChapterReadingPositionData extends DataClass
+    implements Insertable<ChapterReadingPositionData> {
+  final int readingTabId;
+  final int bookId;
+  final int chapter;
+  final int scrollVerse;
+  final double scrollFraction;
+  final double scrollOffset;
+  final DateTime updatedAt;
+  const ChapterReadingPositionData({
+    required this.readingTabId,
+    required this.bookId,
+    required this.chapter,
+    required this.scrollVerse,
+    required this.scrollFraction,
+    required this.scrollOffset,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['reading_tab_id'] = Variable<int>(readingTabId);
+    map['book_id'] = Variable<int>(bookId);
+    map['chapter'] = Variable<int>(chapter);
+    map['scroll_verse'] = Variable<int>(scrollVerse);
+    map['scroll_fraction'] = Variable<double>(scrollFraction);
+    map['scroll_offset'] = Variable<double>(scrollOffset);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ChapterReadingPositionsCompanion toCompanion(bool nullToAbsent) {
+    return ChapterReadingPositionsCompanion(
+      readingTabId: Value(readingTabId),
+      bookId: Value(bookId),
+      chapter: Value(chapter),
+      scrollVerse: Value(scrollVerse),
+      scrollFraction: Value(scrollFraction),
+      scrollOffset: Value(scrollOffset),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ChapterReadingPositionData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChapterReadingPositionData(
+      readingTabId: serializer.fromJson<int>(json['readingTabId']),
+      bookId: serializer.fromJson<int>(json['bookId']),
+      chapter: serializer.fromJson<int>(json['chapter']),
+      scrollVerse: serializer.fromJson<int>(json['scrollVerse']),
+      scrollFraction: serializer.fromJson<double>(json['scrollFraction']),
+      scrollOffset: serializer.fromJson<double>(json['scrollOffset']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'readingTabId': serializer.toJson<int>(readingTabId),
+      'bookId': serializer.toJson<int>(bookId),
+      'chapter': serializer.toJson<int>(chapter),
+      'scrollVerse': serializer.toJson<int>(scrollVerse),
+      'scrollFraction': serializer.toJson<double>(scrollFraction),
+      'scrollOffset': serializer.toJson<double>(scrollOffset),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ChapterReadingPositionData copyWith({
+    int? readingTabId,
+    int? bookId,
+    int? chapter,
+    int? scrollVerse,
+    double? scrollFraction,
+    double? scrollOffset,
+    DateTime? updatedAt,
+  }) => ChapterReadingPositionData(
+    readingTabId: readingTabId ?? this.readingTabId,
+    bookId: bookId ?? this.bookId,
+    chapter: chapter ?? this.chapter,
+    scrollVerse: scrollVerse ?? this.scrollVerse,
+    scrollFraction: scrollFraction ?? this.scrollFraction,
+    scrollOffset: scrollOffset ?? this.scrollOffset,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ChapterReadingPositionData copyWithCompanion(
+    ChapterReadingPositionsCompanion data,
+  ) {
+    return ChapterReadingPositionData(
+      readingTabId:
+          data.readingTabId.present
+              ? data.readingTabId.value
+              : this.readingTabId,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      chapter: data.chapter.present ? data.chapter.value : this.chapter,
+      scrollVerse:
+          data.scrollVerse.present ? data.scrollVerse.value : this.scrollVerse,
+      scrollFraction:
+          data.scrollFraction.present
+              ? data.scrollFraction.value
+              : this.scrollFraction,
+      scrollOffset:
+          data.scrollOffset.present
+              ? data.scrollOffset.value
+              : this.scrollOffset,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChapterReadingPositionData(')
+          ..write('readingTabId: $readingTabId, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapter: $chapter, ')
+          ..write('scrollVerse: $scrollVerse, ')
+          ..write('scrollFraction: $scrollFraction, ')
+          ..write('scrollOffset: $scrollOffset, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    readingTabId,
+    bookId,
+    chapter,
+    scrollVerse,
+    scrollFraction,
+    scrollOffset,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChapterReadingPositionData &&
+          other.readingTabId == this.readingTabId &&
+          other.bookId == this.bookId &&
+          other.chapter == this.chapter &&
+          other.scrollVerse == this.scrollVerse &&
+          other.scrollFraction == this.scrollFraction &&
+          other.scrollOffset == this.scrollOffset &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ChapterReadingPositionsCompanion
+    extends UpdateCompanion<ChapterReadingPositionData> {
+  final Value<int> readingTabId;
+  final Value<int> bookId;
+  final Value<int> chapter;
+  final Value<int> scrollVerse;
+  final Value<double> scrollFraction;
+  final Value<double> scrollOffset;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ChapterReadingPositionsCompanion({
+    this.readingTabId = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.chapter = const Value.absent(),
+    this.scrollVerse = const Value.absent(),
+    this.scrollFraction = const Value.absent(),
+    this.scrollOffset = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ChapterReadingPositionsCompanion.insert({
+    required int readingTabId,
+    required int bookId,
+    required int chapter,
+    this.scrollVerse = const Value.absent(),
+    this.scrollFraction = const Value.absent(),
+    this.scrollOffset = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : readingTabId = Value(readingTabId),
+       bookId = Value(bookId),
+       chapter = Value(chapter),
+       updatedAt = Value(updatedAt);
+  static Insertable<ChapterReadingPositionData> custom({
+    Expression<int>? readingTabId,
+    Expression<int>? bookId,
+    Expression<int>? chapter,
+    Expression<int>? scrollVerse,
+    Expression<double>? scrollFraction,
+    Expression<double>? scrollOffset,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (readingTabId != null) 'reading_tab_id': readingTabId,
+      if (bookId != null) 'book_id': bookId,
+      if (chapter != null) 'chapter': chapter,
+      if (scrollVerse != null) 'scroll_verse': scrollVerse,
+      if (scrollFraction != null) 'scroll_fraction': scrollFraction,
+      if (scrollOffset != null) 'scroll_offset': scrollOffset,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ChapterReadingPositionsCompanion copyWith({
+    Value<int>? readingTabId,
+    Value<int>? bookId,
+    Value<int>? chapter,
+    Value<int>? scrollVerse,
+    Value<double>? scrollFraction,
+    Value<double>? scrollOffset,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ChapterReadingPositionsCompanion(
+      readingTabId: readingTabId ?? this.readingTabId,
+      bookId: bookId ?? this.bookId,
+      chapter: chapter ?? this.chapter,
+      scrollVerse: scrollVerse ?? this.scrollVerse,
+      scrollFraction: scrollFraction ?? this.scrollFraction,
+      scrollOffset: scrollOffset ?? this.scrollOffset,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (readingTabId.present) {
+      map['reading_tab_id'] = Variable<int>(readingTabId.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<int>(bookId.value);
+    }
+    if (chapter.present) {
+      map['chapter'] = Variable<int>(chapter.value);
+    }
+    if (scrollVerse.present) {
+      map['scroll_verse'] = Variable<int>(scrollVerse.value);
+    }
+    if (scrollFraction.present) {
+      map['scroll_fraction'] = Variable<double>(scrollFraction.value);
+    }
+    if (scrollOffset.present) {
+      map['scroll_offset'] = Variable<double>(scrollOffset.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChapterReadingPositionsCompanion(')
+          ..write('readingTabId: $readingTabId, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapter: $chapter, ')
+          ..write('scrollVerse: $scrollVerse, ')
+          ..write('scrollFraction: $scrollFraction, ')
+          ..write('scrollOffset: $scrollOffset, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -12757,6 +13257,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReadingHistoryTable readingHistory = $ReadingHistoryTable(this);
   late final $ReadingTabsTable readingTabs = $ReadingTabsTable(this);
   late final $ReadingPlansTable readingPlans = $ReadingPlansTable(this);
+  late final $ChapterReadingPositionsTable chapterReadingPositions =
+      $ChapterReadingPositionsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -12786,7 +13288,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     readingHistory,
     readingTabs,
     readingPlans,
+    chapterReadingPositions,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'reading_tabs',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('chapter_reading_positions', kind: UpdateKind.delete),
+      ],
+    ),
+  ]);
 }
 
 typedef $$BibleBooksTableCreateCompanionBuilder =
@@ -20414,6 +20929,39 @@ typedef $$ReadingTabsTableUpdateCompanionBuilder =
       Value<DateTime> updatedAt,
     });
 
+final class $$ReadingTabsTableReferences
+    extends BaseReferences<_$AppDatabase, $ReadingTabsTable, ReadingTabData> {
+  $$ReadingTabsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<
+    $ChapterReadingPositionsTable,
+    List<ChapterReadingPositionData>
+  >
+  _chapterReadingPositionsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.chapterReadingPositions,
+        aliasName: $_aliasNameGenerator(
+          db.readingTabs.id,
+          db.chapterReadingPositions.readingTabId,
+        ),
+      );
+
+  $$ChapterReadingPositionsTableProcessedTableManager
+  get chapterReadingPositionsRefs {
+    final manager = $$ChapterReadingPositionsTableTableManager(
+      $_db,
+      $_db.chapterReadingPositions,
+    ).filter((f) => f.readingTabId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _chapterReadingPositionsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
 class $$ReadingTabsTableFilterComposer
     extends Composer<_$AppDatabase, $ReadingTabsTable> {
   $$ReadingTabsTableFilterComposer({
@@ -20482,6 +21030,32 @@ class $$ReadingTabsTableFilterComposer
     column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> chapterReadingPositionsRefs(
+    Expression<bool> Function($$ChapterReadingPositionsTableFilterComposer f) f,
+  ) {
+    final $$ChapterReadingPositionsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.chapterReadingPositions,
+          getReferencedColumn: (t) => t.readingTabId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ChapterReadingPositionsTableFilterComposer(
+                $db: $db,
+                $table: $db.chapterReadingPositions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ReadingTabsTableOrderingComposer
@@ -20610,6 +21184,33 @@ class $$ReadingTabsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  Expression<T> chapterReadingPositionsRefs<T extends Object>(
+    Expression<T> Function($$ChapterReadingPositionsTableAnnotationComposer a)
+    f,
+  ) {
+    final $$ChapterReadingPositionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.chapterReadingPositions,
+          getReferencedColumn: (t) => t.readingTabId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ChapterReadingPositionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.chapterReadingPositions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ReadingTabsTableTableManager
@@ -20623,12 +21224,9 @@ class $$ReadingTabsTableTableManager
           $$ReadingTabsTableAnnotationComposer,
           $$ReadingTabsTableCreateCompanionBuilder,
           $$ReadingTabsTableUpdateCompanionBuilder,
-          (
-            ReadingTabData,
-            BaseReferences<_$AppDatabase, $ReadingTabsTable, ReadingTabData>,
-          ),
+          (ReadingTabData, $$ReadingTabsTableReferences),
           ReadingTabData,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool chapterReadingPositionsRefs})
         > {
   $$ReadingTabsTableTableManager(_$AppDatabase db, $ReadingTabsTable table)
     : super(
@@ -20704,11 +21302,45 @@ class $$ReadingTabsTableTableManager
                       .map(
                         (e) => (
                           e.readTable(table),
-                          BaseReferences(db, table, e),
+                          $$ReadingTabsTableReferences(db, table, e),
                         ),
                       )
                       .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({chapterReadingPositionsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (chapterReadingPositionsRefs) db.chapterReadingPositions,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (chapterReadingPositionsRefs)
+                    await $_getPrefetchedData<
+                      ReadingTabData,
+                      $ReadingTabsTable,
+                      ChapterReadingPositionData
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ReadingTabsTableReferences
+                          ._chapterReadingPositionsRefsTable(db),
+                      managerFromTypedResult:
+                          (p0) =>
+                              $$ReadingTabsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).chapterReadingPositionsRefs,
+                      referencedItemsForCurrentItem:
+                          (item, referencedItems) => referencedItems.where(
+                            (e) => e.readingTabId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -20723,12 +21355,9 @@ typedef $$ReadingTabsTableProcessedTableManager =
       $$ReadingTabsTableAnnotationComposer,
       $$ReadingTabsTableCreateCompanionBuilder,
       $$ReadingTabsTableUpdateCompanionBuilder,
-      (
-        ReadingTabData,
-        BaseReferences<_$AppDatabase, $ReadingTabsTable, ReadingTabData>,
-      ),
+      (ReadingTabData, $$ReadingTabsTableReferences),
       ReadingTabData,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool chapterReadingPositionsRefs})
     >;
 typedef $$ReadingPlansTableCreateCompanionBuilder =
     ReadingPlansCompanion Function({
@@ -20995,6 +21624,402 @@ typedef $$ReadingPlansTableProcessedTableManager =
       ReadingPlan,
       PrefetchHooks Function()
     >;
+typedef $$ChapterReadingPositionsTableCreateCompanionBuilder =
+    ChapterReadingPositionsCompanion Function({
+      required int readingTabId,
+      required int bookId,
+      required int chapter,
+      Value<int> scrollVerse,
+      Value<double> scrollFraction,
+      Value<double> scrollOffset,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ChapterReadingPositionsTableUpdateCompanionBuilder =
+    ChapterReadingPositionsCompanion Function({
+      Value<int> readingTabId,
+      Value<int> bookId,
+      Value<int> chapter,
+      Value<int> scrollVerse,
+      Value<double> scrollFraction,
+      Value<double> scrollOffset,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$ChapterReadingPositionsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ChapterReadingPositionsTable,
+          ChapterReadingPositionData
+        > {
+  $$ChapterReadingPositionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ReadingTabsTable _readingTabIdTable(_$AppDatabase db) =>
+      db.readingTabs.createAlias(
+        $_aliasNameGenerator(
+          db.chapterReadingPositions.readingTabId,
+          db.readingTabs.id,
+        ),
+      );
+
+  $$ReadingTabsTableProcessedTableManager get readingTabId {
+    final $_column = $_itemColumn<int>('reading_tab_id')!;
+
+    final manager = $$ReadingTabsTableTableManager(
+      $_db,
+      $_db.readingTabs,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_readingTabIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ChapterReadingPositionsTableFilterComposer
+    extends Composer<_$AppDatabase, $ChapterReadingPositionsTable> {
+  $$ChapterReadingPositionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get chapter => $composableBuilder(
+    column: $table.chapter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get scrollVerse => $composableBuilder(
+    column: $table.scrollVerse,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get scrollFraction => $composableBuilder(
+    column: $table.scrollFraction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get scrollOffset => $composableBuilder(
+    column: $table.scrollOffset,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ReadingTabsTableFilterComposer get readingTabId {
+    final $$ReadingTabsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.readingTabId,
+      referencedTable: $db.readingTabs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingTabsTableFilterComposer(
+            $db: $db,
+            $table: $db.readingTabs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChapterReadingPositionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChapterReadingPositionsTable> {
+  $$ChapterReadingPositionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get chapter => $composableBuilder(
+    column: $table.chapter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get scrollVerse => $composableBuilder(
+    column: $table.scrollVerse,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get scrollFraction => $composableBuilder(
+    column: $table.scrollFraction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get scrollOffset => $composableBuilder(
+    column: $table.scrollOffset,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ReadingTabsTableOrderingComposer get readingTabId {
+    final $$ReadingTabsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.readingTabId,
+      referencedTable: $db.readingTabs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingTabsTableOrderingComposer(
+            $db: $db,
+            $table: $db.readingTabs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChapterReadingPositionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChapterReadingPositionsTable> {
+  $$ChapterReadingPositionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get bookId =>
+      $composableBuilder(column: $table.bookId, builder: (column) => column);
+
+  GeneratedColumn<int> get chapter =>
+      $composableBuilder(column: $table.chapter, builder: (column) => column);
+
+  GeneratedColumn<int> get scrollVerse => $composableBuilder(
+    column: $table.scrollVerse,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get scrollFraction => $composableBuilder(
+    column: $table.scrollFraction,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get scrollOffset => $composableBuilder(
+    column: $table.scrollOffset,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ReadingTabsTableAnnotationComposer get readingTabId {
+    final $$ReadingTabsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.readingTabId,
+      referencedTable: $db.readingTabs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingTabsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.readingTabs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ChapterReadingPositionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChapterReadingPositionsTable,
+          ChapterReadingPositionData,
+          $$ChapterReadingPositionsTableFilterComposer,
+          $$ChapterReadingPositionsTableOrderingComposer,
+          $$ChapterReadingPositionsTableAnnotationComposer,
+          $$ChapterReadingPositionsTableCreateCompanionBuilder,
+          $$ChapterReadingPositionsTableUpdateCompanionBuilder,
+          (
+            ChapterReadingPositionData,
+            $$ChapterReadingPositionsTableReferences,
+          ),
+          ChapterReadingPositionData,
+          PrefetchHooks Function({bool readingTabId})
+        > {
+  $$ChapterReadingPositionsTableTableManager(
+    _$AppDatabase db,
+    $ChapterReadingPositionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$ChapterReadingPositionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer:
+              () => $$ChapterReadingPositionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$ChapterReadingPositionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> readingTabId = const Value.absent(),
+                Value<int> bookId = const Value.absent(),
+                Value<int> chapter = const Value.absent(),
+                Value<int> scrollVerse = const Value.absent(),
+                Value<double> scrollFraction = const Value.absent(),
+                Value<double> scrollOffset = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ChapterReadingPositionsCompanion(
+                readingTabId: readingTabId,
+                bookId: bookId,
+                chapter: chapter,
+                scrollVerse: scrollVerse,
+                scrollFraction: scrollFraction,
+                scrollOffset: scrollOffset,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int readingTabId,
+                required int bookId,
+                required int chapter,
+                Value<int> scrollVerse = const Value.absent(),
+                Value<double> scrollFraction = const Value.absent(),
+                Value<double> scrollOffset = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ChapterReadingPositionsCompanion.insert(
+                readingTabId: readingTabId,
+                bookId: bookId,
+                chapter: chapter,
+                scrollVerse: scrollVerse,
+                scrollFraction: scrollFraction,
+                scrollOffset: scrollOffset,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          $$ChapterReadingPositionsTableReferences(
+                            db,
+                            table,
+                            e,
+                          ),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: ({readingTabId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                T extends TableManagerState<
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic
+                >
+              >(state) {
+                if (readingTabId) {
+                  state =
+                      state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.readingTabId,
+                            referencedTable:
+                                $$ChapterReadingPositionsTableReferences
+                                    ._readingTabIdTable(db),
+                            referencedColumn:
+                                $$ChapterReadingPositionsTableReferences
+                                    ._readingTabIdTable(db)
+                                    .id,
+                          )
+                          as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ChapterReadingPositionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChapterReadingPositionsTable,
+      ChapterReadingPositionData,
+      $$ChapterReadingPositionsTableFilterComposer,
+      $$ChapterReadingPositionsTableOrderingComposer,
+      $$ChapterReadingPositionsTableAnnotationComposer,
+      $$ChapterReadingPositionsTableCreateCompanionBuilder,
+      $$ChapterReadingPositionsTableUpdateCompanionBuilder,
+      (ChapterReadingPositionData, $$ChapterReadingPositionsTableReferences),
+      ChapterReadingPositionData,
+      PrefetchHooks Function({bool readingTabId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -21047,4 +22072,9 @@ class $AppDatabaseManager {
       $$ReadingTabsTableTableManager(_db, _db.readingTabs);
   $$ReadingPlansTableTableManager get readingPlans =>
       $$ReadingPlansTableTableManager(_db, _db.readingPlans);
+  $$ChapterReadingPositionsTableTableManager get chapterReadingPositions =>
+      $$ChapterReadingPositionsTableTableManager(
+        _db,
+        _db.chapterReadingPositions,
+      );
 }

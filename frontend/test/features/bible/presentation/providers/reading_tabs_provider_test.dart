@@ -106,6 +106,64 @@ void main() {
     expect(await notifier.addTab(), isFalse);
   });
 
+  test('restores each chapter position after navigation and restart', () async {
+    var container = createTestContainer(db: db, closeDatabaseOnDispose: false);
+    var autoSaveSubscription = container.listen<void>(
+      readingTabsAutoSaveProvider,
+      (_, __) {},
+      fireImmediately: true,
+    );
+    final tabs = await _waitForTabs(container);
+    final tabId = tabs.activeTabId;
+    final reader = container.read(bibleReaderProvider.notifier);
+
+    reader.updateReadingPosition(verse: 12, fraction: 0.35, offset: 520);
+    await _waitForChapterPosition(
+      db,
+      tabId,
+      chapter: 1,
+      verse: 12,
+      offset: 520,
+    );
+    reader.goToNextChapter(50);
+    reader.updateReadingPosition(verse: 7, fraction: 0.55, offset: 280);
+    await _waitForChapterPosition(db, tabId, chapter: 2, verse: 7, offset: 280);
+
+    reader.goToPreviousChapter();
+    var readerState = container.read(bibleReaderProvider);
+    expect(readerState.chapter, 1);
+    expect(readerState.scrollVerse, 12);
+    expect(readerState.scrollFraction, 0.35);
+    expect(readerState.scrollOffset, 520);
+
+    reader.goToNextChapter(50);
+    readerState = container.read(bibleReaderProvider);
+    expect(readerState.chapter, 2);
+    expect(readerState.scrollVerse, 7);
+    expect(readerState.scrollFraction, 0.55);
+    expect(readerState.scrollOffset, 280);
+    await _waitForPersistedChapter(db, tabId, 2);
+
+    autoSaveSubscription.close();
+    container.dispose();
+    container = createTestContainer(db: db, closeDatabaseOnDispose: false);
+    addTearDown(container.dispose);
+    autoSaveSubscription = container.listen<void>(
+      readingTabsAutoSaveProvider,
+      (_, __) {},
+      fireImmediately: true,
+    );
+    addTearDown(autoSaveSubscription.close);
+    await _waitForTabs(container);
+
+    container.read(bibleReaderProvider.notifier).goToPreviousChapter();
+    readerState = container.read(bibleReaderProvider);
+    expect(readerState.chapter, 1);
+    expect(readerState.scrollVerse, 12);
+    expect(readerState.scrollFraction, 0.35);
+    expect(readerState.scrollOffset, 520);
+  });
+
   test('ignores a concurrent duplicate add request', () async {
     final container = createTestContainer(
       db: db,
@@ -171,4 +229,27 @@ Future<void> _waitForPersistedPosition(
     await Future<void>.delayed(const Duration(milliseconds: 5));
   }
   fail('Timed out waiting for tab $id to persist verse $verse at $offset');
+}
+
+Future<void> _waitForChapterPosition(
+  AppDatabase db,
+  int tabId, {
+  required int chapter,
+  required int verse,
+  required double offset,
+}) async {
+  for (var attempt = 0; attempt < 1000; attempt++) {
+    final row =
+        await (db.select(db.chapterReadingPositions)
+              ..where((position) => position.readingTabId.equals(tabId))
+              ..where((position) => position.bookId.equals(1))
+              ..where((position) => position.chapter.equals(chapter)))
+            .getSingleOrNull();
+    if (row?.scrollVerse == verse && row?.scrollOffset == offset) return;
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+  }
+  fail(
+    'Timed out waiting for tab $tabId chapter $chapter '
+    'to persist verse $verse at $offset',
+  );
 }

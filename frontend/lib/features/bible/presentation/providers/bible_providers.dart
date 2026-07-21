@@ -5,10 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart';
 import '../../data/datasources/bible_local_datasource_impl.dart';
+import '../../data/datasources/user_local_datasource_impl.dart';
 import '../../data/repositories/bible_repository_impl.dart';
+import '../../data/repositories/reading_tabs_repository_impl.dart';
 import '../../domain/entities/book.dart';
 import '../../domain/entities/chapter_content.dart';
 import '../../domain/repositories/bible_repository.dart';
+import '../../domain/repositories/reading_tabs_repository.dart';
 import '../../domain/usecases/get_all_books_usecase.dart';
 import '../../domain/usecases/get_chapter_usecase.dart';
 
@@ -18,6 +21,11 @@ final bibleRepositoryProvider = Provider<BibleRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final dataSource = BibleLocalDataSourceImpl(db);
   return BibleRepositoryImpl(dataSource);
+});
+
+final readingTabsRepositoryProvider = Provider<ReadingTabsRepository>((ref) {
+  final dataSource = UserLocalDataSourceImpl(ref.watch(appDatabaseProvider));
+  return ReadingTabsRepositoryImpl(dataSource);
 });
 
 // ── Use Cases ─────────────────────────────────────────────────────────
@@ -53,8 +61,7 @@ final booksGroupedProvider = FutureProvider<BooksGrouped>((ref) async {
 });
 
 /// 현재 읽는 장(Chapter) 파라미터.
-final currentChapterParamsProvider =
-    StateProvider<GetChapterParams>((ref) {
+final currentChapterParamsProvider = StateProvider<GetChapterParams>((ref) {
   return const GetChapterParams(
     bookId: 1, // Genesis
     chapter: 1,
@@ -63,8 +70,7 @@ final currentChapterParamsProvider =
 });
 
 /// 현재 장 내용 StreamProvider (파라미터 변경 시 자동 갱신).
-final currentChapterProvider =
-    FutureProvider<ChapterContent>((ref) async {
+final currentChapterProvider = FutureProvider<ChapterContent>((ref) async {
   final params = ref.watch(currentChapterParamsProvider);
   final useCase = ref.watch(getChapterUseCaseProvider);
   final result = await useCase(params);
@@ -75,16 +81,17 @@ final currentChapterProvider =
 });
 
 /// 특정 번역본 로드 여부.
-final isTranslationLoadedProvider =
-    FutureProvider.family<bool, String>((ref, translationCode) async {
+final isTranslationLoadedProvider = FutureProvider.family<bool, String>((
+  ref,
+  translationCode,
+) async {
   final repo = ref.watch(bibleRepositoryProvider);
   final result = await repo.isTranslationLoaded(translationCode);
   return result.valueOrNull ?? false;
 });
 
 /// 로드된 번역본 목록.
-final loadedTranslationsProvider =
-    FutureProvider<List<String>>((ref) async {
+final loadedTranslationsProvider = FutureProvider<List<String>>((ref) async {
   final repo = ref.watch(bibleRepositoryProvider);
   final result = await repo.getLoadedTranslations();
   return result.valueOrNull ?? [];

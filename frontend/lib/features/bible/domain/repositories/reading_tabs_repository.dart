@@ -1,3 +1,4 @@
+import '../entities/chapter_reading_position.dart';
 import '../entities/reading_tab.dart';
 
 abstract interface class ReadingTabsRepository {
@@ -20,4 +21,8 @@ abstract interface class ReadingTabsRepository {
   Future<void> setActiveTab(int id);
 
   Future<void> deleteTab(int id);
+
+  Future<List<ChapterReadingPosition>> getChapterPositions(int readingTabId);
+
+  Future<void> saveChapterPosition(ChapterReadingPosition position);
 }

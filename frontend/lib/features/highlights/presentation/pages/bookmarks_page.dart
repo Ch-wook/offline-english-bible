@@ -131,7 +131,11 @@ class BookmarksPage extends ConsumerWidget {
                   onTap: () {
                     ref
                         .read(bibleReaderProvider.notifier)
-                        .navigateTo(bookId: bm.bookId, chapter: bm.chapter);
+                        .navigateTo(
+                          bookId: bm.bookId,
+                          chapter: bm.chapter,
+                          verse: bm.verse,
+                        );
                     context.go('/bible');
                   },
                 ),

@@ -100,4 +100,60 @@ void main() {
       expect(tabs.last.bookId, 43);
     },
   );
+
+  test(
+    'chapter positions are upserted independently per reading tab',
+    () async {
+      final tabId = await dataSource.createReadingTab(
+        bookId: 1,
+        chapter: 1,
+        translationCode: 'KJV',
+        isParallelView: false,
+        parallelTranslationCode: 'KOREAN_RV',
+        scrollVerse: 1,
+        scrollFraction: 0,
+        scrollOffset: 0,
+        sortOrder: 0,
+      );
+      final now = DateTime(2026, 7, 21);
+
+      await dataSource.saveChapterReadingPosition(
+        readingTabId: tabId,
+        bookId: 1,
+        chapter: 1,
+        scrollVerse: 12,
+        scrollFraction: 0.3,
+        scrollOffset: 520,
+        updatedAt: now,
+      );
+      await dataSource.saveChapterReadingPosition(
+        readingTabId: tabId,
+        bookId: 1,
+        chapter: 2,
+        scrollVerse: 7,
+        scrollFraction: 0.6,
+        scrollOffset: 280,
+        updatedAt: now.add(const Duration(minutes: 1)),
+      );
+      await dataSource.saveChapterReadingPosition(
+        readingTabId: tabId,
+        bookId: 1,
+        chapter: 1,
+        scrollVerse: 14,
+        scrollFraction: 0.4,
+        scrollOffset: 640,
+        updatedAt: now.add(const Duration(minutes: 2)),
+      );
+
+      var positions = await dataSource.getChapterReadingPositions(tabId);
+      expect(positions, hasLength(2));
+      final chapterOne = positions.singleWhere((row) => row.chapter == 1);
+      expect(chapterOne.scrollVerse, 14);
+      expect(chapterOne.scrollOffset, 640);
+
+      await dataSource.deleteReadingTab(tabId);
+      positions = await dataSource.getChapterReadingPositions(tabId);
+      expect(positions, isEmpty);
+    },
+  );
 }

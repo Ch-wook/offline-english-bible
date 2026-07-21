@@ -144,6 +144,22 @@ class ReadingTabs extends Table {
   DateTimeColumn get updatedAt => dateTime()();
 }
 
+/// 읽기 탭 안에서 장마다 마지막으로 읽던 세부 위치.
+@DataClassName('ChapterReadingPositionData')
+class ChapterReadingPositions extends Table {
+  IntColumn get readingTabId =>
+      integer().references(ReadingTabs, #id, onDelete: KeyAction.cascade)();
+  IntColumn get bookId => integer()();
+  IntColumn get chapter => integer()();
+  IntColumn get scrollVerse => integer().withDefault(const Constant(1))();
+  RealColumn get scrollFraction => real().withDefault(const Constant(0))();
+  RealColumn get scrollOffset => real().withDefault(const Constant(0))();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {readingTabId, bookId, chapter};
+}
+
 /// 읽기 계획 (사용자 정의).
 class ReadingPlans extends Table {
   IntColumn get id => integer().autoIncrement()();

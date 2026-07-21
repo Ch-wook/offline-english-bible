@@ -1,4 +1,5 @@
 import '../../../../core/database/app_database.dart';
+import '../../domain/entities/chapter_reading_position.dart';
 import '../../domain/entities/reading_tab.dart';
 import '../../domain/repositories/reading_tabs_repository.dart';
 import '../datasources/user_local_datasource.dart';
@@ -51,6 +52,26 @@ final class ReadingTabsRepositoryImpl implements ReadingTabsRepository {
   @override
   Future<void> deleteTab(int id) => _dataSource.deleteReadingTab(id);
 
+  @override
+  Future<List<ChapterReadingPosition>> getChapterPositions(
+    int readingTabId,
+  ) async =>
+      (await _dataSource.getChapterReadingPositions(
+        readingTabId,
+      )).map(_positionToDomain).toList();
+
+  @override
+  Future<void> saveChapterPosition(ChapterReadingPosition position) =>
+      _dataSource.saveChapterReadingPosition(
+        readingTabId: position.readingTabId,
+        bookId: position.bookId,
+        chapter: position.chapter,
+        scrollVerse: position.scrollVerse,
+        scrollFraction: position.scrollFraction,
+        scrollOffset: position.scrollOffset,
+        updatedAt: position.updatedAt,
+      );
+
   static BibleReadingTab _toDomain(ReadingTabData row) => BibleReadingTab(
     id: row.id,
     bookId: row.bookId,
@@ -79,5 +100,17 @@ final class ReadingTabsRepositoryImpl implements ReadingTabsRepository {
     sortOrder: tab.sortOrder,
     isActive: tab.isActive,
     updatedAt: tab.updatedAt,
+  );
+
+  static ChapterReadingPosition _positionToDomain(
+    ChapterReadingPositionData row,
+  ) => ChapterReadingPosition(
+    readingTabId: row.readingTabId,
+    bookId: row.bookId,
+    chapter: row.chapter,
+    scrollVerse: row.scrollVerse,
+    scrollFraction: row.scrollFraction,
+    scrollOffset: row.scrollOffset,
+    updatedAt: row.updatedAt,
   );
 }

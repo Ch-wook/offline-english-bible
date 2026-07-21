@@ -127,6 +127,40 @@ final class UserLocalDataSourceImpl implements UserLocalDataSource {
   Future<void> deleteReadingTab(int id) =>
       (_db.delete(_db.readingTabs)..where((tab) => tab.id.equals(id))).go();
 
+  @override
+  Future<List<ChapterReadingPositionData>> getChapterReadingPositions(
+    int readingTabId,
+  ) =>
+      (_db.select(_db.chapterReadingPositions)
+            ..where((position) => position.readingTabId.equals(readingTabId))
+            ..orderBy([(position) => OrderingTerm.desc(position.updatedAt)]))
+          .get();
+
+  @override
+  Future<void> saveChapterReadingPosition({
+    required int readingTabId,
+    required int bookId,
+    required int chapter,
+    required int scrollVerse,
+    required double scrollFraction,
+    required double scrollOffset,
+    required DateTime updatedAt,
+  }) async {
+    await _db
+        .into(_db.chapterReadingPositions)
+        .insertOnConflictUpdate(
+          ChapterReadingPositionsCompanion(
+            readingTabId: Value(readingTabId),
+            bookId: Value(bookId),
+            chapter: Value(chapter),
+            scrollVerse: Value(scrollVerse),
+            scrollFraction: Value(scrollFraction),
+            scrollOffset: Value(scrollOffset),
+            updatedAt: Value(updatedAt),
+          ),
+        );
+  }
+
   // ── Bookmarks ──────────────────────────────────────────────────────
 
   @override

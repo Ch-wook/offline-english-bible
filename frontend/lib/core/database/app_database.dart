@@ -54,13 +54,14 @@ part 'app_database.g.dart';
     ReadingHistory,
     ReadingTabs,
     ReadingPlans,
+    ChapterReadingPositions,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -96,6 +97,9 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(readingTabs, readingTabs.scrollVerse);
         await m.addColumn(readingTabs, readingTabs.scrollFraction);
         await m.addColumn(readingTabs, readingTabs.scrollOffset);
+      }
+      if (from < 5) {
+        await m.createTable(chapterReadingPositions);
       }
     },
   );
@@ -158,6 +162,11 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_reading_tabs_order '
       'ON reading_tabs (sort_order, id)',
+    );
+
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_chapter_positions_tab '
+      'ON chapter_reading_positions (reading_tab_id, updated_at DESC)',
     );
 
     // 단어장 복습 스케줄

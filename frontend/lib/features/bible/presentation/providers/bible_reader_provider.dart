@@ -1,10 +1,13 @@
 // lib/features/bible/presentation/providers/bible_reader_provider.dart
 // [NEW] 성경 읽기 화면 StateNotifier + State
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../dictionary/domain/services/dictionary_query_normalizer.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
+import '../../domain/entities/chapter_reading_position.dart';
 import '../../domain/entities/reading_tab.dart';
 import '../../domain/entities/verse.dart';
 import '../../domain/usecases/get_chapter_usecase.dart';
@@ -165,23 +168,33 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
   }
 
   final Ref _ref;
+  final Map<(int, int), ChapterReadingPosition> _chapterPositions = {};
+  int? _activeReadingTabId;
+  int _positionLoadGeneration = 0;
 
   // ── Navigation ────────────────────────────────────────────────────
 
-  void navigateTo({required int bookId, required int chapter, int verse = 1}) {
+  void navigateTo({required int bookId, required int chapter, int? verse}) {
+    _cacheCurrentPosition(persist: true);
+    final restored =
+        verse == null ? _chapterPositions[(bookId, chapter)] : null;
     state = state.copyWith(
       bookId: bookId,
       chapter: chapter,
-      scrollVerse: verse < 1 ? 1 : verse,
-      scrollFraction: 0,
-      scrollOffset: 0,
+      scrollVerse:
+          verse == null ? restored?.scrollVerse ?? 1 : verse.clamp(1, 999),
+      scrollFraction: restored?.scrollFraction ?? 0,
+      scrollOffset: restored?.scrollOffset ?? 0,
       clearVerseSelection: true,
       clearTappedWord: true,
     );
     _syncToChapterParams();
   }
 
-  void restoreReadingTab(BibleReadingTab tab) {
+  Future<void> restoreReadingTab(BibleReadingTab tab) async {
+    _activeReadingTabId = tab.id;
+    _chapterPositions.clear();
+    final generation = ++_positionLoadGeneration;
     state = BibleReaderState(
       bookId: tab.bookId,
       chapter: tab.chapter,
@@ -192,34 +205,53 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
       scrollFraction: tab.scrollFraction,
       scrollOffset: tab.scrollOffset,
     );
+    _chapterPositions[(tab.bookId, tab.chapter)] = ChapterReadingPosition(
+      readingTabId: tab.id,
+      bookId: tab.bookId,
+      chapter: tab.chapter,
+      scrollVerse: tab.scrollVerse,
+      scrollFraction: tab.scrollFraction,
+      scrollOffset: tab.scrollOffset,
+      updatedAt: tab.updatedAt,
+    );
     _syncToChapterParams();
+    try {
+      final positions = await _ref
+          .read(readingTabsRepositoryProvider)
+          .getChapterPositions(tab.id);
+      if (_activeReadingTabId != tab.id ||
+          generation != _positionLoadGeneration) {
+        return;
+      }
+      for (final position in positions) {
+        final key = (position.bookId, position.chapter);
+        final cached = _chapterPositions[key];
+        if (cached == null || position.updatedAt.isAfter(cached.updatedAt)) {
+          _chapterPositions[key] = position;
+        }
+      }
+      final latest = _chapterPositions[(state.bookId, state.chapter)];
+      if (latest != null && latest.updatedAt.isAfter(tab.updatedAt)) {
+        state = state.copyWith(
+          scrollVerse: latest.scrollVerse,
+          scrollFraction: latest.scrollFraction,
+          scrollOffset: latest.scrollOffset,
+        );
+      }
+    } on Object {
+      // The active tab remains usable even if historical positions fail to load.
+    }
   }
 
   void goToNextChapter(int maxChapter) {
     if (state.chapter < maxChapter) {
-      state = state.copyWith(
-        chapter: state.chapter + 1,
-        scrollVerse: 1,
-        scrollFraction: 0,
-        scrollOffset: 0,
-        clearVerseSelection: true,
-        clearTappedWord: true,
-      );
-      _syncToChapterParams();
+      navigateTo(bookId: state.bookId, chapter: state.chapter + 1);
     }
   }
 
   void goToPreviousChapter() {
     if (state.chapter > 1) {
-      state = state.copyWith(
-        chapter: state.chapter - 1,
-        scrollVerse: 1,
-        scrollFraction: 0,
-        scrollOffset: 0,
-        clearVerseSelection: true,
-        clearTappedWord: true,
-      );
-      _syncToChapterParams();
+      navigateTo(bookId: state.bookId, chapter: state.chapter - 1);
     }
   }
 
@@ -307,6 +339,7 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
       scrollFraction: safeFraction,
       scrollOffset: safeOffset,
     );
+    _cacheCurrentPosition();
   }
 
   // ── Auto Scroll ───────────────────────────────────────────────────
@@ -320,6 +353,32 @@ class BibleReaderNotifier extends StateNotifier<BibleReaderState> {
   void _syncToChapterParams() {
     _ref.read(currentChapterParamsProvider.notifier).state =
         state.toChapterParams();
+  }
+
+  void _cacheCurrentPosition({bool persist = false}) {
+    final readingTabId = _activeReadingTabId;
+    if (readingTabId == null) return;
+    final position = ChapterReadingPosition(
+      readingTabId: readingTabId,
+      bookId: state.bookId,
+      chapter: state.chapter,
+      scrollVerse: state.scrollVerse,
+      scrollFraction: state.scrollFraction,
+      scrollOffset: state.scrollOffset,
+      updatedAt: DateTime.now(),
+    );
+    _chapterPositions[(state.bookId, state.chapter)] = position;
+    if (persist) unawaited(_persistPosition(position));
+  }
+
+  Future<void> _persistPosition(ChapterReadingPosition position) async {
+    try {
+      await _ref
+          .read(readingTabsRepositoryProvider)
+          .saveChapterPosition(position);
+    } on Object {
+      // The in-memory location still restores correctly during this session.
+    }
   }
 }
 
